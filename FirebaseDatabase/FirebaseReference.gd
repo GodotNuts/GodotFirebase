@@ -71,10 +71,13 @@ func _get_list_url():
 #func _get_filter():
 #    return query_tag + FilterQuery
 
+var can_request = true
+
 func _process(delta):
     current_update_time += delta
-    if auth and auth.idtoken  and current_update_time >= UpdateGranularity:
+    if auth and auth.idtoken and can_request:
         listener.request(_get_list_url() + db_path + _get_remaining_path(), [accept_header], true, HTTPClient.METHOD_POST)
+        can_request = false
         current_update_time = 0
 
 func _get_command(body : String):
@@ -109,7 +112,7 @@ func _get_data(body):
     return res
 
 func on_listener_request_complete(result, response_code, headers, body):
-    print("Listener request complete")
+    can_request = true
     if body:
         var bod = body.get_string_from_utf8()
         var command = _get_command(bod)
