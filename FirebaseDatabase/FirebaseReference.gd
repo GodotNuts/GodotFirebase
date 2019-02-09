@@ -118,14 +118,15 @@ func on_listener_request_complete(result, response_code, headers, body):
         var command = _get_command(bod)
         if command != null:
             var data = _get_data(bod)
-            _route_data(command, data.path, data.data)
-            if command == put_tag:
-                if data.path == separator:
-                    emit_signal("full_data_update", store.data_set)
-                else:
-                    emit_signal("new_data_update", data.data)
-            elif command == patch_tag:
-                emit_signal("patch_data_update", data.data)
+            if data:
+                _route_data(command, data.path, data.data)
+                if command == put_tag:
+                    if data.path == separator:
+                        emit_signal("full_data_update", store.data_set)
+                    else:
+                        emit_signal("new_data_update", data.data)
+                elif command == patch_tag:
+                    emit_signal("patch_data_update", data.data)
 
 func on_push_request_complete(result, response_code, headers, body):
     if response_code == HTTPClient.RESPONSE_OK:
