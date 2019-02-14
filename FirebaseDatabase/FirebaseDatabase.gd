@@ -11,9 +11,7 @@ var config = {
 
 var auth = null
 
-var listeners = {}
-var pushers = {}
-var stores = {}
+var OrderBy = "orderBy"
 
 onready var FilterQuery
 
