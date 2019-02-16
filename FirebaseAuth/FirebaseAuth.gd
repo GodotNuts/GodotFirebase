@@ -1,7 +1,6 @@
 extends HTTPRequest
 
 signal login_succeeded(auth_result)
-#warning-ignore:unused_signal
 signal login_failed
 
 onready var API_Key = ""
@@ -54,6 +53,11 @@ func _on_FirebaseAuth_request_completed(result, response_code, headers, body):
             begin_refresh_countdown()
     else:
         print(body.get_string_from_ascii())
+        var bod = body.get_string_from_ascii()
+        var json_result = JSON.parse(bod)
+        var res = json_result.result
+        # error message would be INVALID_EMAIL, EMAIL_NOT_FOUND, INVALID_PASSWORD, USER_DISABLED or WEAK_PASSWORD
+        emit_signal("login_failed", res.error.code, res.error.message)
         
 func begin_refresh_countdown():
     var refresh_token = null
