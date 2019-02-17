@@ -2,11 +2,17 @@ extends HTTPRequest
 
 signal login_succeeded(auth_result)
 signal login_failed
+signal userdata_received(userdata)
 
-onready var API_Key = ""
-onready var signup_request_url = "https://www.googleapis.com/identitytoolkit/v3/relyingparty/signupNewUser?key="
-onready var signin_request_url = "https://www.googleapis.com/identitytoolkit/v3/relyingparty/verifyPassword?key="
-onready var refresh_request_url = "https://securetoken.googleapis.com/v1/token?key="
+var API_Key = ""
+var signup_request_url = "https://www.googleapis.com/identitytoolkit/v3/relyingparty/signupNewUser?key="
+var signin_request_url = "https://www.googleapis.com/identitytoolkit/v3/relyingparty/verifyPassword?key="
+var userdata_request_url = "https://www.googleapis.com/identitytoolkit/v3/relyingparty/getAccountInfo?key="
+var refresh_request_url = "https://securetoken.googleapis.com/v1/token?key="
+
+const REPONSE_SIGNIN   = "identitytoolkit#VerifyPasswordResponse"
+const REPONSE_SIGNUP   = "identitytoolkit#SignupNewUserResponse"
+const REPONSE_USERDATA = "identitytoolkit#GetAccountInfoResponse"
 
 var needs_refresh = false
 var auth = null
@@ -26,6 +32,7 @@ func _ready():
     signup_request_url += API_Key
     signin_request_url += API_Key
     refresh_request_url += API_Key
+    userdata_request_url += API_Key
     connect("request_completed", self, "_on_FirebaseAuth_request_completed")
     
 func login_with_email_and_password(email, password):
@@ -42,20 +49,27 @@ func signup_with_email_and_password(email, password):
     request(signup_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print(login_request_body))
     
 func _on_FirebaseAuth_request_completed(result, response_code, headers, body):
+    var bod = body.get_string_from_utf8()
+    var json_result = JSON.parse(bod)
+    if json_result.error != OK:
+        print_debug("Error while parsing body json")
+        return
+    
+    var res = json_result.result
     if response_code == HTTPClient.RESPONSE_OK:
-        var bod = body.get_string_from_ascii()
-        var json_result = JSON.parse(bod)
-        var res = json_result.result
-        if res:
+        if not res.has("kind"):
             auth = get_clean_keys(res)
-            if not needs_refresh:
-                emit_signal("login_succeeded", auth)
             begin_refresh_countdown()
+        else:
+            match res.kind:
+                REPONSE_SIGNIN, REPONSE_SIGNUP:
+                    auth = get_clean_keys(res)
+                    emit_signal("login_succeeded", auth)
+                    begin_refresh_countdown()
+                REPONSE_USERDATA:
+                    var userdata = FirebaseUserData.new(res.users[0])
+                    emit_signal("userdata_received", userdata)
     else:
-        print(body.get_string_from_ascii())
-        var bod = body.get_string_from_ascii()
-        var json_result = JSON.parse(bod)
-        var res = json_result.result
         # error message would be INVALID_EMAIL, EMAIL_NOT_FOUND, INVALID_PASSWORD, USER_DISABLED or WEAK_PASSWORD
         emit_signal("login_failed", res.error.code, res.error.message)
         
@@ -79,3 +93,10 @@ func get_clean_keys(auth_result):
     for key in auth_result.keys():
         cleaned[key.replace("_", "").to_lower()] = auth_result[key]
     return cleaned
+
+func get_user_data():
+    if auth == null or auth.has("idtoken") == false:
+        print_debug("Not logged in")
+        return
+    
+    request(userdata_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print({"idToken":auth.idtoken}))
