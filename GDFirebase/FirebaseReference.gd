@@ -1,3 +1,4 @@
+tool
 extends Node
 
 signal full_data_update(data)
@@ -58,7 +59,17 @@ func set_store(store_ref):
     if !store:
         store = store_ref
         add_child(store)
-        store.set_script(preload("res://addons/FirebaseDatabase/Store.gd"))
+        store.set_script(preload("res://addons/GDFirebase/Store.gd"))
+
+func update(path, data):
+    var to_update = JSON.print(data)
+    while !can_push:
+        yield(get_tree().create_timer(0.2), "timeout")
+        
+    can_push = false
+    pusher.request(_get_list_url() + db_path + _get_remaining_path(), PoolStringArray(), true, HTTPClient.METHOD_PATCH, to_update)
+
+    pass
 
 func push(data):
     var to_push = JSON.print(data)
@@ -66,13 +77,16 @@ func push(data):
     while !can_push:
         yield(get_tree().create_timer(0.2), "timeout")
     can_push = false
+    if data.has("user_name"):
+        print("User name: " + data.user_name)
+        
     pusher.request(_get_list_url() + db_path + _get_remaining_path(), PoolStringArray(), true, HTTPClient.METHOD_POST, to_push)
 
 func _get_remaining_path(is_push = true):
     if !filter_query or is_push:
-        return json_list_tag + query_tag + auth_tag + auth.idtoken
+        return json_list_tag + query_tag + auth_tag + Firebase.Auth.auth.idtoken
     else:
-        return json_list_tag + query_tag + _get_filter() + filter_tag + auth_tag + auth.idtoken
+        return json_list_tag + query_tag + _get_filter() + filter_tag + auth_tag + Firebase.Auth.auth.idtoken
 
 func _get_list_url():
     return config.databaseURL + separator # + ListName + json_list_tag + auth_tag + auth.idtoken
@@ -83,11 +97,11 @@ func _get_filter():
     # At the moment, this means you can't dynamically change your filter; I think it's okay to specify that in the rules.
     if !cached_filter:
         cached_filter = ""
-        if filter_query.has(FirebaseDatabase.OrderBy):
-            cached_filter += FirebaseDatabase.OrderBy + equal_tag + escaped_quote + filter_query[FirebaseDatabase.OrderBy] + escaped_quote
-            filter_query.erase(FirebaseDatabase.OrderBy)
+        if filter_query.has(Firebase.Database.OrderBy):
+            cached_filter += Firebase.Database.OrderBy + equal_tag + escaped_quote + filter_query[Firebase.Database.OrderBy] + escaped_quote
+            filter_query.erase(Firebase.Database.OrderBy)
         else:
-            cached_filter += FirebaseDatabase.OrderBy + equal_tag + escaped_quote + key_filter_tag + escaped_quote # Presumptuous, but to get it to work at all...
+            cached_filter += Firebase.Database.OrderBy + equal_tag + escaped_quote + key_filter_tag + escaped_quote # Presumptuous, but to get it to work at all...
 
         for key in filter_query.keys():
             cached_filter += filter_tag + key + equal_tag + filter_query[key]
@@ -95,7 +109,7 @@ func _get_filter():
     return cached_filter
 
 func _process(delta):
-    if auth and auth.idtoken and can_request:
+    if Firebase.Auth.auth and Firebase.Auth.auth.idtoken and can_request:
         var request_url = _get_list_url() + db_path + _get_remaining_path(false)
         listener.request(request_url, [accept_header], true, HTTPClient.METHOD_POST)
         can_request = false
@@ -138,6 +152,8 @@ func on_listener_request_complete(result, response_code, headers, body):
         var command = _get_command(bod)
         if command != null:
             var data = _get_data(bod)
+            if data.has("user_name"):
+                print("User name: " + data.user_name)
             if data:
                 _route_data(command, data.path, data.data)
                 if command == put_tag:
@@ -155,4 +171,7 @@ func on_push_request_complete(result, response_code, headers, body):
         return
 
     emit_signal("push_failed")
-    
+
+func disconnect_signals():
+    pusher.disconnect("request_completed", self, "on_push_request_complete")
+    listener.disconnect("request_completed", self, "on_listener_request_complete")

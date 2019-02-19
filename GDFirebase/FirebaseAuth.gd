@@ -1,3 +1,4 @@
+tool
 extends HTTPRequest
 
 signal login_succeeded(auth_result)
@@ -13,6 +14,7 @@ var refresh_request_url = "https://securetoken.googleapis.com/v1/token?key="
 const REPONSE_SIGNIN   = "identitytoolkit#VerifyPasswordResponse"
 const REPONSE_SIGNUP   = "identitytoolkit#SignupNewUserResponse"
 const REPONSE_USERDATA = "identitytoolkit#GetAccountInfoResponse"
+var refresh_request_url = "https://securetoken.googleapis.com/v1/token?key="
 
 var needs_refresh = false
 var auth = null
@@ -34,20 +36,20 @@ func _ready():
     refresh_request_url += API_Key
     userdata_request_url += API_Key
     connect("request_completed", self, "_on_FirebaseAuth_request_completed")
-    
+
 func login_with_email_and_password(email, password):
     login_request_body.email = email
     login_request_body.password = password
 #warning-ignore:return_value_discarded
     request(signin_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print(login_request_body))
     pass
-    
+
 func signup_with_email_and_password(email, password):
     login_request_body.email = email
     login_request_body.password = password
 #warning-ignore:return_value_discarded
     request(signup_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print(login_request_body))
-    
+
 func _on_FirebaseAuth_request_completed(result, response_code, headers, body):
     var bod = body.get_string_from_utf8()
     var json_result = JSON.parse(bod)
@@ -56,6 +58,8 @@ func _on_FirebaseAuth_request_completed(result, response_code, headers, body):
         return
     
     var res = json_result.result
+    
+    print(body.get_string_from_ascii())
     if response_code == HTTPClient.RESPONSE_OK:
         if not res.has("kind"):
             auth = get_clean_keys(res)
@@ -73,6 +77,8 @@ func _on_FirebaseAuth_request_completed(result, response_code, headers, body):
         # error message would be INVALID_EMAIL, EMAIL_NOT_FOUND, INVALID_PASSWORD, USER_DISABLED or WEAK_PASSWORD
         emit_signal("login_failed", res.error.code, res.error.message)
         
+        print(body.get_string_from_ascii())
+
 func begin_refresh_countdown():
     var refresh_token = null
     var expires_in = 1000
@@ -82,7 +88,7 @@ func begin_refresh_countdown():
     yield(get_tree().create_timer(float(expires_in)), "timeout")
     refresh_request_body.refresh_token = refresh_token
     request(refresh_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print(refresh_request_body))
-    
+
 func get_clean_keys(auth_result):
     var cleaned = {}
     for key in auth_result.keys():
@@ -95,3 +101,6 @@ func get_user_data():
         return
     
     request(userdata_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print({"idToken":auth.idtoken}))
+    
+func _exit_tree():
+    disconnect("request_completed", self, "_on_FirebaseAuth_request_completed")
