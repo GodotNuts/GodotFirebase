@@ -58,13 +58,8 @@ func _on_FirebaseAuth_request_completed(result, response_code, headers, body):
 func begin_refresh_countdown():
     var refresh_token = null
     var expires_in = 1000
-    auth = get_clean_keys(auth)
-    if auth.has("refreshToken"):
-        refresh_token = auth.refreshToken
-        expires_in = auth.expiresIn
-    elif auth.has("refresh_token"):
-        refresh_token = auth.refresh_token
-        expires_in = auth.expires_in
+    refresh_token = auth.refreshtoken
+    expires_in = auth.expiresin
     needs_refresh = true
     yield(get_tree().create_timer(float(expires_in)), "timeout")
     refresh_request_body.refresh_token = refresh_token
