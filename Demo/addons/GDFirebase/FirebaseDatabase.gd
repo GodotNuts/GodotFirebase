@@ -17,8 +17,6 @@ const StartAt = "startAt"
 const EndAt = "endAt"
 const EqualTo = "equalTo"
 
-var references = {}
-
 func _on_FirebaseAuth_login_succeeded(auth_result):
     auth = auth_result
 
@@ -34,5 +32,4 @@ func get_database_reference(path : String, filter : Dictionary):
     firebase_reference.set_store(store)
     firebase_reference.set_db_path(path, filter)
     add_child(firebase_reference)
-    references.append(firebase_reference)
     return firebase_reference
