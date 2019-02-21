@@ -14,3 +14,10 @@ func _ready():
     add_child(Firestore)
     Auth.connect("login_succeeded", Database, "_on_FirebaseAuth_login_succeeded")
     Auth.connect("login_succeeded", Firestore, "_on_FirebaseAuth_login_succeeded")
+    
+func _exit_tree():
+    Auth.disconnect("login_succeeded", Database, "_on_FirebaseAuth_login_succeeded")
+    Auth.disconnect("login_succeeded", Firestore, "_on_FirebaseAuth_login_succeeded")
+    Auth.free()
+    Database.free()
+    Firestore.free()

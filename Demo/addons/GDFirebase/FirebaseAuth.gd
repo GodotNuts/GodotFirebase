@@ -3,6 +3,7 @@ extends HTTPRequest
 
 signal login_succeeded(auth_result)
 signal login_failed
+signal userdata_received(userdata)
 
 var API_Key = ""
 var signup_request_url = "https://www.googleapis.com/identitytoolkit/v3/relyingparty/signupNewUser?key="
