@@ -1,4 +1,3 @@
-tool
 extends Node
 
 var config = {
@@ -37,11 +36,3 @@ func get_database_reference(path : String, filter : Dictionary):
     add_child(firebase_reference)
     references.append(firebase_reference)
     return firebase_reference
-    
-func _exit_tree():
-    Firebase.Auth.disconnect("login_succeeded", self, "_on_FirebaseAuth_login_succeeded")
-    for reference_key in references.keys():
-        var reference = references[reference_key]
-        reference.disconnect_signals()
-        remove_child(reference)
-    

@@ -1,4 +1,3 @@
-tool
 extends Node
 
 signal listed_documents(documents)
@@ -52,4 +51,3 @@ func _on_FirebaseAuth_login_succeeded(auth_result):
     for collection_key in collections.keys():
         collections[collection_key].auth = auth
     pass
-    

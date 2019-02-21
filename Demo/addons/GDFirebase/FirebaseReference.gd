@@ -1,4 +1,3 @@
-tool
 extends Node
 
 signal full_data_update(data)
@@ -171,7 +170,3 @@ func on_push_request_complete(result, response_code, headers, body):
         return
 
     emit_signal("push_failed")
-
-func disconnect_signals():
-    pusher.disconnect("request_completed", self, "on_push_request_complete")
-    listener.disconnect("request_completed", self, "on_listener_request_complete")

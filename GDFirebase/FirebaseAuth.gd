@@ -1,4 +1,3 @@
-tool
 extends HTTPRequest
 
 signal login_succeeded(auth_result)
@@ -92,9 +91,6 @@ func get_clean_keys(auth_result):
     for key in auth_result.keys():
         cleaned[key.replace("_", "").to_lower()] = auth_result[key]
     return cleaned
-    
-func _exit_tree():
-    disconnect("request_completed", self, "_on_FirebaseAuth_request_completed")
     
 func get_user_data():
     if auth == null or auth.has("idtoken") == false:
