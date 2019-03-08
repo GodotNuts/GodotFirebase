@@ -33,3 +33,6 @@ func get_database_reference(path : String, filter : Dictionary):
     firebase_reference.set_db_path(path, filter)
     add_child(firebase_reference)
     return firebase_reference
+
+func get_filtered_database_reference(path : String): 
+    return get_database_reference(path, {})
