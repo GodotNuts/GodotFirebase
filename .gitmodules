@@ -1,0 +1,3 @@
+[submodule "GDFirebase/HTTPSSEClient"]
+	path = GDFirebase/HTTPSSEClient
+	url = https://github.com/WolfgangSenff/HTTPSSEClient

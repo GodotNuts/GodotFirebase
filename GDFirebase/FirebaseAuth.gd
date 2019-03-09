@@ -91,6 +91,7 @@ func get_clean_keys(auth_result):
     for key in auth_result.keys():
         cleaned[key.replace("_", "").to_lower()] = auth_result[key]
     return cleaned
+
     
 func get_user_data():
     if auth == null or auth.has("idtoken") == false:

@@ -30,6 +30,7 @@ func _process(delta):
             if !firebase_reference:
                 firebase_reference = Firebase.Database.get_database_reference("testlist/values", { Firebase.Database.LimitToLast: "3" })
                 firebase_reference.connect("full_data_update", self, "_on_full_data_update")
+                firebase_reference.connect("new_data_update", self, "_on_new_data_update")
                 #firestore_document = Firebase.Firestore.collection("AvailableMaps")
     
             firebase_reference.push({"mouse_position": {"x": mouse_pos.x, "y": mouse_pos.y}, "color": color})
@@ -46,6 +47,7 @@ func on_data_returned(data):
 func _on_full_data_update(data):
     if data and data.keys():
         for key in data.keys():
-            if !handled_keys.has(key):
-                on_data_returned(data[key])
-                handled_keys[key] = true
+            on_data_returned(data[key])
+
+func _on_new_data_update(data):
+    on_data_returned(data)
