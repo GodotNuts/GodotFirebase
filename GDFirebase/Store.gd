@@ -20,15 +20,22 @@ func put_recursive(path, data, previous_key, current_data_set):
             assert(false)
         var chopped_path = remove_key(path, key)
         if !chopped_path:
-            assert(false)
+            chopped_path = path_separator
             
-        put_recursive(chopped_path, data, key, current_data_set[previous_key])
+        if previous_key:
+            put_recursive(chopped_path, data, key, current_data_set[previous_key])
+        else:
+            data_set[key] = data
+            
 
-func get_key(path):
+func get_key(path : String):
     var first_slash_idx = path.find(path_separator)
     var second_slash_idx = path.find(path_separator, first_slash_idx + path_separator.length())
-    if first_slash_idx and second_slash_idx:
+    if first_slash_idx != -1 and second_slash_idx != -1:
         return path.substr(first_slash_idx, second_slash_idx - first_slash_idx)
+    elif first_slash_idx != -1:
+        var return_key = path.substr(first_slash_idx + path_separator.length(), path.length() - path_separator.length())
+        return return_key
     
     return null
     

@@ -20,20 +20,20 @@ const EqualTo = "equalTo"
 func _on_FirebaseAuth_login_succeeded(auth_result):
     auth = auth_result
 
-func get_filtered_database_reference(path : String, filter : Dictionary):        
+func get_database_reference(path : String, filter : Dictionary):        
     var firebase_reference = Node.new()
     firebase_reference.set_script(load("res://addons/GDFirebase/FirebaseReference.gd"))
     var pusher = HTTPRequest.new()
-    var listener = HTTPRequest.new()
+    var listener = Node.new()
+    listener.set_script(load("res://addons/GDFirebase/HTTPSSEClient/HTTPSSEClient.gd"))
     var store = Node.new()
+    firebase_reference.set_db_path(path, filter)
     firebase_reference.set_auth_and_config(auth, config)
     firebase_reference.set_pusher(pusher)
     firebase_reference.set_listener(listener)
     firebase_reference.set_store(store)
-    firebase_reference.set_db_path(path, filter)
     add_child(firebase_reference)
     return firebase_reference
 
-
-func get_database_reference(path : String):
-    return get_filtered_database_reference(path, {})
+func get_filtered_database_reference(path : String): 
+    return get_database_reference(path, {})

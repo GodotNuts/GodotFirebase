@@ -12,14 +12,12 @@ var listener
 var store
 var auth
 var config
-var can_request = true
 var can_push = true
 var filter_query
 var db_path
 var cached_filter
+var can_connect_to_host = false
 
-const event_tag = "event: "
-const data_tag = "data: "
 const put_tag = "put"
 const patch_tag = "patch"
 const separator = "/"
@@ -52,7 +50,26 @@ func set_listener(listener_ref):
     if !listener:
         listener = listener_ref
         add_child(listener)
-        listener.connect("request_completed", self, "on_listener_request_complete")
+        listener.connect("new_sse_event", self, "on_new_sse_event")
+        var base_url = _get_list_url().trim_suffix(separator)
+        var extended_url = separator + db_path + _get_remaining_path(false)
+        listener.connect_to_host(base_url, extended_url)
+
+func on_new_sse_event(headers, event, data_str):
+    if data_str:
+        var data = JSON.parse(data_str).result
+        var command = event
+        
+        if command and command != "keep-alive":
+            _route_data(command, data.path, data.data)
+            if command == put_tag:
+                if data.path == separator:
+                    emit_signal("full_data_update", store.data_set)
+                else:
+                    emit_signal("new_data_update", data.data)
+            elif command == patch_tag:
+                emit_signal("patch_data_update", data.data)
+    pass
 
 func set_store(store_ref):
     if !store:
@@ -107,61 +124,11 @@ func _get_filter():
 
     return cached_filter
 
-func _process(delta):
-    if Firebase.Auth.auth and Firebase.Auth.auth.idtoken and can_request:
-        var request_url = _get_list_url() + db_path + _get_remaining_path(false)
-        listener.request(request_url, [accept_header], true, HTTPClient.METHOD_POST)
-        can_request = false
-
-func _get_command(body : String):
-    # event: event name
-    # data: JSON payload
-    var event_idx = body.find(event_tag) + event_tag.length()
-    if not event_idx:
-        return null
-
-    var data_idx = body.find(data_tag, event_idx)
-    if not data_idx:
-        return null
-
-    var command_substr = body.substr(event_idx, data_idx - event_idx)
-    command_substr.erase(command_substr.length() - 1, 1)
-    return command_substr
-
 func _route_data(command, path, data):
     if command == put_tag:
         store.put(path, data)
     elif command == patch_tag:
         store.patch(path, data)
-
-func _get_data(body):
-    var data_idx = body.find(data_tag)
-    if not data_idx:
-        return null
-
-    body = body.right(data_idx + data_tag.length())
-    var json_result = JSON.parse(body)
-    var res = json_result.result
-    return res
-
-func on_listener_request_complete(result, response_code, headers, body):
-    can_request = true
-    if body:
-        var bod = body.get_string_from_utf8()
-        var command = _get_command(bod)
-        if command != null:
-            var data = _get_data(bod)
-            if data.has("user_name"):
-                print("User name: " + data.user_name)
-            if data:
-                _route_data(command, data.path, data.data)
-                if command == put_tag:
-                    if data.path == separator:
-                        emit_signal("full_data_update", store.data_set)
-                    else:
-                        emit_signal("new_data_update", data.data)
-                elif command == patch_tag:
-                    emit_signal("patch_data_update", data.data)
 
 func on_push_request_complete(result, response_code, headers, body):
     can_push = true # slight timing issue here: this gets turned to true, so they can push, before the signal that it's ok to push. Oh well.
