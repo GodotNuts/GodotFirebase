@@ -1,11 +1,13 @@
-[gd_scene load_steps=7 format=2]
+[gd_scene load_steps=9 format=2]
 
 [ext_resource path="res://FirebaseLoginAndDB.tscn" type="PackedScene" id=1]
 [ext_resource path="res://MainTheme.tres" type="Theme" id=2]
 [ext_resource path="res://ChatControl.gd" type="Script" id=3]
-[ext_resource path="res://Chat.gd" type="Script" id=4]
-[ext_resource path="res://Game.gd" type="Script" id=5]
-[ext_resource path="res://icon.png" type="Texture" id=6]
+[ext_resource path="res://addons/GDFirebase/FirebaseVBoxContainer.tscn" type="PackedScene" id=4]
+[ext_resource path="res://ChatContainer.gd" type="Script" id=5]
+[ext_resource path="res://ChatBox.tscn" type="PackedScene" id=6]
+[ext_resource path="res://Game.gd" type="Script" id=7]
+[ext_resource path="res://icon.png" type="Texture" id=8]
 
 [node name="MainScene" type="Node2D"]
 
@@ -50,10 +52,10 @@ margin_bottom = 400.0
 rect_min_size = Vector2( 1024, 400 )
 scroll_horizontal_enabled = false
 
-[node name="Chat" type="VBoxContainer" parent="CanvasLayer/ChatControl/VBoxContainer/ScrollContainer"]
-mouse_filter = 2
-alignment = 2
-script = ExtResource( 4 )
+[node name="Chat" parent="CanvasLayer/ChatControl/VBoxContainer/ScrollContainer" instance=ExtResource( 4 )]
+script = ExtResource( 5 )
+ItemTemplate = ExtResource( 6 )
+CurrentPath = "game/chat"
 
 [node name="SubmitText" type="LineEdit" parent="CanvasLayer/ChatControl/VBoxContainer"]
 margin_top = 404.0
@@ -71,11 +73,11 @@ text = "Submit"
 
 [node name="Game" type="Node2D" parent="."]
 visible = false
-script = ExtResource( 5 )
+script = ExtResource( 7 )
 
 [node name="Sprite" type="Sprite" parent="Game"]
 position = Vector2( 310.417, 182.17 )
-texture = ExtResource( 6 )
+texture = ExtResource( 8 )
 
 [node name="Tween" type="Tween" parent="Game"]
 

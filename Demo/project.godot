@@ -9,12 +9,18 @@
 config_version=4
 
 _global_script_classes=[ {
+"base": "Resource",
+"class": "FirebaseResource",
+"language": "GDScript",
+"path": "res://addons/GDFirebase/FirebaseResource.gd"
+}, {
 "base": "Reference",
 "class": "FirebaseUserData",
 "language": "GDScript",
 "path": "res://addons/GDFirebase/FirebaseUserData.gd"
 } ]
 _global_script_class_icons={
+"FirebaseResource": "",
 "FirebaseUserData": ""
 }
 

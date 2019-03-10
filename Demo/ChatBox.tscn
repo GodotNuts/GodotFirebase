@@ -4,7 +4,8 @@
 
 [node name="ChatBox" type="HSplitContainer"]
 anchor_right = 1.0
-margin_bottom = 31.0
+margin_right = 224.0
+margin_bottom = 82.0
 rect_min_size = Vector2( 1024, 82 )
 size_flags_horizontal = 2
 dragger_visibility = 2
@@ -21,7 +22,7 @@ size_flags_vertical = 2
 text = "Justinian:"
 valign = 1
 
-[node name="Text" type="Label" parent="."]
+[node name="Text" type="LineEdit" parent="."]
 margin_left = 424.0
 margin_right = 1024.0
 margin_bottom = 44.0
@@ -30,6 +31,5 @@ size_flags_horizontal = 2
 size_flags_vertical = 2
 text = "Hey, how's it going?
 "
-valign = 1
-autowrap = true
 
+[connection signal="text_entered" from="Text" to="." method="_on_Text_text_entered"]

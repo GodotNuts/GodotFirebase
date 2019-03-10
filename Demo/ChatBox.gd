@@ -1,8 +1,5 @@
 extends HSplitContainer
 
-var user_name = ""
-var text = ""
-
-func _ready():
-    $UserName.text = user_name
-    $Text.text = text
+func set_item(item):
+    $UserName.text = item.user_name + ": "
+    $Text.text = item.text

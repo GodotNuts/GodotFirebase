@@ -55,20 +55,18 @@ func set_listener(listener_ref):
         var extended_url = separator + db_path + _get_remaining_path(false)
         listener.connect_to_host(base_url, extended_url)
 
-func on_new_sse_event(headers, event, data_str):
-    if data_str:
-        var data = JSON.parse(data_str).result
-        var command = event
-        
+func on_new_sse_event(headers, event, data):
+    if data:
+        var command = event        
         if command and command != "keep-alive":
             _route_data(command, data.path, data.data)
             if command == put_tag:
                 if data.path == separator:
-                    emit_signal("full_data_update", store.data_set)
+                    emit_signal("full_data_update", FirebaseResource.new("/", store.data_set))
                 else:
-                    emit_signal("new_data_update", data.data)
+                    emit_signal("new_data_update", FirebaseResource.new(data.path, data.data))
             elif command == patch_tag:
-                emit_signal("patch_data_update", data.data)
+                emit_signal("patch_data_update", FirebaseResource.new(data.path, data.data))
     pass
 
 func set_store(store_ref):
@@ -84,8 +82,6 @@ func update(path, data):
         
     can_push = false
     pusher.request(_get_list_url() + db_path + _get_remaining_path(), PoolStringArray(), true, HTTPClient.METHOD_PATCH, to_update)
-
-    pass
 
 func push(data):
     var to_push = JSON.print(data)
