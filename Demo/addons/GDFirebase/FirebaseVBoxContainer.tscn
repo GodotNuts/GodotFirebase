@@ -1,0 +1,12 @@
+[gd_scene load_steps=2 format=2]
+
+[ext_resource path="res://addons/GDFirebase/FirebaseContainer.gd" type="Script" id=1]
+
+[node name="FirebaseVBoxContainer" type="VBoxContainer"]
+margin_left = 512.0
+margin_right = 512.0
+grow_vertical = 0
+size_flags_horizontal = 6
+alignment = 1
+script = ExtResource( 1 )
+

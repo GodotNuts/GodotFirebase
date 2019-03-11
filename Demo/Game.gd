@@ -5,6 +5,7 @@ var handled_keys = {}
 var firebase_reference
 var firestore_document
 var random_color
+var mouse_tapped_key
 
 
 func _ready():
@@ -28,12 +29,15 @@ func _process(delta):
                 "alpha": random_color.a8
                }
             if !firebase_reference:
-                firebase_reference = Firebase.Database.get_database_reference("testlist/values", { Firebase.Database.LimitToLast: "3" })
+                firebase_reference = Firebase.Database.get_database_reference("testlist/values", { })
                 firebase_reference.connect("full_data_update", self, "_on_full_data_update")
                 firebase_reference.connect("new_data_update", self, "_on_new_data_update")
                 #firestore_document = Firebase.Firestore.collection("AvailableMaps")
-    
-            firebase_reference.push({"mouse_position": {"x": mouse_pos.x, "y": mouse_pos.y}, "color": color})
+            if mouse_tapped_key and allow_processing:
+                firebase_reference.update(mouse_tapped_key, {"mouse_position": {"x": mouse_pos.x, "y": mouse_pos.y}, "color": color})
+            else:
+                allow_processing = true
+                firebase_reference.push({"mouse_position": {"x": mouse_pos.x, "y": mouse_pos.y}, "color": color})
             #firestore_document.add("some_random_document_2", null)
         pass
 
@@ -45,9 +49,9 @@ func on_data_returned(data):
     yield($Tween, "tween_completed")
 
 func _on_full_data_update(data):
-    if data and data.keys():
-        for key in data.keys():
-            on_data_returned(data[key])
+    if data.data and data.data.keys():
+        for key in data.data.keys():
+            on_data_returned(data.data[key])
 
 func _on_new_data_update(data):
-    on_data_returned(data)
+    on_data_returned(data.data)

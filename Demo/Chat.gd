@@ -23,14 +23,15 @@ func add_chat(name : String, text : String):
     emit_signal("chat_added")
     
 func on_received_chat(data):
-    if data:
-        for key in data.keys():                
-            var chat = data[key]
-            add_chat(chat.user_name, chat.text)
+    if data.data:
+        for key in data.data.keys():                
+            var chat = data.data[key]
+            add_chat(chat.data.user_name, chat.data.text)
     
 func on_received_new_chat(data):
-    if data:            
-        add_chat(data.user_name, data.text)
-func on_received_updated_chat(path, data):
-    if data:            
-        add_chat(data.user_name, data.text)
+    if data.data:            
+        add_chat(data.data.user_name, data.data.text)
+        
+func on_received_updated_chat(data):
+    if data.data:
+        add_chat(data.data.user_name, data.data.text)

@@ -19,6 +19,7 @@ var told_to_connect = false
 var connection_in_progress = false
 var request_in_progress = false
 var is_requested = false
+var response_body = PoolByteArray()
 
 func connect_to_host(domain : String, url_after_domain : String, port : int = -1, use_ssl : bool = false, verify_host : bool = true):
     self.domain = domain
@@ -62,8 +63,6 @@ func _process(delta):
             attempt_to_request(httpclient_status)
         return
         
-    var response_body = PoolByteArray()
-
     var httpclient_has_response = httpclient.has_response()
         
     if httpclient_has_response or httpclient_status == HTTPClient.STATUS_BODY:
@@ -72,15 +71,20 @@ func _process(delta):
         httpclient.poll()
         var chunk = httpclient.read_response_body_chunk()
         if(chunk.size() == 0):
-            yield(get_tree().create_timer(0.1), "timeout")
+            return
         else:
             response_body = response_body + chunk
-
+            
         var body = response_body.get_string_from_utf8()
-        if response_body.size() > 0:
-            response_body.resize(0)
+        if body:
             var event_data = get_event_data(body)
-            emit_signal("new_sse_event", headers, event_data.event, event_data.data)
+            if event_data.event != "keep-alive":
+                var result = JSON.parse(event_data.data).result
+                if response_body.size() > 0 and result: # stop here if the value doesn't parse
+                    response_body.resize(0)
+                    emit_signal("new_sse_event", headers, event_data.event, result)
+            else:
+                response_body.resize(0)
 
 func get_event_data(body : String) -> Dictionary:
     var result = {}

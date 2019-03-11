@@ -21,5 +21,6 @@ func _on_SubmitButton_pressed():
         firebase_reference.push({"user_name": user_name, "text": text})
 
 func on_chat_added():
-    $Tween.interpolate_property($VBoxContainer/ScrollContainer, "scroll_vertical", $VBoxContainer/ScrollContainer.scroll_vertical, $VBoxContainer/ScrollContainer.scroll_vertical + 200, 1, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
+    pass
+    $Tween.interpolate_property($VBoxContainer/ScrollContainer, "scroll_vertical", $VBoxContainer/ScrollContainer.scroll_vertical, $VBoxContainer/ScrollContainer.scroll_vertical + $VBoxContainer.rect_size.y, 1, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
     $Tween.start()
