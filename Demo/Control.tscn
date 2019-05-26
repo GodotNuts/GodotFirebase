@@ -17,22 +17,18 @@
 theme = ExtResource( 2 )
 
 [node name="Email" parent="CanvasLayer/FirebaseLoginAndDB/VBoxContainer" index="0"]
-margin_right = 800.0
 margin_bottom = 77.0
 
 [node name="Password" parent="CanvasLayer/FirebaseLoginAndDB/VBoxContainer" index="1"]
 margin_top = 96.0
-margin_right = 800.0
 margin_bottom = 173.0
 
 [node name="Login" parent="CanvasLayer/FirebaseLoginAndDB/VBoxContainer" index="2"]
 margin_top = 192.0
-margin_right = 800.0
 margin_bottom = 265.0
 
 [node name="Signup" parent="CanvasLayer/FirebaseLoginAndDB/VBoxContainer" index="3"]
 margin_top = 284.0
-margin_right = 800.0
 margin_bottom = 357.0
 
 [node name="ChatControl" type="Control" parent="CanvasLayer"]

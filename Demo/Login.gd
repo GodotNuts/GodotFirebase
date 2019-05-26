@@ -17,6 +17,7 @@ func _on_Signup_pressed():
 
 func _on_FirebaseAuth_login_succeeded(auth):
     hide()
+    
 func on_login_failed(error_code, message):
     print("error code: " + str(error_code))
     print("message: " + str(message))
