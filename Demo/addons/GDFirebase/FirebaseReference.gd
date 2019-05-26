@@ -12,10 +12,10 @@ var listener
 var store
 var auth
 var config
-var can_push = true
 var filter_query
 var db_path
 var cached_filter
+var push_queue = []
 var can_connect_to_host = false
 
 const put_tag = "put"
@@ -77,22 +77,17 @@ func set_store(store_ref):
 
 func update(path, data):
     var to_update = JSON.print(data)
-    while !can_push:
-        yield(get_tree().create_timer(0.2), "timeout")
-        
-    can_push = false
-    pusher.request(_get_list_url() + db_path + _get_remaining_path(), PoolStringArray(), true, HTTPClient.METHOD_PATCH, to_update)
+    if pusher.get_http_client_status() != HTTPClient.STATUS_REQUESTING:    
+        pusher.request(_get_list_url() + db_path + _get_remaining_path(), PoolStringArray(), true, HTTPClient.METHOD_PATCH, to_update)
+    else:
+        push_queue.append(data)
 
 func push(data):
     var to_push = JSON.print(data)
-    # Idea being to wait until the Push request is free to send more data, consider exporting the timer on this
-    while !can_push:
-        yield(get_tree().create_timer(0.2), "timeout")
-    can_push = false
-    if data.has("user_name"):
-        print("User name: " + data.user_name)
-        
-    pusher.request(_get_list_url() + db_path + _get_remaining_path(), PoolStringArray(), true, HTTPClient.METHOD_POST, to_push)
+    if pusher.get_http_client_status() == HTTPClient.STATUS_DISCONNECTED:
+        pusher.request(_get_list_url() + db_path + _get_remaining_path(), PoolStringArray(), true, HTTPClient.METHOD_POST, to_push)
+    else:
+        push_queue.append(data)
 
 func _get_remaining_path(is_push = true):
     if !filter_query or is_push:
@@ -127,9 +122,11 @@ func _route_data(command, path, data):
         store.patch(path, data)
 
 func on_push_request_complete(result, response_code, headers, body):
-    can_push = true # slight timing issue here: this gets turned to true, so they can push, before the signal that it's ok to push. Oh well.
     if response_code == HTTPClient.RESPONSE_OK:
         emit_signal("push_successful")
-        return
-
-    emit_signal("push_failed")
+    else:
+        emit_signal("push_failed")
+    
+    if push_queue.size() > 0:
+        push(push_queue[0])
+        push_queue.remove(0)
