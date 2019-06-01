@@ -4,7 +4,7 @@ signal login_succeeded(auth_result)
 signal login_failed
 signal userdata_received(userdata)
 
-var API_Key = ""
+var config = {}
 var signup_request_url = "https://www.googleapis.com/identitytoolkit/v3/relyingparty/signupNewUser?key="
 var signin_request_url = "https://www.googleapis.com/identitytoolkit/v3/relyingparty/verifyPassword?key="
 var userdata_request_url = "https://www.googleapis.com/identitytoolkit/v3/relyingparty/getAccountInfo?key="
@@ -28,11 +28,12 @@ var refresh_request_body = {
     "refresh_token":""
     }
 
-func _ready():
-    signup_request_url += API_Key
-    signin_request_url += API_Key
-    refresh_request_url += API_Key
-    userdata_request_url += API_Key
+func set_config(config_json):
+    config = config_json
+    signup_request_url += config.apiKey
+    signin_request_url += config.apiKey
+    refresh_request_url += config.apiKey
+    userdata_request_url += config.apiKey
     connect("request_completed", self, "_on_FirebaseAuth_request_completed")
 
 func login_with_email_and_password(email, password):

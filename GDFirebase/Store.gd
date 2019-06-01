@@ -11,7 +11,8 @@ func put(path, data):
 func put_recursive(path, data, previous_key, current_data_set):
     if path == path_separator:
         if previous_key.length() == 0:
-            data_set = data
+            if data:
+                data_set = data
         else:
             current_data_set[previous_key] = data
     else:
