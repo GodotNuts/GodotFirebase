@@ -5,23 +5,18 @@ signal listed_documents(documents)
 var base_url = "https://firestore.googleapis.com/v1/"
 var extended_url = "projects/[PROJECT_ID]/databases/(default)/documents/"
 
-var config = {
-"apiKey": "",
-"authDomain": "",
-"databaseURL": "",
-"projectId": "",
-"storageBucket": "",
-"messagingSenderId": "" }
+var config = {}
 
 var collections = {}
 var auth
 var request_list_node
 
-func _ready():
+func set_config(config_json):
+    config = config_json
     extended_url = extended_url.replace("[PROJECT_ID]", config.projectId)
     request_list_node = HTTPRequest.new()
     request_list_node.connect("request_completed", self, "on_list_request_completed")
-    
+
 func collection(path):
     if !collections.has(path):
         var coll = preload("res://addons/GDFirebase/FirebaseFirestoreCollection.gd")

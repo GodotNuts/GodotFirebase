@@ -1,12 +1,6 @@
 extends Node
 
-var config = {
-"apiKey": "",
-"authDomain": "",
-"databaseURL": "",
-"projectId": "",
-"storageBucket": "",
-"messagingSenderId": "" }
+var config = {}
 
 var auth = null
 
@@ -16,6 +10,9 @@ const LimitToLast = "limitToLast"
 const StartAt = "startAt"
 const EndAt = "endAt"
 const EqualTo = "equalTo"
+
+func set_config(config_json):
+    config = config_json
 
 func _on_FirebaseAuth_login_succeeded(auth_result):
     auth = auth_result
