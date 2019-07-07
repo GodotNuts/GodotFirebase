@@ -14,7 +14,8 @@ func put_recursive(path, data, previous_key, current_data_set):
             if data:
                 data_set = data
         else:
-            current_data_set[previous_key] = data
+            if data:
+                current_data_set[previous_key] = data
     else:
         var key = get_key(path)
         if !key:
@@ -26,7 +27,8 @@ func put_recursive(path, data, previous_key, current_data_set):
         if previous_key:
             put_recursive(chopped_path, data, key, current_data_set[previous_key])
         else:
-            data_set[key] = data
+            if data:
+                data_set[key] = data
             
 
 func get_key(path : String):
@@ -52,10 +54,12 @@ func patch(path, data):
 func patch_recursive(path, data, previous_key, current_data_set):
     if path == path_separator:
         if previous_key.length() == 0:
-            data_set = data
+            if data:
+                data_set = data
         else:
-            for key in data.keys():
-                current_data_set[key] = data[key]
+            if data:
+                for key in data.keys():
+                    current_data_set[key] = data[key]
     else:
         var key = get_key(path)
         if !key:

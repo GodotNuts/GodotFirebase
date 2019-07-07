@@ -76,7 +76,6 @@ position = Vector2( 310.417, 182.17 )
 texture = ExtResource( 8 )
 
 [node name="Tween" type="Tween" parent="Game"]
-
 [connection signal="pressed" from="CanvasLayer/ChatControl/VBoxContainer/SubmitButton" to="CanvasLayer/ChatControl" method="_on_SubmitButton_pressed"]
 
 [editable path="CanvasLayer/FirebaseLoginAndDB"]
