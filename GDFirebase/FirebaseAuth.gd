@@ -28,6 +28,8 @@ var refresh_request_body = {
     "refresh_token":""
     }
 
+# Sets the configuration needed for the plugin to talk to Firebase
+# These settings come from the Firebase.gd script
 func set_config(config_json):
     config = config_json
     signup_request_url += config.apiKey
@@ -36,17 +38,24 @@ func set_config(config_json):
     userdata_request_url += config.apiKey
     connect("request_completed", self, "_on_FirebaseAuth_request_completed")
 
+# Called with Firebase.Auth.login_with_email_and_password(email, password)
+# You must pass in the email and password to this function for it to work correctly
+# If the login fails it will return an error code through the function _on_FirebaseAuth_request_completed
 func login_with_email_and_password(email, password):
     login_request_body.email = email
     login_request_body.password = password
     request(signin_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print(login_request_body))
     pass
 
+# Called with Firebase.Auth.signup_with_email_and_password(email, password)
+# You must pass in the email and password to this function for it to work correctly
 func signup_with_email_and_password(email, password):
     login_request_body.email = email
     login_request_body.password = password
     request(signup_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print(login_request_body))
 
+# This function is called whenever there is an authentication request to Firebase
+# On an error, this function with emit the signal 'login_failed' and print the error to the console
 func _on_FirebaseAuth_request_completed(result, response_code, headers, body):
     var bod = body.get_string_from_utf8()
     var json_result = JSON.parse(bod)
@@ -72,6 +81,7 @@ func _on_FirebaseAuth_request_completed(result, response_code, headers, body):
         # error message would be INVALID_EMAIL, EMAIL_NOT_FOUND, INVALID_PASSWORD, USER_DISABLED or WEAK_PASSWORD
         emit_signal("login_failed", res.error.code, res.error.message)
 
+# Function is called when a new token is issued to a user. The function will yield until the token has expired, and then request a new one.
 func begin_refresh_countdown():
     var refresh_token = null
     var expires_in = 1000
@@ -87,13 +97,14 @@ func begin_refresh_countdown():
     refresh_request_body.refresh_token = refresh_token
     request(refresh_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print(refresh_request_body))
 
+# This function is used to make all keys lowercase
+# This is only used to cut down on processing errors from Firebase
 func get_clean_keys(auth_result):
     var cleaned = {}
     for key in auth_result.keys():
         cleaned[key.replace("_", "").to_lower()] = auth_result[key]
     return cleaned
 
-    
 func get_user_data():
     if auth == null or auth.has("idtoken") == false:
         print_debug("Not logged in")

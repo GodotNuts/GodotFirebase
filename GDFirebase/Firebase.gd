@@ -5,6 +5,9 @@ onready var Database = Node.new()
 onready var Firestore = Node.new()
 onready var Storage = HTTPRequest.new()
 
+# Configuration used by all files in this project
+# These values can be found in your Firebase Project
+# See the README on Github for how to access
 onready var config = {
     "apiKey": "",
     "authDomain": "",
