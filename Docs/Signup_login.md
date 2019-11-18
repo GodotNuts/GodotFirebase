@@ -42,9 +42,10 @@ If the script is unable to parse the body, it will print our an error to the con
 
 #### Body has RESPONSE_SIGNIN, RESPONSE_SIGNUP
 If the response body has `RESPONSE_SIGNIN, RESPONSE_SIGNUP`, the user will be logged in and the refresh countdown will start
+This refresh is needed for Firebase, as there is a limit to how long a connection can be left open, and you need the connection to stay open for updates
 
 #### Body has RESPONSE_USERDATA
-If the response body has `RESPONSE_USERDATA`, the script will emit a signal "userdata_recieved" with the userdata
+If the response body has `RESPONSE_USERDATA`, the script will emit a signal "userdata_received" with the userdata
 
 #### Body has INVALID_EMAIL, EMAIL_NOT_FOUND, INVALID_PASSWORD, USER_DISABLED or WEAK_PASSWORD
 If the response body has `INVALID_EMAIL, EMAIL_NOT_FOUND, INVALID_PASSWORD, USER_DISABLED or WEAK_PASSWORD`, the login has failed and the script will emit a signal "login_failed". It will also pass the error code and error message to be printed into the console

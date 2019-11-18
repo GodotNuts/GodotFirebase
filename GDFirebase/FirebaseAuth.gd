@@ -29,7 +29,7 @@ var refresh_request_body = {
     }
 
 # Sets the configuration needed for the plugin to talk to Firebase
-# These settings come from the Firebase.gd script
+# These settings come from the Firebase.gd script automatically
 func set_config(config_json):
     config = config_json
     signup_request_url += config.apiKey
@@ -99,6 +99,7 @@ func begin_refresh_countdown():
 
 # This function is used to make all keys lowercase
 # This is only used to cut down on processing errors from Firebase
+# This is due to Google have inconsistencies in the API that we are trying to fix
 func get_clean_keys(auth_result):
     var cleaned = {}
     for key in auth_result.keys():
