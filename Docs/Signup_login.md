@@ -1,5 +1,9 @@
 # Signup and Login
 
+**Please note before you can use the login methods, you need to enable the Email/Password Signin Method**
+
+![email signin method](/Docs/Images/email_signin_method.png)
+
 ## Signup with Email
 From inside of Godot after you have set your configurations in the **Firebase.gd** script, you are able to call
 ```
@@ -62,7 +66,7 @@ You can also use this data to only show the items you care about, such as the em
 print(auth.email)
 ```
 
-## Examples
+# Examples
 
 ![signup login page](/Docs/Images/signup_login_page.png)
 ```python
