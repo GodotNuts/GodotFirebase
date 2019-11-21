@@ -48,13 +48,14 @@ firebase_reference.push({"mouse_position": {"x": mouse_pos.x, "y": mouse_pos.y},
 
 For all examples consider the following. A single textbox with a send button.
 
-![Push Data Example](/Images/push_data_example.png)
+![Push Data Example](/Docs/Images/push_data_example.png)
+
 
 ### Single Item
 
 The following will take the text from the textbox, and push it into the database from the reference point we created. Once the send button is clicked, we will be able to see the data in Firebase.
 
-![Push Data Example Value](/Images/push_data_example_value.png)
+![Push Data Example Value](/Docs/Images/push_data_example_value.png)
 
 ```python
 func _on_send_pressed():
@@ -62,7 +63,7 @@ func _on_send_pressed():
 	firebase_reference.push({"score" : score_data.text})
 ```
 
-![Push Data Example Result](/Images/push_data_example_result.png)
+![Push Data Example Result](/Docs/Images/push_data_example_result.png)
 
 ### Multiple Items
 
@@ -75,4 +76,4 @@ func _on_send_pressed():
 	firebase_reference.push({"mouse_position": var2str(mouse_pos), "score" : score_data.text})
 ```
 
-![Push Data Example Result 2](/Images/push_data_example_result_2.png)
+![Push Data Example Result 2](/Docs/Images/push_data_example_result_2.png)
