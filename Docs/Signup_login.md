@@ -56,19 +56,21 @@ If the response body has `INVALID_EMAIL, EMAIL_NOT_FOUND, INVALID_PASSWORD, USER
 ```python
 extends Node2D
 
+var EmailTextbox
+var PasswordTextbox
+
 func _ready():
 	Firebase.Auth.connect("login_succeeded", self, "_on_FirebaseAuth_login_succeeded")
 	Firebase.Auth.connect("login_failed", self, "on_login_failed")
 
+	EmailTextbox = get_node("EmailTextbox")
+	PasswordTextbox = get_node("PasswordTextbox")
+
 func _on_login_pressed():
-	var email = $email.text
-	var password = $password.text
-	Firebase.Auth.login_with_email_and_password(email, password)
+	Firebase.Auth.login_with_email_and_password(EmailTextbox.text, PasswordTextbox.text)
 
 func _on_register_pressed():
-	var email = $email.text
-	var password = $password.text
-	Firebase.Auth.signup_with_email_and_password(email, password)
+	Firebase.Auth.signup_with_email_and_password(EmailTextbox.text, PasswordTextbox.text)
 
 func _on_FirebaseAuth_login_succeeded(auth):
 	var user = Firebase.Auth.get_user_data()
