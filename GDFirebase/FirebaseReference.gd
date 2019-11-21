@@ -46,6 +46,7 @@ func set_pusher(pusher_ref):
         add_child(pusher)
         pusher.connect("request_completed", self, "on_push_request_complete")
 
+# Sets the listener used to watch for new data in the database
 func set_listener(listener_ref):
     if !listener:
         listener = listener_ref
@@ -75,6 +76,8 @@ func set_store(store_ref):
         add_child(store)
         store.set_script(preload("res://addons/GDFirebase/Store.gd"))
 
+# Used to update data into a referenced database
+# See func get_database_reference(path, filter) in FirebaseDatabase.gd
 func update(path, data):
     var to_update = JSON.print(data)
     if pusher.get_http_client_status() != HTTPClient.STATUS_REQUESTING:    
@@ -82,6 +85,8 @@ func update(path, data):
     else:
         push_queue.append(data)
 
+# Used to add data into a referenced database
+# See func get_database_reference(path, filter) in FirebaseDatabase.gd
 func push(data):
     var to_push = JSON.print(data)
     if pusher.get_http_client_status() == HTTPClient.STATUS_DISCONNECTED:
@@ -121,6 +126,9 @@ func _route_data(command, path, data):
     elif command == patch_tag:
         store.patch(path, data)
 
+# Function called after a push request has been made
+# Emits a signal if the push was successful or not
+# If the push queue is not empty, this function will push the next part of the data and repeat the process
 func on_push_request_complete(result, response_code, headers, body):
     if response_code == HTTPClient.RESPONSE_OK:
         emit_signal("push_successful")

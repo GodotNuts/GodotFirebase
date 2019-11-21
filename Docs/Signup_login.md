@@ -50,6 +50,18 @@ If the response body has `RESPONSE_USERDATA`, the script will emit a signal "use
 #### Body has INVALID_EMAIL, EMAIL_NOT_FOUND, INVALID_PASSWORD, USER_DISABLED or WEAK_PASSWORD
 If the response body has `INVALID_EMAIL, EMAIL_NOT_FOUND, INVALID_PASSWORD, USER_DISABLED or WEAK_PASSWORD`, the login has failed and the script will emit a signal "login_failed". It will also pass the error code and error message to be printed into the console
 
+## Successful Login 
+If the login was successful, a signal (login_succeeded) from **FirebaseAuth.gd** will emit with the auth data. You can see in the example below we connect to this signal and tie it to a function called "_on_FirebaseAuth_login_succeeded" that looks for the auth data to be sent to it. You can then print this data out if you want with a simple print command
+```python
+print(auth)
+```
+
+You can also use this data to only show the items you care about, such as the email address of the person who just signed in
+
+```python
+print(auth.email)
+```
+
 ## Examples
 
 ![signup login page](/Docs/Images/signup_login_page.png)

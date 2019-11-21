@@ -14,9 +14,12 @@ const EqualTo = "equalTo"
 func set_config(config_json):
     config = config_json
 
+# Takes the data received from a successful login and stores it in the variable 'auth'
 func _on_FirebaseAuth_login_succeeded(auth_result):
     auth = auth_result
 
+# Gets the database reference that can be used later for pushing or pulling data
+# Best to store this in a variable that you can call multiple times
 func get_database_reference(path : String, filter : Dictionary):        
     var firebase_reference = Node.new()
     firebase_reference.set_script(load("res://addons/GDFirebase/FirebaseReference.gd"))
