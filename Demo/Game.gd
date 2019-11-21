@@ -34,16 +34,16 @@ func _process(delta):
                 firebase_reference.connect("new_data_update", self, "_on_new_data_update")
                 #firestore_document = Firebase.Firestore.collection("AvailableMaps")
             if mouse_tapped_key and allow_processing:
-                firebase_reference.update(mouse_tapped_key, {"mouse_position": {"x": mouse_pos.x, "y": mouse_pos.y}, "color": color})
+                firebase_reference.update(mouse_tapped_key, {"mouse_position": var2str(mouse_pos), "color": color})
             else:
                 allow_processing = true
-                firebase_reference.push({"mouse_position": {"x": mouse_pos.x, "y": mouse_pos.y}, "color": color})
+                firebase_reference.push({"mouse_position": var2str(mouse_pos), "color": color})
             #firestore_document.add("some_random_document_2", null)
         pass
 
 func on_data_returned(data):
-    var mouse_pos = data.mouse_position
-    $Tween.interpolate_property($Sprite, "global_position", $Sprite.global_position, Vector2(float(mouse_pos.x), float(mouse_pos.y)), 2.0, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
+    var mouse_pos = str2var(data.mouse_position)
+    $Tween.interpolate_property($Sprite, "global_position", $Sprite.global_position, mouse_pos, 2.0, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
     $Tween.interpolate_property($Sprite, "modulate", $Sprite.modulate, Color8(data.color.red, data.color.blue, data.color.green, data.color.alpha), 1.0, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
     $Tween.start()
     yield($Tween, "tween_completed")
