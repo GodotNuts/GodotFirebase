@@ -77,3 +77,8 @@ func _on_send_pressed():
 ```
 
 ![Push Data Example Result 2](/Docs/Images/push_data_example_result_2.png)
+
+## Update Data
+When updating data, you need to provide both the path to the data, as well as the new value(s)
+
+## Reading Data
