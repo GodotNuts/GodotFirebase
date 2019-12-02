@@ -1,5 +1,8 @@
 # GodotFirebase
 
+## Documentation
+Check out the official documentation [Here](/Docs)
+
 ## Installation and Activation
 1. Copy the folder **GDFirebase** to the project path res://addons/
 2. Open your Project Settings
