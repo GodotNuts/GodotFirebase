@@ -1,5 +1,6 @@
 # Database Commands
 
+---
 ## get_database_reference(path, filter):
 
 This function is used to create a reference to the database that you have in Firebase. This is best used when you store this reference into a variable to call from multiple places, or add listeners to for changes in data.
@@ -22,6 +23,7 @@ If you get a error in Godot that says **Assertion Failed**, please check to make
 }
 ```
 
+---
 ## push(data):
 
 This function is used to push data into a database that you have referenced. See **get_database_reference(path, filter):** one how to create a reference path.
@@ -78,7 +80,9 @@ func _on_send_pressed():
 
 ![Push Data Example Result 2](/Docs/Images/push_data_example_result_2.png)
 
+---
 ## Update Data
 When updating data, you need to provide both the path to the data, as well as the new value(s)
 
+---
 ## Reading Data
