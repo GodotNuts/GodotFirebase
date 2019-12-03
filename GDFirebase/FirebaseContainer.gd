@@ -25,31 +25,10 @@ func connect_to_database():
     else:
         db_ref = Firebase.Database.get_database_reference(CurrentPath + "/" + SpecifiedKey)
         
-    db_ref.connect("full_data_update", self, "on_full_update", [], CONNECT_ONESHOT if OneShot else CONNECT_PERSIST)
     db_ref.connect("new_data_update", self, "on_new_update", [], CONNECT_ONESHOT if OneShot else CONNECT_PERSIST)
     if !OneShot:
         db_ref.connect("patch_data_update", self, "on_patch_update")
-        #db_ref.connect("data_deleted", self, "on_data_delete")
         
-func on_full_update(data):
-    if data.data:
-        # Add the children as not already tracked
-        for key in data.data.keys():
-            var item = data.data[key]
-            if !tracked_values.has(key):
-                var template = ItemTemplate.instance()
-                tracked_values[key] = { "item": item, "template": template }
-                add_child(template)
-                template.set_item(item)
-                on_item_added(item, key, template)
-            else:
-                # Update the key present
-                tracked_values[key].template.set_item(item)
-                on_item_added(item, key, tracked_values[key].template)
-        
-        if OneShot:
-            db_ref.queue_free()
-
 func on_new_update(data):
     if data.data:
         var item = data.data
