@@ -15,6 +15,7 @@ const RESPONSE_SIGNUP   = "identitytoolkit#SignupNewUserResponse"
 const RESPONSE_USERDATA = "identitytoolkit#GetAccountInfoResponse"
 
 var needs_refresh = false
+var refresh_token = null
 var auth = null
 
 var login_request_body = {
