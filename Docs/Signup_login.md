@@ -1,5 +1,10 @@
 # Signup and Login
 
+**Please note before you can use the login methods, you need to enable the Email/Password Signin Method**
+
+![email signin method](/Docs/Images/email_signin_method.png)
+
+---
 ## Signup with Email
 From inside of Godot after you have set your configurations in the **Firebase.gd** script, you are able to call
 ```
@@ -18,6 +23,7 @@ var login_request_body = {
 
 From there the script will POST the data to the `signup_request_url` and add the user to the application
 
+---
 ## Login with Email
 From inside of Godot after you have set your configurations in the **Firebase.gd** script, you are able to call
 ```
@@ -50,7 +56,8 @@ If the response body has `RESPONSE_USERDATA`, the script will emit a signal "use
 #### Body has INVALID_EMAIL, EMAIL_NOT_FOUND, INVALID_PASSWORD, USER_DISABLED or WEAK_PASSWORD
 If the response body has `INVALID_EMAIL, EMAIL_NOT_FOUND, INVALID_PASSWORD, USER_DISABLED or WEAK_PASSWORD`, the login has failed and the script will emit a signal "login_failed". It will also pass the error code and error message to be printed into the console
 
-## Successful Login 
+---
+## Successful Login
 If the login was successful, a signal (login_succeeded) from **FirebaseAuth.gd** will emit with the auth data. You can see in the example below we connect to this signal and tie it to a function called "_on_FirebaseAuth_login_succeeded" that looks for the auth data to be sent to it. You can then print this data out if you want with a simple print command
 ```python
 print(auth)
@@ -62,7 +69,28 @@ You can also use this data to only show the items you care about, such as the em
 print(auth.email)
 ```
 
-## Examples
+auth contains the following information
+* displayname
+* email
+* expiresin
+* idtoken
+* kind
+* localid
+* refreshtoken
+* registered
+
+---
+## Stored Login Information
+Upon a successful login, the auth information will be written to a local encrypted file from **FirebaseAuth.gd** using the function **save_auth_local()**. This is called for you and should not be run by your application outside of its loop.
+
+#### Upgrading from Godot 3.1.x to Godot 3.2.x+
+If you originally used this code in Godot 3.1.x on Android and moved to Godot 3.2.x and above, you will need to implement some extra code when trying to load the data, as Godot changed how **OS.get_unique_id()** works.
+
+---
+## Auto Login
+Once a user registers and logs into the app for the first time, they will auto login in the future. This is handled by the function **load_auth_local()** from **FirebaseAuth.gd**. 
+
+# Examples
 
 ![signup login page](/Docs/Images/signup_login_page.png)
 ```python
@@ -74,6 +102,7 @@ var PasswordTextbox
 func _ready():
 	Firebase.Auth.connect("login_succeeded", self, "_on_FirebaseAuth_login_succeeded")
 	Firebase.Auth.connect("login_failed", self, "on_login_failed")
+	Firebase.Auth.load_auth_local()
 
 	EmailTextbox = get_node("EmailTextbox")
 	PasswordTextbox = get_node("PasswordTextbox")

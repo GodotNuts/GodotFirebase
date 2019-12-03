@@ -1,5 +1,9 @@
 # GodotFirebase
 
+## Documentation
+Check out the official documentation [Here](/Docs)
+
+---
 ## Installation and Activation
 1. Copy the folder **GDFirebase** to the project path res://addons/
 2. Open your Project Settings
@@ -8,6 +12,7 @@
 ![Plugin Section](/Images/plugins_section.png)
 5. From there, you will have an autoload singleton with the variables Auth, Database, and Firestore; reference it by using Firebase.Auth, etc.
 
+---
 ## Creating A Firebase App / Web App
 1. Go create a Firebase app at console.firebase.google.com. A Guide can be found [Here](https://firebase.google.com/docs/projects/learn-more#setting_up_a_firebase_project_and_connecting_apps)
 2. Once the app has been created, add a web app to it
@@ -28,7 +33,7 @@
 
 
 
-
+---
 ## Todo:
 1. Implement other Firebase features: Storage, Remote Config, Dynamic Links
 2. Add comments to code
