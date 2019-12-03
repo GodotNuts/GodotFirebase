@@ -121,7 +121,7 @@ func _get_filter():
     return cached_filter
 
 func _route_data(command, path, data):
-    if path == separator and data.size() > 0:
+    if path == separator and data and data.size() > 0:
         for key in data.keys():
             if command == put_tag:
                 store.put(separator + key, data)
