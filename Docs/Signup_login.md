@@ -81,7 +81,7 @@ auth contains the following information
 
 ---
 ## Stored Login Information
-Upon a successful login, the auth information will be written to a local encrypted file from **FirebaseAuth.gd** using the function **save_auth_local(auth_info)**. This is called for you and should not be run by your application outside of its loop.
+Upon a successful login, the auth information will be written to a local encrypted file from **FirebaseAuth.gd** using the function **save_auth_local()**. This is called for you and should not be run by your application outside of its loop.
 
 #### Upgrading from Godot 3.1.x to Godot 3.2.x+
 If you originally used this code in Godot 3.1.x on Android and moved to Godot 3.2.x and above, you will need to implement some extra code when trying to load the data, as Godot changed how **OS.get_unique_id()** works.
@@ -102,6 +102,7 @@ var PasswordTextbox
 func _ready():
 	Firebase.Auth.connect("login_succeeded", self, "_on_FirebaseAuth_login_succeeded")
 	Firebase.Auth.connect("login_failed", self, "on_login_failed")
+	Firebase.Auth.load_auth_local()
 
 	EmailTextbox = get_node("EmailTextbox")
 	PasswordTextbox = get_node("PasswordTextbox")

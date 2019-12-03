@@ -40,10 +40,6 @@ Or you can add a dictionary of items:
 firebase_reference.push({"mouse_position": {"x": mouse_pos.x, "y": mouse_pos.y}, "color": "red"})
 ```
 
-# Database Signals
-
-## Coming Soon
-
 # Examples
 
 ## Pushing Data
@@ -82,7 +78,8 @@ func _on_send_pressed():
 
 ---
 ## Update Data
-When updating data, you need to provide both the path to the data, as well as the new value(s)
+Coming Soon
 
 ---
 ## Reading Data
+Coming Soon
