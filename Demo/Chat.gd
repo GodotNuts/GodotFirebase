@@ -11,7 +11,6 @@ func _ready():
     
 func on_login_success(auth_ref):
     listener = Firebase.Database.get_database_reference("game/chat", { })
-    listener.connect("full_data_update", self, "on_received_chat")
     listener.connect("patch_data_update", self, "on_received_updated_chat")
     listener.connect("new_data_update", self, "on_received_new_chat")
     

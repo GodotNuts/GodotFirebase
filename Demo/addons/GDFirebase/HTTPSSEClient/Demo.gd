@@ -15,4 +15,4 @@ func on_connected():
     
 func on_new_sse_event(headers, event, data):
     print("event is: " + event)
-    print("data is: " + data)
+    print("data is: " + data) 

@@ -1,6 +1,5 @@
 extends Node
 
-signal full_data_update(data)
 signal new_data_update(data)
 signal patch_data_update(data)
 
@@ -61,9 +60,10 @@ func on_new_sse_event(headers, event, data):
         if command and command != "keep-alive":
             _route_data(command, data.path, data.data)
             if command == put_tag:
-                if data.path == separator:
-                    emit_signal("full_data_update", FirebaseResource.new("/", store.data_set))
-                else:
+                if data.path == separator and data.data and data.data.keys().size() > 0:
+                    for key in data.data.keys():
+                        emit_signal("new_data_update", FirebaseResource.new(separator + key, data.data[key]))
+                elif data.path != separator:
                     emit_signal("new_data_update", FirebaseResource.new(data.path, data.data))
             elif command == patch_tag:
                 emit_signal("patch_data_update", FirebaseResource.new(data.path, data.data))
@@ -116,6 +116,14 @@ func _get_filter():
     return cached_filter
 
 func _route_data(command, path, data):
+    if path == separator and data.size() > 0:
+        for key in data.keys():
+            if command == put_tag:
+                store.put(separator + key, data)
+            elif command == patch_tag:
+                store.patch(separator + key, data)
+        return
+        
     if command == put_tag:
         store.put(path, data)
     elif command == patch_tag:

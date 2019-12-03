@@ -6,6 +6,7 @@ signal connection_error(error)
 
 const event_tag = "event:"
 const data_tag = "data:"
+const continue_internal = "continue_internal"
 
 var httpclient = HTTPClient.new()
 var is_connected = false
@@ -78,17 +79,21 @@ func _process(delta):
         var body = response_body.get_string_from_utf8()
         if body:
             var event_data = get_event_data(body)
-            if event_data.event != "keep-alive":
+            if event_data.event != "keep-alive" and event_data.event != continue_internal:
                 var result = JSON.parse(event_data.data).result
                 if response_body.size() > 0 and result: # stop here if the value doesn't parse
                     response_body.resize(0)
                     emit_signal("new_sse_event", headers, event_data.event, result)
             else:
-                response_body.resize(0)
+                if event_data.event != continue_internal:
+                    response_body.resize(0)
 
 func get_event_data(body : String) -> Dictionary:
     var result = {}
     var event_idx = body.find(event_tag)
+    if event_idx == -1:
+        result["event"] = continue_internal
+        return result
     assert(event_idx != -1)
     var data_idx = body.find(data_tag, event_idx + event_tag.length())
     assert(data_idx != -1)
