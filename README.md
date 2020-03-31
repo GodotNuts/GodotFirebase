@@ -1,5 +1,13 @@
 # GodotFirebase
 
+If you wish to support this project, you can find my Patreon here (this will be updating more regularly as I'm starting to get more interest):
+https://patreon.com/diurnalproductions
+
+and my Ko-fi here:
+https://ko-fi.com/kyleszklenski
+
+
+
 ## Installation and Activation
 1. Copy the folder **GDFirebase** to the project path res://addons/
 2. Open your Project Settings
