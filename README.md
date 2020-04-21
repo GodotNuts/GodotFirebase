@@ -38,6 +38,6 @@ https://ko-fi.com/kyleszklenski
 
 
 ## Todo:
-1. Implement other Firebase features: Storage, Remote Config, Dynamic Links
+1. Implement other Firebase features: Ads, Remote Config, Dynamic Links
 2. Add comments to code
 3. Create documentation
