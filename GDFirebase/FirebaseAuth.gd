@@ -1,14 +1,14 @@
 extends HTTPRequest
 
 signal login_succeeded(auth_result)
-signal login_failed
+signal login_failed(code, message)
 signal userdata_received(userdata)
 
 var config = {}
-var signup_request_url = "https://www.googleapis.com/identitytoolkit/v3/relyingparty/signupNewUser?key="
-var signin_request_url = "https://www.googleapis.com/identitytoolkit/v3/relyingparty/verifyPassword?key="
-var userdata_request_url = "https://www.googleapis.com/identitytoolkit/v3/relyingparty/getAccountInfo?key="
-var refresh_request_url = "https://securetoken.googleapis.com/v1/token?key="
+var signup_request_url = "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=%s" 
+var signin_request_url = "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=%s" 
+var userdata_request_url = "https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=%s" 
+var refresh_request_url = "https://securetoken.googleapis.com/v1/token?key=%s"
 
 const RESPONSE_SIGNIN   = "identitytoolkit#VerifyPasswordResponse"
 const RESPONSE_SIGNUP   = "identitytoolkit#SignupNewUserResponse"
@@ -32,10 +32,10 @@ var refresh_request_body = {
 # These settings come from the Firebase.gd script automatically
 func set_config(config_json):
     config = config_json
-    signup_request_url += config.apiKey
-    signin_request_url += config.apiKey
-    refresh_request_url += config.apiKey
-    userdata_request_url += config.apiKey
+    signup_request_url %= config.apiKey
+    signin_request_url %= config.apiKey
+    userdata_request_url %= config.apiKey
+    refresh_request_url %= config.apiKey
     connect("request_completed", self, "_on_FirebaseAuth_request_completed")
 
 # Called with Firebase.Auth.login_with_email_and_password(email, password)
@@ -59,6 +59,7 @@ func signup_with_email_and_password(email, password):
 func _on_FirebaseAuth_request_completed(result, response_code, headers, body):
     var bod = body.get_string_from_utf8()
     var json_result = JSON.parse(bod)
+    print(json_result.result)
     if json_result.error != OK:
         print_debug("Error while parsing body json")
         return
@@ -106,6 +107,7 @@ func get_clean_keys(auth_result):
         cleaned[key.replace("_", "").to_lower()] = auth_result[key]
     return cleaned
 
+# Function called to get all
 func get_user_data():
     if auth == null or auth.has("idtoken") == false:
         print_debug("Not logged in")

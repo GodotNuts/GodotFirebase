@@ -16,6 +16,7 @@ func set_config(config_json):
     extended_url = extended_url.replace("[PROJECT_ID]", config.projectId)
     request_list_node = HTTPRequest.new()
     request_list_node.connect("request_completed", self, "on_list_request_completed")
+    add_child(request_list_node)
 
 func collection(path):
     if !collections.has(path):
@@ -35,11 +36,11 @@ func collection(path):
 
 func list(path):
     if path:
-        var url = base_url + extended_url + path + "?auth=" + auth.idtoken
-        request_list_node.request(url, PoolStringArray(), true, HTTPClient.METHOD_GET)
+        var url = base_url + extended_url + path + "/"
+        request_list_node.request(url, ["Authorization: Bearer " + auth.idtoken], true, HTTPClient.METHOD_GET)
 
 func on_list_request_completed(result, response_code, headers, body):
-    pass
+    print(JSON.parse(body.get_string_from_utf8()).result)
 
 func _on_FirebaseAuth_login_succeeded(auth_result):
     auth = auth_result
