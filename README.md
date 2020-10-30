@@ -1,9 +1,9 @@
 # GodotFirebase
 
-If you wish to support this project, you can find my Patreon here (this will be updating more regularly as I'm starting to get more interest):
-https://patreon.com/diurnalproductions
+A Plugin by: Kyle Szklenski and Nicolò Santilio.
 
-and my Ko-fi here:
+If you wish to support this project, you can buy me a coffee here:
+
 https://ko-fi.com/kyleszklenski
 
 
