@@ -1,6 +1,6 @@
 # GodotFirebase
 
-A Plugin by: Kyle Szklenski and Nicolò Santilio.
+A Plugin by: Kyle Szklenski and Nicolò Santilio, with contributions from many others.
 
 If you wish to support this project, you can buy me a coffee here:
 
