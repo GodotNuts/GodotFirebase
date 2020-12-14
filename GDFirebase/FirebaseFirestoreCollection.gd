@@ -55,7 +55,7 @@ func add(documentId : String, fields : Dictionary = {}):
     if auth:
         request = REQUESTS.ADD
         var url = _get_request_url()
-        url += query_tag + documentId_tag + documentId.replace(" ", "%20")
+        url += query_tag + documentId_tag + documentId
         
         pusher.request(url, [authorization_header + auth.idtoken], true, HTTPClient.METHOD_POST, JSON.print(fields))
     else:
