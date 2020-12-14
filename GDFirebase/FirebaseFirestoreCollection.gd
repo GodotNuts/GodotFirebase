@@ -55,7 +55,7 @@ func add(documentId : String, fields : Dictionary = {}):
     if auth:
         request = REQUESTS.ADD
         var url = _get_request_url()
-        url += query_tag + documentId_tag + documentId
+        url += query_tag + documentId_tag + documentId.replace(" ", "%20")
         
         pusher.request(url, [authorization_header + auth.idtoken], true, HTTPClient.METHOD_POST, JSON.print(fields))
     else:
@@ -65,7 +65,7 @@ func add(documentId : String, fields : Dictionary = {}):
 func get(documentId : String):
     if auth:
         request = REQUESTS.GET
-        var url = _get_request_url() + separator + documentId
+        var url = _get_request_url() + separator + documentId.replace(" ", "%20")
         
         pusher.request(url, [authorization_header + auth.idtoken], true, HTTPClient.METHOD_GET)
     else:
@@ -75,7 +75,7 @@ func get(documentId : String):
 func update(documentId : String, fields : Dictionary = {}):
     if auth:
         request = REQUESTS.UPDATE
-        var url = _get_request_url() + separator + documentId
+        var url = _get_request_url() + separator + documentId.replace(" ", "%20")
         print(fields)
         pusher.request(url, [authorization_header + auth.idtoken], true, HTTPClient.METHOD_PATCH, JSON.print(fields))
     else:
@@ -85,7 +85,7 @@ func update(documentId : String, fields : Dictionary = {}):
 func delete(documentId : String):
     if auth:
         request = REQUESTS.DELETE
-        var url = _get_request_url() + separator + documentId
+        var url = _get_request_url() + separator + documentId.replace(" ", "%20")
         
         pusher.request(url, [authorization_header + auth.idtoken], true, HTTPClient.METHOD_DELETE)
     else:
