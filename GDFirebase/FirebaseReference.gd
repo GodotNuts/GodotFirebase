@@ -89,6 +89,16 @@ func push(data):
     else:
         push_queue.append(data)
 
+#
+# Returns a deep copy of the current local copy of the data stored at this reference in the Firebase
+# Realtime Database.
+#
+func get_data() -> Dictionary:
+    if store == null:
+        return { }
+    
+    return store.get_data()
+
 func _get_remaining_path(is_push = true):
     if !filter_query or is_push:
         return json_list_tag + query_tag + auth_tag + Firebase.Auth.auth.idtoken
@@ -115,15 +125,11 @@ func _get_filter():
 
     return cached_filter
 
+#
+# Appropriately updates the current local copy of the data stored at this reference in the Firebase
+# Realtime Database.
+#
 func _route_data(command, path, data):
-    if path == separator and data.size() > 0:
-        for key in data.keys():
-            if command == put_tag:
-                store.put(separator + key, data)
-            elif command == patch_tag:
-                store.patch(separator + key, data)
-        return
-        
     if command == put_tag:
         store.put(path, data)
     elif command == patch_tag:

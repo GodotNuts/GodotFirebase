@@ -1,71 +1,106 @@
+#
+# Data structure that holds the currently-known data at a given path (a.k.a. reference) in a
+# Firebase Realtime Database. Can process both puts and patches into the data based on realtime
+# events received from the service.
+#
+
 tool
 extends Node
 
-var data_set = {}
+const _delimiter = "/"
+const _root = "_root"
 
-const path_separator = "/"
+var _data = { }
 
-func put(path, data):
-    put_recursive(path, data, "", data_set)
+#
+# Puts a new payload into this data store at the given path. Any existing values in this data store
+# at the specified path will be completely erased.
+#
+func put(path, payload):
+	_update_data(path, payload, false)
 
-func put_recursive(path, data, previous_key, current_data_set):
-    if path == path_separator:
-        if previous_key.length() == 0:
-            if data:
-                data_set = data
-        else:
-            if data:
-                current_data_set[previous_key] = data
-    else:
-        var key = get_key(path)
-        if !key:
-            assert(false)
-        var chopped_path = remove_key(path, key)
-        if !chopped_path:
-            chopped_path = path_separator
-            
-        if previous_key:
-            put_recursive(chopped_path, data, key, current_data_set[previous_key])
-        else:
-            if data:
-                data_set[key] = data
-            
+#
+# Patches an update payload into this data store at the specified path.
+#
+# NOTE: When patching in updates to arrays, payload should contain the entire new array! Updating
+#  single elements/indexes of an array is not supported. Sometimes when manually mutating array
+#  data directly from the Firebase Realtime Database console, single-element patches will be sent
+#  out – which can cause issues here.
+#
+func patch(path, payload):
+	_update_data(path, payload, true)
 
-func get_key(path : String):
-    var first_slash_idx = path.find(path_separator)
-    var second_slash_idx = path.find(path_separator, first_slash_idx + path_separator.length())
-    if first_slash_idx != -1 and second_slash_idx != -1:
-        return path.substr(first_slash_idx, second_slash_idx - first_slash_idx)
-    elif first_slash_idx != -1:
-        var return_key = path.substr(first_slash_idx + path_separator.length(), path.length() - path_separator.length())
-        return return_key
-    
-    return null
-    
-func remove_key(path, key):
-    if !path or !key:
-        return null
-    
-    return path.replace(path_separator + key, "")
+#
+# Returns a deep copy of this data store's payload.
+#
+func get_data() -> Dictionary:
+	return _data[_root].duplicate(true)
 
-func patch(path, data):
-    patch_recursive(path, data, "", data_set)
+#
+# Updates this data store by either putting or patching the provided payload into it at the given
+# path. The provided payload can technically be any value.
+#
+func _update_data(path: String, payload, patch: bool) -> void:
+	print("Updating data store (patch = %s) (%s = %s)..." % [patch, path, payload])
+	
+	#
+	# Remove any leading separators.
+	#
+	path = path.lstrip(_delimiter)
+	
+	#
+	# Traverse the path.
+	#
+	var dict = _data
+	var keys = PoolStringArray([_root])
+	
+	keys.append_array(path.split(_delimiter, false))
+	
+	var final_key_idx = (keys.size() - 1)
+	var final_key = (keys[final_key_idx])
+	
+	keys.remove(final_key_idx)
+	
+	for key in keys:
+		if !dict.has(key):
+			dict[key] = { }
+		
+		dict = dict[key]
+	
+	#
+	# Handle non-patch (a.k.a. put) mode and then update the destination value.
+	#
+	var new_type = typeof(payload)
+	
+	if !patch:
+		dict.erase(final_key)
 
-func patch_recursive(path, data, previous_key, current_data_set):
-    if path == path_separator:
-        if previous_key.length() == 0:
-            if data:
-                data_set = data
-        else:
-            if data:
-                for key in data.keys():
-                    current_data_set[key] = data[key]
-    else:
-        var key = get_key(path)
-        if !key:
-            assert(false)
-        var chopped_path = remove_key(path, key)
-        if !chopped_path:
-            assert(false)
-            
-        patch_recursive(chopped_path, data, key, current_data_set[previous_key])
+	if new_type == TYPE_NIL:
+		dict.erase(final_key)
+	elif new_type == TYPE_DICTIONARY:
+		if !dict.has(final_key):
+			dict[final_key] = { }
+		
+		_update_dictionary(dict[final_key], payload)
+	else:
+		dict[final_key] = payload
+	
+	print("...Data store updated (%s)." % _data)
+
+#
+# Helper method to "blit" changes in an update dictionary payload onto an original dictionary.
+# Parameters are directly changed via reference.
+#
+func _update_dictionary(original_dict: Dictionary, update_payload: Dictionary) -> void:
+	for key in update_payload.keys():
+		var val_type = typeof(update_payload[key])
+		
+		if val_type == TYPE_NIL:
+			original_dict.erase(key)
+		elif val_type == TYPE_DICTIONARY:
+			if !original_dict.has(key):
+				original_dict[key] = { }
+			
+			_update_dictionary(original_dict[key], update_payload[key])
+		else:
+			original_dict[key] = update_payload[key]
