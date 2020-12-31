@@ -6,7 +6,7 @@ _**Note:** This document can eventually be moved into the repository's wiki._
 
 ## Running Tests
 
-The easiest way to run all of this project's unit and integration tests is from the [command line](https://github.com/bitwes/Gut/wiki/Command-Line). First, ensure that your shell has the `godot` alias defined. For example, one might add the following to their `~/.zshrc` file on macOS.
+The easiest way to run all of this project's unit and integration tests is from the [command line](https://github.com/bitwes/Gut/wiki/Command-Line). First, ensure that your shell has the `godot` alias defined. For example, one might add the following to their `~/.zshrc` file on macOS and then re-source (or simply restart) their shell session.
 
 ```bash
 alias godot='/Applications/Godot.app/Contents/MacOS/Godot'
