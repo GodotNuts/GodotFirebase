@@ -1,10 +1,10 @@
 # Godot Firebase
 
-A Plugin by Kyle Szklenski and Nicolò Santilio, with contributions from many other (including @BearDooks on docs, @lukehollenback on general enhancements, and so on).
+A Plugin by Kyle Szklenski and Nicolò Santilio, with contributions from many other (including BearDooks on docs, Luke Hollenback on general enhancements, and so on).
 
 If you wish to support this project, you can [:coffee: Buy Me a Coffee](https://ko-fi.com/kyleszklenski).
 
-## Cloning
+## :arrow_down:  Cloning
 
 This project uses [git submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules) to pull in other libraries that it consumes. The easiest way to clone this repository while also cloning all referenced submodules is by using the `--recurse-submodules` flag as follows:
 
