@@ -73,7 +73,7 @@ func set_store(store_ref):
     if !store:
         store = store_ref
         add_child(store)
-        store.set_script(preload("res://addons/GDFirebase/Store.gd"))
+        store.set_script(preload("res://addons/GDFirebase/FirebaseDatabaseStore.gd"))
 
 func update(path, data):
     var to_update = JSON.print(data)
