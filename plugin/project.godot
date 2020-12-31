@@ -33,13 +33,19 @@ _global_script_classes=[ {
 "class": "FirestoreDocument",
 "language": "GDScript",
 "path": "res://addons/godot-firebase/FirebaseFirestoreDocument.gd"
+}, {
+"base": "Object",
+"class": "TestUtils",
+"language": "GDScript",
+"path": "res://test/TestUtils.gd"
 } ]
 _global_script_class_icons={
 "FirebaseResource": "",
 "FirebaseStorage": "",
 "FirebaseUserData": "",
 "FirestoreCollection": "",
-"FirestoreDocument": ""
+"FirestoreDocument": "",
+"TestUtils": ""
 }
 
 [application]
