@@ -76,9 +76,16 @@ func set_store(store_ref):
         store.set_script(preload("res://addons/GDFirebase/FirebaseDatabaseStore.gd"))
 
 func update(path, data):
+    path = path.strip_edges(true, true)
+
+    if path == separator:
+        path = ""
+    
     var to_update = JSON.print(data)
-    if pusher.get_http_client_status() != HTTPClient.STATUS_REQUESTING:    
-        pusher.request(_get_list_url() + db_path + _get_remaining_path(), PoolStringArray(), true, HTTPClient.METHOD_PATCH, to_update)
+    if pusher.get_http_client_status() != HTTPClient.STATUS_REQUESTING:
+        var resolved_path = (_get_list_url() + db_path + path + _get_remaining_path())
+        
+        pusher.request(resolved_path, PoolStringArray(), true, HTTPClient.METHOD_PATCH, to_update)
     else:
         push_queue.append(data)
 
