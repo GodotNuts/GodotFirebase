@@ -4,9 +4,9 @@ A Google Firebase SDK written in GDScript for use in Godot Engine projects.
 
 ## :coffee: Contributors
 
-The following individuals and many more have contributed significantly to this project. If you would like to support this project's further development, consider donating to these individuals.
+The following individuals and many more have contributed significantly to this project. If you would like to support this project's further development, consider supporting them.
 
-- Kyle Szklenski (creator) ([:coffee: Buy Me a Coffee](https://ko-fi.com/kyleszklenski))
+- Kyle Szklenski (creator) ([buy me a coffee](https://ko-fi.com/kyleszklenski))
 - Nicolò Santilio (creator)
 - BearDooks (documentation)
 - Luke Hollenback (general enhancements & maitenance) ([buy me a coffee](https://ko-fi.com/lukehollenback))
