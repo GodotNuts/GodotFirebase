@@ -8,8 +8,8 @@ The following individuals and many more have contributed significantly to this p
 
 - Kyle Szklenski (creator) ([buy me a coffee](https://ko-fi.com/kyleszklenski))
 - Nicolò Santilio (creator)
-- BearDooks (documentation)
-- Luke Hollenback (general enhancements & maitenance) ([buy me a coffee](https://ko-fi.com/lukehollenback))
+- BearDooks
+- [Luke Hollenback](https://github.com/lukehollenback) ([buy me a coffee](https://ko-fi.com/lukehollenback))
 
 ## :arrow_down:  Cloning
 
