@@ -65,6 +65,20 @@ class TestPutOperations:
 		
 		assert_eq_deep(store_object, TestValue)
 	
+	func test_put_deleted_value():
+		# NOTE: Firebase Realtime Database sets values to null to indicate that they have been
+		#  deleted.
+		
+		var store = TestUtils.instantiate(FirebaseDatabaseStore)
+		
+		store.put(TestKey, TestObject)
+		store.put(TestKey + "/II", null)
+		
+		var store_data: Dictionary = store.get_data()
+		var store_object = store_data[TestKey]
+		
+		assert_false(store_object.has("II"), "The value should have been deleted, but was not.")
+	
 	func test_put_new_object():
 		var store = TestUtils.instantiate(FirebaseDatabaseStore)
 		
@@ -108,7 +122,7 @@ class TestPutOperations:
 class TestPatchOperations:
 	extends "res://addons/gut/test.gd"
 	
-	func test_put_object():
+	func test_patch_object():
 		var store = TestUtils.instantiate(FirebaseDatabaseStore)
 		
 		store.patch(TestKey, TestObject)
@@ -118,7 +132,7 @@ class TestPatchOperations:
 		
 		assert_eq_deep(store_object, TestObject)
 	
-	func test_put_nested_object():
+	func test_patch_nested_object():
 		var store = TestUtils.instantiate(FirebaseDatabaseStore)
 		
 		store.put(TestKey, TestObject)
@@ -129,7 +143,7 @@ class TestPatchOperations:
 		
 		assert_eq_deep(store_object, TestObjectOther)
 	
-	func test_put_array_value():
+	func test_patch_array_value():
 		var store = TestUtils.instantiate(FirebaseDatabaseStore)
 		
 		store.put(TestKey, TestObject)
@@ -140,7 +154,7 @@ class TestPatchOperations:
 		
 		assert_eq_deep(store_object, TestArray)
 	
-	func test_put_normal_value():
+	func test_patch_normal_value():
 		var store = TestUtils.instantiate(FirebaseDatabaseStore)
 		
 		store.put(TestKey, TestObject)
@@ -150,3 +164,17 @@ class TestPatchOperations:
 		var store_object = store_data[TestKey]["II"]
 		
 		assert_eq_deep(store_object, TestValue)
+	
+	func test_patch_deleted_value():
+		# NOTE: Firebase Realtime Database sets values to null to indicate that they have been
+		#  deleted.
+		
+		var store = TestUtils.instantiate(FirebaseDatabaseStore)
+		
+		store.put(TestKey, TestObject)
+		store.patch(TestKey + "/II", null)
+		
+		var store_data: Dictionary = store.get_data()
+		var store_object = store_data[TestKey]
+		
+		assert_false(store_object.has("II"), "The value should have been deleted, but was not.")
