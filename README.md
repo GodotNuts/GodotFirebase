@@ -1,8 +1,15 @@
 # Godot Firebase
 
-A Plugin by Kyle Szklenski and Nicolò Santilio, with contributions from many other (including BearDooks on docs, Luke Hollenback on general enhancements, and so on).
+A Google Firebase SDK written in GDScript for use in Godot Engine projects.
 
-If you wish to support this project, you can [:coffee: Buy Me a Coffee](https://ko-fi.com/kyleszklenski).
+## :coffee: Contributors
+
+The following individuals and many more have contributed significantly to this project. If you would like to support this project's further development, consider donating to these individuals.
+
+- Kyle Szklenski (creator) ([:coffee: Buy Me a Coffee](https://ko-fi.com/kyleszklenski))
+- Nicolò Santilio (creator)
+- BearDooks (documentation)
+- Luke Hollenback (general enhancements & maitenance) ([buy me a coffee](https://ko-fi.com/lukehollenback))
 
 ## :arrow_down:  Cloning
 
