@@ -1,5 +1,5 @@
 {
-	"dirs":["res://test/unit/","res://test/integration/"],
+	"dirs":["res://test/unit/"],
 	"double_strategy":"partial",
 	"ignore_pause":false,
 	"include_subdirs":true,
@@ -8,7 +8,7 @@
 	"opacity":100,
 	"prefix":"test_",
 	"selected":"",
-	"should_exit":false,
+	"should_exit":true,
 	"should_maximize":true,
 	"suffix":".gd",
 	"tests": [],
