@@ -1,0 +1,11 @@
+[gd_scene load_steps=2 format=2]
+
+[ext_resource path="res://addons/GDFirebase/CircularContainer.gd" type="Script" id=1]
+
+[node name="CircularContainer" type="Container"]
+margin_right = 1024.0
+margin_bottom = 464.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource( 1 )
+
