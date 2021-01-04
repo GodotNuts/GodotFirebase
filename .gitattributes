@@ -1,24 +1,2 @@
-#
-# Auto detect text files and perform LF normalization.
-#
+# Auto detect text files and perform LF normalization
 * text=auto
-
-#
-# Exclude parts of the project that are not required for runtime and/or simply clutter up the final
-# release artifact from exported archives. The net affect of these ignores is that the plugin only
-# contains what is absolutely necessary when downloaded from the Godot Asset Library.
-#
-# The affect of these exclusions can be tested by running `git archive` on this repository.
-#
-/.github			export-ignore
-/.gitattributes		export-ignore
-/.gitignore			export-ignore
-/.gitmodules		export-ignore
-/.gutconfig.json	export-ignore
-/demo/				export-ignore
-/test/				export-ignore
-/addons/gut/		export-ignore
-/icon.png			export-ignore
-/icon.png.import	export-ignore
-/project.godot		export-ignore
-/default_env.tres	export-ignore
