@@ -1,6 +1,6 @@
 extends Node
 
-const ENVIRONMENT_VARIABLES : String = "environment_variables/"
+const ENVIRONMENT_VARIABLES : String = "firebase/environment_variables/"
 onready var Auth = HTTPRequest.new()
 onready var Firestore = Node.new()
 onready var Database = Node.new()
