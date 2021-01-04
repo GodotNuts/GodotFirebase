@@ -1,0 +1,13 @@
+name: Run GUT Tests
+
+on: [push]
+
+jobs:
+  TestAction:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Run Action
+      id: run_tests
+      uses: josephbmanley/run-gut-tests-action@v1.0.1
