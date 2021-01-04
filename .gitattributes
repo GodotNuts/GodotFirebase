@@ -22,3 +22,5 @@
 /icon.png.import    export-ignore
 /project.godot      export-ignore
 /default_env.tres   export-ignore
+/LICENSE            export-ignore
+/README.md          export-ignore
