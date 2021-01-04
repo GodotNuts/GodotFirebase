@@ -64,7 +64,7 @@ window/handheld/orientation="portrait"
 
 [editor_plugins]
 
-enabled=PoolStringArray( "godot-firebase" )
+enabled=PoolStringArray( "godot-firebase", "http-sse-client" )
 
 [input]
 

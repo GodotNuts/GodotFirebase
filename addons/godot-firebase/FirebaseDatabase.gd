@@ -22,7 +22,7 @@ func get_database_reference(path : String, filter : Dictionary):
 	firebase_reference.set_script(load("res://addons/godot-firebase/FirebaseReference.gd"))
 	var pusher = HTTPRequest.new()
 	var listener = Node.new()
-	listener.set_script(load("res://addons/godot-firebase/HTTPSSEClient/HTTPSSEClient.gd"))
+	listener.set_script(load("res://addons/http-sse-client/HTTPSSEClient.gd"))
 	var store = Node.new()
 	firebase_reference.set_db_path(path, filter)
 	firebase_reference.set_auth_and_config(auth, config)

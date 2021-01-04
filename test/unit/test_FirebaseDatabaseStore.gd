@@ -31,6 +31,8 @@ class TestPutOperations:
 		var store_object = store_data[TestKey]
 		
 		assert_eq_deep(store_object, TestObject)
+		
+		store.queue_free()
 	
 	func test_put_nested_object():
 		var store = TestUtils.instantiate(FirebaseDatabaseStore)
@@ -42,6 +44,8 @@ class TestPutOperations:
 		var store_object = store_data[TestKey]["V"]
 		
 		assert_eq_deep(store_object, TestObjectOther)
+		
+		store.queue_free()
 	
 	func test_put_array_value():
 		var store = TestUtils.instantiate(FirebaseDatabaseStore)
@@ -53,6 +57,8 @@ class TestPutOperations:
 		var store_object = store_data[TestKey]["III"]
 		
 		assert_eq_deep(store_object, TestArray)
+		
+		store.queue_free()
 	
 	func test_put_normal_value():
 		var store = TestUtils.instantiate(FirebaseDatabaseStore)
@@ -64,6 +70,8 @@ class TestPutOperations:
 		var store_object = store_data[TestKey]["II"]
 		
 		assert_eq_deep(store_object, TestValue)
+		
+		store.queue_free()
 	
 	func test_put_deleted_value():
 		# NOTE: Firebase Realtime Database sets values to null to indicate that they have been
@@ -78,6 +86,8 @@ class TestPutOperations:
 		var store_object = store_data[TestKey]
 		
 		assert_false(store_object.has("II"), "The value should have been deleted, but was not.")
+		
+		store.queue_free()
 	
 	func test_put_new_object():
 		var store = TestUtils.instantiate(FirebaseDatabaseStore)
@@ -88,6 +98,8 @@ class TestPutOperations:
 		var store_object = store_data[TestKey]
 		
 		assert_eq_deep(store_object, TestObject)
+		
+		store.queue_free()
 	
 	func test_put_new_nested_object():
 		var store = TestUtils.instantiate(FirebaseDatabaseStore)
@@ -98,6 +110,8 @@ class TestPutOperations:
 		var store_object = store_data[TestKey]["V"]
 		
 		assert_eq_deep(store_object, TestObjectOther)
+		
+		store.queue_free()
 	
 	func test_put_new_array_value():
 		var store = TestUtils.instantiate(FirebaseDatabaseStore)
@@ -108,6 +122,8 @@ class TestPutOperations:
 		var store_object = store_data[TestKey]["III"]
 		
 		assert_eq_deep(store_object, TestArray)
+		
+		store.queue_free()
 	
 	func test_put_new_normal_value():
 		var store = TestUtils.instantiate(FirebaseDatabaseStore)
@@ -118,6 +134,8 @@ class TestPutOperations:
 		var store_object = store_data[TestKey]["II"]
 		
 		assert_eq_deep(store_object, TestValue)
+		
+		store.queue_free()
 
 class TestPatchOperations:
 	extends "res://addons/gut/test.gd"
@@ -131,6 +149,8 @@ class TestPatchOperations:
 		var store_object = store_data[TestKey]
 		
 		assert_eq_deep(store_object, TestObject)
+		
+		store.queue_free()
 	
 	func test_patch_nested_object():
 		var store = TestUtils.instantiate(FirebaseDatabaseStore)
@@ -142,6 +162,8 @@ class TestPatchOperations:
 		var store_object = store_data[TestKey]["V"]
 		
 		assert_eq_deep(store_object, TestObjectOther)
+		
+		store.queue_free()
 	
 	func test_patch_array_value():
 		var store = TestUtils.instantiate(FirebaseDatabaseStore)
@@ -153,6 +175,8 @@ class TestPatchOperations:
 		var store_object = store_data[TestKey]["III"]
 		
 		assert_eq_deep(store_object, TestArray)
+		
+		store.queue_free()
 	
 	func test_patch_normal_value():
 		var store = TestUtils.instantiate(FirebaseDatabaseStore)
@@ -164,6 +188,8 @@ class TestPatchOperations:
 		var store_object = store_data[TestKey]["II"]
 		
 		assert_eq_deep(store_object, TestValue)
+		
+		store.queue_free()
 	
 	func test_patch_deleted_value():
 		# NOTE: Firebase Realtime Database sets values to null to indicate that they have been
@@ -178,3 +204,5 @@ class TestPatchOperations:
 		var store_object = store_data[TestKey]
 		
 		assert_false(store_object.has("II"), "The value should have been deleted, but was not.")
+		
+		store.queue_free()

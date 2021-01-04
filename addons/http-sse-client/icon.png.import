@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/icon.png-f2a38f8a6808429a08209ae135bde34c.stex"
+path="res://.import/icon.png-fd61c0c5f1d1b4df37e0abe3d8f80985.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://addons/GDFirebase/HTTPSSEClient/icon.png"
-dest_files=[ "res://.import/icon.png-f2a38f8a6808429a08209ae135bde34c.stex" ]
+source_file="res://addons/http-sse-client/icon.png"
+dest_files=[ "res://.import/icon.png-fd61c0c5f1d1b4df37e0abe3d8f80985.stex" ]
 
 [params]
 

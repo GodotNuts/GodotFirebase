@@ -1,3 +1,0 @@
-[submodule "GDFirebase/HTTPSSEClient"]
-	path = plugin/addons/godot-firebase/HTTPSSEClient
-	url = https://github.com/WolfgangSenff/HTTPSSEClient
