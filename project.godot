@@ -59,7 +59,7 @@ Firebase="*res://addons/godot-firebase/Firebase.gd"
 
 [editor_plugins]
 
-enabled=PoolStringArray( "godot-firebase", "gut" )
+enabled=PoolStringArray( "godot-firebase", "gut", "http-sse-client" )
 
 [rendering]
 
