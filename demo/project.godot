@@ -44,13 +44,13 @@ _global_script_class_icons={
 
 [application]
 
-config/name="TestFirebaseJS"
+config/name="FirebaseTestHarness"
 run/main_scene="res://Control.tscn"
 config/icon="res://icon.png"
 
 [autoload]
 
-Firebase="*res://addons/godot-firebase/Firebase.gd"
+Firebase="*res://addons/godot-firebase/Firebase.tscn"
 
 [debug]
 
