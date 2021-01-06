@@ -14,9 +14,6 @@ The following individuals and many more have contributed significantly to this p
 - [Luke Hollenback](https://github.com/lukehollenback) ([buy me a coffee](https://ko-fi.com/lukehollenback))
 
 ## :arrow_down:  Cloning
-
-This project uses [git submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules) to pull in other libraries that it consumes. The easiest way to clone this repository while also cloning all referenced submodules is by using the `--recurse-submodules` flag as follows:
-
 SSH:
 ```bash
 git clone git@github.com:WolfgangSenff/GodotFirebase.git
