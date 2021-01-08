@@ -20,6 +20,8 @@ const RESPONSE_USERDATA = "identitytoolkit#GetAccountInfoResponse"
 var needs_refresh = false
 var auth = null
 
+var is_busy = false
+
 var login_request_body = {
     "email":"",
     "password":"",
@@ -70,17 +72,22 @@ func set_config(config_json):
 # You must pass in the email and password to this function for it to work correctly
 # If the login fails it will return an error code through the function _on_FirebaseAuth_request_completed
 func login_with_email_and_password(email, password):
-    login_request_body.email = email
-    login_request_body.password = password
-    request(signin_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print(login_request_body))
-    pass
+    if (is_busy == false):
+        login_request_body.email = email
+        login_request_body.password = password
+        request(signin_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print(login_request_body))
+    else:
+        printerr("Firebase Auth is currently busy and cannot process this request")
 
 # Called with Firebase.Auth.signup_with_email_and_password(email, password)
 # You must pass in the email and password to this function for it to work correctly
 func signup_with_email_and_password(email, password):
-    login_request_body.email = email
-    login_request_body.password = password
-    request(signup_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print(login_request_body))
+    if (is_busy == false):
+        login_request_body.email = email
+        login_request_body.password = password
+        request(signup_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print(login_request_body))
+    else:
+        printerr("Firebase Auth is currently busy and cannot process this request")
 
 # This function is called whenever there is an authentication request to Firebase
 # On an error, this function with emit the signal 'login_failed' and print the error to the console
@@ -90,6 +97,7 @@ func _on_FirebaseAuth_request_completed(result, response_code, headers, body):
     print(json_result.result)
     if json_result.error != OK:
         print_debug("Error while parsing body json")
+        is_busy = false
         return
     
     var res = json_result.result
@@ -97,41 +105,57 @@ func _on_FirebaseAuth_request_completed(result, response_code, headers, body):
         if not res.has("kind"):
             auth = get_clean_keys(res)
             begin_refresh_countdown()
+            is_busy = false
         else:
             match res.kind:
                 RESPONSE_SIGNIN, RESPONSE_SIGNUP:
                     auth = get_clean_keys(res)
                     emit_signal("login_succeeded", auth)
                     begin_refresh_countdown()
+                    is_busy = false
                 RESPONSE_USERDATA:
                     var userdata = FirebaseUserData.new(res.users[0])
                     emit_signal("userdata_received", userdata)
+                    is_busy = false
     else:
         # error message would be INVALID_EMAIL, EMAIL_NOT_FOUND, INVALID_PASSWORD, USER_DISABLED or WEAK_PASSWORD
         emit_signal("login_failed", res.error.code, res.error.message)
+        is_busy = false
 
 # Function used to change the email account for the currently logged in user
 func change_user_email(email):
-	change_email_body.email = email
-	change_email_body.idToken = auth.idtoken
-	request(update_account_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print(change_email_body))
+    if (is_busy == false):
+        change_email_body.email = email
+        change_email_body.idToken = auth.idtoken
+        request(update_account_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print(change_email_body))
+    else:
+        printerr("Firebase Auth is currently busy and cannot process this request")
 
 # Function used to change the password for the currently logged in user
 func change_user_password(password):
-	change_password_body.email = password
-	change_password_body.idToken = auth.idtoken
-	request(update_account_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print(change_password_body))
+    if (is_busy == false):
+        change_password_body.email = password
+        change_password_body.idToken = auth.idtoken
+        request(update_account_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print(change_password_body))
+    else:
+        printerr("Firebase Auth is currently busy and cannot process this request")
 
 # Function to send a account verification email
 func send_account_verification_email():
-	account_verification_body.idToken = auth.idtoken
-	request(oobcode_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print(account_verification_body))
+    if (is_busy == false):
+        account_verification_body.idToken = auth.idtoken
+        request(oobcode_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print(account_verification_body))
+    else:
+        printerr("Firebase Auth is currently busy and cannot process this request")
 
 # Function used to reset the password for a user who has forgotten in.
 # This will send the users account an email with a password reset link
 func send_password_reset_email(email):
-	password_reset_body.email = email
-	request(oobcode_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print(password_reset_body))
+    if (is_busy == false):
+        password_reset_body.email = email
+        request(oobcode_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print(password_reset_body))
+    else:
+        printerr("Firebase Auth is currently busy and cannot process this request")
 
 # Function is called when a new token is issued to a user. The function will yield until the token has expired, and then request a new one.
 func begin_refresh_countdown():
@@ -160,12 +184,19 @@ func get_clean_keys(auth_result):
 
 # Function called to get all
 func get_user_data():
-    if auth == null or auth.has("idtoken") == false:
-        print_debug("Not logged in")
-        return
-        
-    request(userdata_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print({"idToken":auth.idtoken}))
+    if (is_busy == false):
+        if auth == null or auth.has("idtoken") == false:
+            print_debug("Not logged in")
+            is_busy = false
+            return
+            
+        request(userdata_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print({"idToken":auth.idtoken}))
+    else:
+        printerr("Firebase Auth is currently busy and cannot process this request")
 
 # Function used to delete the account of the currently authenticated user
 func delete_user_account():
-	request(delete_account_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print({"idToken":auth.idtoken}))
+    if (is_busy == false):
+        request(delete_account_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print({"idToken":auth.idtoken}))
+    else:
+        printerr("Firebase Auth is currently busy and cannot process this request")
