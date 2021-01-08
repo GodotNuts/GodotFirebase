@@ -9,6 +9,7 @@ var signup_request_url = "https://identitytoolkit.googleapis.com/v1/accounts:sig
 var signin_request_url = "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=%s" 
 var userdata_request_url = "https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=%s" 
 var refresh_request_url = "https://securetoken.googleapis.com/v1/token?key=%s"
+var password_reset_url = "https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=%s"
 
 const RESPONSE_SIGNIN   = "identitytoolkit#VerifyPasswordResponse"
 const RESPONSE_SIGNUP   = "identitytoolkit#SignupNewUserResponse"
@@ -20,13 +21,18 @@ var auth = null
 var login_request_body = {
     "email":"",
     "password":"",
-    "returnSecureToken": true
+    "returnSecureToken": true,
    }
 
 var refresh_request_body = {
     "grant_type":"refresh_token",
-    "refresh_token":""
+    "refresh_token":"",
     }
+
+var password_reset_body = {
+	"requestType":"password_reset",
+	"email":"",
+   }
 
 # Sets the configuration needed for the plugin to talk to Firebase
 # These settings come from the Firebase.gd script automatically
@@ -36,6 +42,7 @@ func set_config(config_json):
     signin_request_url %= config.apiKey
     userdata_request_url %= config.apiKey
     refresh_request_url %= config.apiKey
+    password_reset_url %= config.apiKey
     connect("request_completed", self, "_on_FirebaseAuth_request_completed")
 
 # Called with Firebase.Auth.login_with_email_and_password(email, password)
@@ -81,6 +88,11 @@ func _on_FirebaseAuth_request_completed(result, response_code, headers, body):
     else:
         # error message would be INVALID_EMAIL, EMAIL_NOT_FOUND, INVALID_PASSWORD, USER_DISABLED or WEAK_PASSWORD
         emit_signal("login_failed", res.error.code, res.error.message)
+
+# Function used to reset the password for a user. This will send the users account an email with a password reset link
+func reset_password(email):
+	password_reset_body.email = email
+	request(password_reset_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print(password_reset_body))
 
 # Function is called when a new token is issued to a user. The function will yield until the token has expired, and then request a new one.
 func begin_refresh_countdown():
