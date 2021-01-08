@@ -10,6 +10,7 @@ var signin_request_url = "https://identitytoolkit.googleapis.com/v1/accounts:sig
 var userdata_request_url = "https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=%s" 
 var refresh_request_url = "https://securetoken.googleapis.com/v1/token?key=%s"
 var password_reset_url = "https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=%s"
+var delete_account_url = "https://identitytoolkit.googleapis.com/v1/accounts:delete?key=%s"
 
 const RESPONSE_SIGNIN   = "identitytoolkit#VerifyPasswordResponse"
 const RESPONSE_SIGNUP   = "identitytoolkit#SignupNewUserResponse"
@@ -43,6 +44,7 @@ func set_config(config_json):
     userdata_request_url %= config.apiKey
     refresh_request_url %= config.apiKey
     password_reset_url %= config.apiKey
+    delete_account_url %= config.apiKey
     connect("request_completed", self, "_on_FirebaseAuth_request_completed")
 
 # Called with Firebase.Auth.login_with_email_and_password(email, password)
@@ -126,3 +128,7 @@ func get_user_data():
         return
         
     request(userdata_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print({"idToken":auth.idtoken}))
+
+# Function used to delete the account of the currently authenticated user
+func delete_user_account():
+	request(delete_account_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print({"idToken":auth.idtoken}))
