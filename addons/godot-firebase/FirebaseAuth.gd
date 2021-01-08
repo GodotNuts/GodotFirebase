@@ -117,8 +117,9 @@ func change_user_password(password):
 	change_password_body.idToken = auth.idtoken
 	request(update_account_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print(change_password_body))
 
-# Function used to reset the password for a user. This will send the users account an email with a password reset link
-func reset_password(email):
+# Function used to reset the password for a user who has forgotten in.
+# This will send the users account an email with a password reset link
+func send_password_reset_email(email):
 	password_reset_body.email = email
 	request(password_reset_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print(password_reset_body))
 
