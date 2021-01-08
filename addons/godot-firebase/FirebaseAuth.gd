@@ -9,9 +9,9 @@ var signup_request_url = "https://identitytoolkit.googleapis.com/v1/accounts:sig
 var signin_request_url = "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=%s" 
 var userdata_request_url = "https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=%s" 
 var refresh_request_url = "https://securetoken.googleapis.com/v1/token?key=%s"
-var oobcode_url = "https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=%s"
-var delete_account_url = "https://identitytoolkit.googleapis.com/v1/accounts:delete?key=%s"
-var update_account_url = "https://identitytoolkit.googleapis.com/v1/accounts:update?key=%s"
+var oobcode_request_url = "https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=%s"
+var delete_account_request_url = "https://identitytoolkit.googleapis.com/v1/accounts:delete?key=%s"
+var update_account_request_url = "https://identitytoolkit.googleapis.com/v1/accounts:update?key=%s"
 
 const RESPONSE_SIGNIN   = "identitytoolkit#VerifyPasswordResponse"
 const RESPONSE_SIGNUP   = "identitytoolkit#SignupNewUserResponse"
@@ -61,9 +61,9 @@ func set_config(config_json):
     signin_request_url %= config.apiKey
     userdata_request_url %= config.apiKey
     refresh_request_url %= config.apiKey
-    oobcode_url %= config.apiKey
-    delete_account_url %= config.apiKey
-    update_account_url %= config.apiKey
+    oobcode_request_url %= config.apiKey
+    delete_account_request_url %= config.apiKey
+    update_account_request_url %= config.apiKey
     connect("request_completed", self, "_on_FirebaseAuth_request_completed")
 
 # Called with Firebase.Auth.login_with_email_and_password(email, password)
@@ -114,24 +114,24 @@ func _on_FirebaseAuth_request_completed(result, response_code, headers, body):
 func change_user_email(email):
 	change_email_body.email = email
 	change_email_body.idToken = auth.idtoken
-	request(update_account_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print(change_email_body))
+	request(update_account_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print(change_email_body))
 
 # Function used to change the password for the currently logged in user
 func change_user_password(password):
 	change_password_body.email = password
 	change_password_body.idToken = auth.idtoken
-	request(update_account_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print(change_password_body))
+	request(update_account_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print(change_password_body))
 
 # Function to send a account verification email
 func send_account_verification_email():
 	account_verification_body.idToken = auth.idtoken
-	request(oobcode_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print(account_verification_body))
+	request(oobcode_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print(account_verification_body))
 
 # Function used to reset the password for a user who has forgotten in.
 # This will send the users account an email with a password reset link
 func send_password_reset_email(email):
 	password_reset_body.email = email
-	request(oobcode_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print(password_reset_body))
+	request(oobcode_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print(password_reset_body))
 
 # Function is called when a new token is issued to a user. The function will yield until the token has expired, and then request a new one.
 func begin_refresh_countdown():
@@ -168,4 +168,4 @@ func get_user_data():
 
 # Function used to delete the account of the currently authenticated user
 func delete_user_account():
-	request(delete_account_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print({"idToken":auth.idtoken}))
+	request(delete_account_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print({"idToken":auth.idtoken}))
