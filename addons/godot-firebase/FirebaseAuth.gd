@@ -11,6 +11,7 @@ var userdata_request_url = "https://identitytoolkit.googleapis.com/v1/accounts:l
 var refresh_request_url = "https://securetoken.googleapis.com/v1/token?key=%s"
 var password_reset_url = "https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=%s"
 var delete_account_url = "https://identitytoolkit.googleapis.com/v1/accounts:delete?key=%s"
+var update_account_url = "https://identitytoolkit.googleapis.com/v1/accounts:update?key=%s"
 
 const RESPONSE_SIGNIN   = "identitytoolkit#VerifyPasswordResponse"
 const RESPONSE_SIGNUP   = "identitytoolkit#SignupNewUserResponse"
@@ -35,6 +36,18 @@ var password_reset_body = {
 	"email":"",
    }
 
+var change_email_body = {
+	"idToken":"",
+	"email":"",
+	"returnSecureToken": true,
+   }
+
+var change_password_body = {
+	"idToken":"",
+	"password":"",
+	"returnSecureToken": true,
+   }
+
 # Sets the configuration needed for the plugin to talk to Firebase
 # These settings come from the Firebase.gd script automatically
 func set_config(config_json):
@@ -45,6 +58,7 @@ func set_config(config_json):
     refresh_request_url %= config.apiKey
     password_reset_url %= config.apiKey
     delete_account_url %= config.apiKey
+    update_account_url %= config.apiKey
     connect("request_completed", self, "_on_FirebaseAuth_request_completed")
 
 # Called with Firebase.Auth.login_with_email_and_password(email, password)
@@ -90,6 +104,18 @@ func _on_FirebaseAuth_request_completed(result, response_code, headers, body):
     else:
         # error message would be INVALID_EMAIL, EMAIL_NOT_FOUND, INVALID_PASSWORD, USER_DISABLED or WEAK_PASSWORD
         emit_signal("login_failed", res.error.code, res.error.message)
+
+# Function used to change the email account for the currently logged in user
+func change_user_email(email):
+	change_email_body.email = email
+	change_email_body.idToken = auth.idtoken
+	request(update_account_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print(change_email_body))
+
+# Function used to change the password for the currently logged in user
+func change_user_password(password):
+	change_password_body.email = password
+	change_password_body.idToken = auth.idtoken
+	request(update_account_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print(change_password_body))
 
 # Function used to reset the password for a user. This will send the users account an email with a password reset link
 func reset_password(email):
