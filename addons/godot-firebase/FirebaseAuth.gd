@@ -9,7 +9,7 @@ var signup_request_url = "https://identitytoolkit.googleapis.com/v1/accounts:sig
 var signin_request_url = "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=%s" 
 var userdata_request_url = "https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=%s" 
 var refresh_request_url = "https://securetoken.googleapis.com/v1/token?key=%s"
-var password_reset_url = "https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=%s"
+var oobcode_url = "https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=%s"
 var delete_account_url = "https://identitytoolkit.googleapis.com/v1/accounts:delete?key=%s"
 var update_account_url = "https://identitytoolkit.googleapis.com/v1/accounts:update?key=%s"
 
@@ -48,6 +48,11 @@ var change_password_body = {
 	"returnSecureToken": true,
    }
 
+var account_verification_body = {
+	"requestType":"verify_email",
+	"idToken":"",
+   }
+
 # Sets the configuration needed for the plugin to talk to Firebase
 # These settings come from the Firebase.gd script automatically
 func set_config(config_json):
@@ -56,7 +61,7 @@ func set_config(config_json):
     signin_request_url %= config.apiKey
     userdata_request_url %= config.apiKey
     refresh_request_url %= config.apiKey
-    password_reset_url %= config.apiKey
+    oobcode_url %= config.apiKey
     delete_account_url %= config.apiKey
     update_account_url %= config.apiKey
     connect("request_completed", self, "_on_FirebaseAuth_request_completed")
@@ -117,11 +122,16 @@ func change_user_password(password):
 	change_password_body.idToken = auth.idtoken
 	request(update_account_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print(change_password_body))
 
+# Function to send a account verification email
+func send_account_verification_email():
+	account_verification_body.idToken = auth.idtoken
+	request(oobcode_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print(account_verification_body))
+
 # Function used to reset the password for a user who has forgotten in.
 # This will send the users account an email with a password reset link
 func send_password_reset_email(email):
 	password_reset_body.email = email
-	request(password_reset_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print(password_reset_body))
+	request(oobcode_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print(password_reset_body))
 
 # Function is called when a new token is issued to a user. The function will yield until the token has expired, and then request a new one.
 func begin_refresh_countdown():
