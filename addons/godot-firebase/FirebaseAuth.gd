@@ -68,28 +68,33 @@ func set_config(config_json):
     update_account_request_url %= config.apiKey
     connect("request_completed", self, "_on_FirebaseAuth_request_completed")
 
+# Function is used to check if the auth script is ready to process a request. Returns true if it is not currently processing
+# If false it will print an error
+func _is_ready():
+    if is_busy:
+        printerr("Firebase Auth is currently busy and cannot process this request")
+        return false
+    else:
+        return true
+
 # Called with Firebase.Auth.login_with_email_and_password(email, password)
 # You must pass in the email and password to this function for it to work correctly
 # If the login fails it will return an error code through the function _on_FirebaseAuth_request_completed
 func login_with_email_and_password(email, password):
-    if (is_busy == false):
+    if _is_ready():
         is_busy = true
         login_request_body.email = email
         login_request_body.password = password
         request(signin_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print(login_request_body))
-    else:
-        printerr("Firebase Auth is currently busy and cannot process this request")
 
 # Called with Firebase.Auth.signup_with_email_and_password(email, password)
 # You must pass in the email and password to this function for it to work correctly
 func signup_with_email_and_password(email, password):
-    if (is_busy == false):
+    if _is_ready():
         is_busy = true
         login_request_body.email = email
         login_request_body.password = password
         request(signup_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print(login_request_body))
-    else:
-        printerr("Firebase Auth is currently busy and cannot process this request")
 
 # This function is called whenever there is an authentication request to Firebase
 # On an error, this function with emit the signal 'login_failed' and print the error to the console
@@ -126,42 +131,34 @@ func _on_FirebaseAuth_request_completed(result, response_code, headers, body):
 
 # Function used to change the email account for the currently logged in user
 func change_user_email(email):
-    if (is_busy == false):
+    if _is_ready():
         is_busy = true
         change_email_body.email = email
         change_email_body.idToken = auth.idtoken
         request(update_account_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print(change_email_body))
-    else:
-        printerr("Firebase Auth is currently busy and cannot process this request")
 
 # Function used to change the password for the currently logged in user
 func change_user_password(password):
-    if (is_busy == false):
+    if _is_ready():
         is_busy = true
         change_password_body.email = password
         change_password_body.idToken = auth.idtoken
         request(update_account_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print(change_password_body))
-    else:
-        printerr("Firebase Auth is currently busy and cannot process this request")
 
 # Function to send a account verification email
 func send_account_verification_email():
-    if (is_busy == false):
+    if _is_ready():
         is_busy = true
         account_verification_body.idToken = auth.idtoken
         request(oobcode_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print(account_verification_body))
-    else:
-        printerr("Firebase Auth is currently busy and cannot process this request")
 
 # Function used to reset the password for a user who has forgotten in.
 # This will send the users account an email with a password reset link
 func send_password_reset_email(email):
-    if (is_busy == false):
+    if _is_ready():
         is_busy = true
         password_reset_body.email = email
         request(oobcode_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print(password_reset_body))
-    else:
-        printerr("Firebase Auth is currently busy and cannot process this request")
 
 # Function is called when a new token is issued to a user. The function will yield until the token has expired, and then request a new one.
 func begin_refresh_countdown():
@@ -190,7 +187,7 @@ func get_clean_keys(auth_result):
 
 # Function called to get all
 func get_user_data():
-    if (is_busy == false):
+    if _is_ready():
         is_busy = true
         if auth == null or auth.has("idtoken") == false:
             print_debug("Not logged in")
@@ -198,13 +195,9 @@ func get_user_data():
             return
             
         request(userdata_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print({"idToken":auth.idtoken}))
-    else:
-        printerr("Firebase Auth is currently busy and cannot process this request")
 
 # Function used to delete the account of the currently authenticated user
 func delete_user_account():
-    if (is_busy == false):
+    if _is_ready():
         is_busy = true
         request(delete_account_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print({"idToken":auth.idtoken}))
-    else:
-        printerr("Firebase Auth is currently busy and cannot process this request")
