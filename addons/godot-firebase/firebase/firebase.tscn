@@ -5,10 +5,6 @@
 [ext_resource path="res://addons/godot-firebase/firebase/firebase.gd" type="Script" id=3]
 [ext_resource path="res://addons/godot-firebase/auth/auth.gd" type="Script" id=4]
 
-
-
-
-
 [node name="Firebase" type="Node"]
 script = ExtResource( 3 )
 

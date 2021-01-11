@@ -5,18 +5,19 @@
 #
 
 tool
+class_name FirebaseDatabaseStore
 extends Node
 
-const _delimiter = "/"
-const _root = "_root"
+const _DELIMITER : String = "/"
+const _ROOT : String = "_root"
 
-var _data = { }
+var _data : Dictionary = { }
 
 #
 # Puts a new payload into this data store at the given path. Any existing values in this data store
 # at the specified path will be completely erased.
 #
-func put(path, payload):
+func put(path : String, payload : Dictionary) -> void:
 		_update_data(path, payload, false)
 
 #
@@ -27,34 +28,34 @@ func put(path, payload):
 #  data directly from the Firebase Realtime Database console, single-element patches will be sent
 #  out – which can cause issues here.
 #
-func patch(path, payload):
+func patch(path : String, payload : Dictionary) -> void:
 		_update_data(path, payload, true)
 
 #
 # Returns a deep copy of this data store's payload.
 #
 func get_data() -> Dictionary:
-		return _data[_root].duplicate(true)
+		return _data[_ROOT].duplicate(true)
 
 #
 # Updates this data store by either putting or patching the provided payload into it at the given
 # path. The provided payload can technically be any value.
 #
-func _update_data(path: String, payload, patch: bool) -> void:
+func _update_data(path: String, payload : Dictionary, patch: bool) -> void:
 		print("Updating data store (patch = %s) (%s = %s)..." % [patch, path, payload])
 		
 		#
 		# Remove any leading separators.
 		#
-		path = path.lstrip(_delimiter)
+		path = path.lstrip(_DELIMITER)
 		
 		#
 		# Traverse the path.
 		#
 		var dict = _data
-		var keys = PoolStringArray([_root])
+		var keys = PoolStringArray([_ROOT])
 		
-		keys.append_array(path.split(_delimiter, false))
+		keys.append_array(path.split(_DELIMITER, false))
 		
 		var final_key_idx = (keys.size() - 1)
 		var final_key = (keys[final_key_idx])

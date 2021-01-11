@@ -1,16 +1,16 @@
+class_name FirestoreDocument
 extends Node
 
 # A FirestoreDocument objects that holds all important values for a Firestore Document,
 # @doc_name = name of the Firestore Document, which is the request PATH
 # @doc_fields = fields held by Firestore Document, in APIs format
 # created when requested from a `collection().get()` call
-class_name FirestoreDocument
 
 var document : Dictionary # the Document itself
 var doc_fields : Dictionary   # only .fields
 var doc_name : String         # only .name
 
-func _init(doc : Dictionary = {}, doc_name : String = "", doc_fields : Dictionary = {}):
+func _init(doc : Dictionary = {}, doc_name : String = "", doc_fields : Dictionary = {}) -> void:
 		self.document = doc
 		self.doc_name = doc_name
 		self.doc_fields = (doc_fields)

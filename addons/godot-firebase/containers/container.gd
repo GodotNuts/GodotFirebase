@@ -6,50 +6,50 @@ signal item_deleted(item, id, template)
 
 export (PackedScene) var ItemTemplate
 
-var tracked_values = {}
+var tracked_values : Dictionary = {}
 
-export (String) var CurrentPath
-export (bool) var OneShot = false
-export (String) var SpecifiedKey
-var db_ref
+export (String) var current_path : String
+export (bool) var one_shot : bool = false
+export (String) var specified_key : String
+var db_ref : FirebaseDatabaseReference
 
-func _ready():
+func _ready() -> void:
 	Firebase.Auth.connect("login_succeeded", self, "on_login_succeeded")
 		
-func on_login_succeeded(auth_token):
+func on_login_succeeded(auth_token : String):
 	connect_to_database()
 	
-func connect_to_database():
-	if !SpecifiedKey:
-		db_ref = Firebase.Database.get_database_reference(CurrentPath, { })
+func connect_to_database() -> void:
+	if !specified_key:
+		db_ref = Firebase.Database.get_database_reference(current_path, { })
 	else:
-		db_ref = Firebase.Database.get_database_reference(CurrentPath + "/" + SpecifiedKey)
+		db_ref = Firebase.Database.get_database_reference(current_path + "/" + specified_key)
 		
-	db_ref.connect("new_data_update", self, "on_new_update", [], CONNECT_ONESHOT if OneShot else CONNECT_PERSIST)
-	if !OneShot:
+	db_ref.connect("new_data_update", self, "on_new_update", [], CONNECT_ONESHOT if one_shot else CONNECT_PERSIST)
+	if !one_shot:
 		db_ref.connect("patch_data_update", self, "on_patch_update")
 		
-func on_new_update(data):
+func on_new_update(data : Dictionary) -> void:
 	if data.data:
 		var item = data.data
 		var template = ItemTemplate.instance()
 		add_child(template)
 		template.set_item(item)
 			
-func on_item_added(item, key, template):
+func on_item_added(item, key : String, template : ItemTemplate) -> void:
 	pass
 
-func on_patch_update(data):
+func on_patch_update(data : Dictionary) -> void:
 	if data.data and data.path:
 		if tracked_values.has(data.path):
 			tracked_values[data.path].template.set_item(data.data)
 	
-func delete_child(key):
+func delete_child(key : String) -> void:
 	var item = tracked_values[key]
 	remove_child(item.template)
 	tracked_values.erase(key)
 	
-func on_data_delete(data):
+func on_data_delete(data : Dictionary) -> void:
 	if data:
 		for key in data.keys():
 			if tracked_values.has(key):

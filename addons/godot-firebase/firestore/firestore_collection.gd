@@ -1,6 +1,6 @@
+class_name FirestoreCollection
 extends Node
 
-class_name FirestoreCollection
 
 signal add_document(doc)
 signal get_document(doc)
@@ -8,31 +8,31 @@ signal update_document(doc)
 signal delete_document()
 signal error(code,status,message)
 
-var base_url
-var extended_url
-var config
-var auth
-var collection_name
+var base_url : String
+var extended_url : String
+var config : Dictionary
+var auth : String
+var collection_name : String
 
-var pusher
+var pusher : HTTPRequest
 
 
-const event_tag = "event: "
-const data_tag = "data: "
-const put_tag = "put"
-const patch_tag = "patch"
-const separator = "/"
-const json_list_tag = ".json"
-const query_tag = "?"
-const auth_tag = "auth="
-const authorization_header = "Authorization: Bearer "
-const auth_variable_begin = "["
-const auth_variable_end = "]"
-const filter_tag = "&"
-const escaped_quote = "\""
-const equal_tag = "="
-const key_filter_tag = "$key"
-const documentId_tag = "documentId="
+const event_tag : String = "event: "
+const data_tag : String = "data: "
+const put_tag : String = "put"
+const patch_tag : String = "patch"
+const separator : String = "/"
+const json_list_tag : String = ".json"
+const query_tag : String = "?"
+const auth_tag : String = "auth="
+const authorization_header : String = "Authorization: Bearer "
+const auth_variable_begin : String = "["
+const auth_variable_end : String = "]"
+const filter_tag : String = "&"
+const escaped_quote : String = "\""
+const equal_tag : String = "="
+const key_filter_tag : String = "$key"
+const documentId_tag : String = "documentId="
 
 var request : int
 enum REQUESTS {
@@ -42,7 +42,7 @@ enum REQUESTS {
 		DELETE
 }
 
-func _ready():
+func _ready() -> void:
 		var push_node = HTTPRequest.new()
 		add_child(push_node)
 		pusher = push_node
@@ -51,7 +51,7 @@ func _ready():
 # ----------------------- REQUESTS
 
 # used to SAVE/ADD a new document to the collection, specify @documentID and @fields
-func add(documentId : String, fields : Dictionary = {}):
+func add(documentId : String, fields : Dictionary = {}) -> void:
 		if auth:
 				request = REQUESTS.ADD
 				var url = _get_request_url()
@@ -62,7 +62,7 @@ func add(documentId : String, fields : Dictionary = {}):
 				printerr("Unauthorized")
 
 # used to GET a document from the collection, specify @documentId
-func get(documentId : String):
+func get(documentId : String) -> void:
 		if auth:
 				request = REQUESTS.GET
 				var url = _get_request_url() + separator + documentId.replace(" ", "%20")
@@ -72,7 +72,7 @@ func get(documentId : String):
 				printerr("Unauthorized")
 
 # used to UPDATE a document, specify @documentID and @fields
-func update(documentId : String, fields : Dictionary = {}):
+func update(documentId : String, fields : Dictionary = {}) -> void:
 		if auth:
 				request = REQUESTS.UPDATE
 				var url = _get_request_url() + separator + documentId.replace(" ", "%20")
@@ -82,7 +82,7 @@ func update(documentId : String, fields : Dictionary = {}):
 				printerr("Unauthorized")
 
 # used to DELETE a document, specify @documentId
-func delete(documentId : String):
+func delete(documentId : String) -> void:
 		if auth:
 				request = REQUESTS.DELETE
 				var url = _get_request_url() + separator + documentId.replace(" ", "%20")
@@ -92,7 +92,7 @@ func delete(documentId : String):
 				printerr("Unauthorized")
 
 # ----------------- Functions
-func _get_request_url():
+func _get_request_url() -> String:
 		return base_url + extended_url + collection_name
 
 

@@ -1,9 +1,9 @@
 extends Resource
 class_name FirebaseResource
 
-var key
-var data
+var key : String
+var data : Dictionary
 
-func _init(key, data):
+func _init(key : String, data : Dictionary) -> void:
 		self.key = key
 		self.data = data

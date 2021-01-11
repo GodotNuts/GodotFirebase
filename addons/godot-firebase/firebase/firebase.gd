@@ -1,14 +1,14 @@
 extends Node
 
 const ENVIRONMENT_VARIABLES : String = "firebase/environment_variables/"
-onready var Auth = $Auth
-onready var Firestore = $Firestore
-onready var Database = $Database
+onready var Auth : Node = $Auth
+onready var Firestore : Node = $Firestore
+onready var Database : Node = $Database
 
 # Configuration used by all files in this project
 # These values can be found in your Firebase Project
 # See the README on Github for how to access
-var config = {  
+var config : Dictionary = {  
 		"apiKey": "",
 		"authDomain": "",
 		"databaseURL": "",
@@ -19,14 +19,14 @@ var config = {
 		"measurementId": "",
 		}
 
-func load_config():
+func load_config() -> void:
 		if ProjectSettings.has_setting(ENVIRONMENT_VARIABLES+"apiKey"):
 				for key in config.keys():
 						config[key] = ProjectSettings.get_setting(ENVIRONMENT_VARIABLES+key)
 		else:
 				printerr("No configuration settings found, add them in override.cfg file.")
 
-func _ready():
+func _ready() -> void:
 		load_config()
 		Auth.set_config(config)
 		Firestore.set_config(config)
