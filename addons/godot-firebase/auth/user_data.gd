@@ -13,7 +13,7 @@ var provider_id : String = ""
 var display_name : String = ""
 var photo_url : String = ""
 
-func _init(p_userdata : Dictionary) -> FirebaseUserData:
+func _init(p_userdata : Dictionary) ->  void:
 	local_id = p_userdata.localId
 	email = p_userdata.email
 	email_verified = p_userdata.emailVerified

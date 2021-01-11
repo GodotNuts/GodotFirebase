@@ -10,9 +10,9 @@ signal push_failed
 var pusher : HTTPRequest
 var listener : Node
 var store : FirebaseDatabaseStore
-var auth : String
+var auth : Dictionary
 var config : Dictionary
-var filter_query : String
+var filter_query : Dictionary
 var db_path : String
 var cached_filter : String
 var push_queue : Array = []
@@ -36,7 +36,7 @@ func set_db_path(path : String, filter_query_dict : Dictionary) -> void:
 	db_path = path
 	filter_query = filter_query_dict
 
-func set_auth_and_config(auth_ref : String, config_ref : Dictionary) -> void:
+func set_auth_and_config(auth_ref : Dictionary, config_ref : Dictionary) -> void:
 	auth = auth_ref
 	config = config_ref
 

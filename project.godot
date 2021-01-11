@@ -9,6 +9,31 @@
 config_version=4
 
 _global_script_classes=[ {
+"base": "HTTPRequest",
+"class": "FirebaseAuth",
+"language": "GDScript",
+"path": "res://addons/godot-firebase/auth/auth.gd"
+}, {
+"base": "Control",
+"class": "FirebaseContainer",
+"language": "GDScript",
+"path": "res://addons/godot-firebase/containers/container.gd"
+}, {
+"base": "Node",
+"class": "FirebaseDatabase",
+"language": "GDScript",
+"path": "res://addons/godot-firebase/database/database.gd"
+}, {
+"base": "Node",
+"class": "FirebaseDatabaseReference",
+"language": "GDScript",
+"path": "res://addons/godot-firebase/database/reference.gd"
+}, {
+"base": "Node",
+"class": "FirebaseDatabaseStore",
+"language": "GDScript",
+"path": "res://addons/godot-firebase/database/database_store.gd"
+}, {
 "base": "Resource",
 "class": "FirebaseResource",
 "language": "GDScript",
@@ -40,6 +65,11 @@ _global_script_classes=[ {
 "path": "res://test/TestUtils.gd"
 } ]
 _global_script_class_icons={
+"FirebaseAuth": "",
+"FirebaseContainer": "",
+"FirebaseDatabase": "",
+"FirebaseDatabaseReference": "",
+"FirebaseDatabaseStore": "",
 "FirebaseResource": "",
 "FirebaseStorage": "",
 "FirebaseUserData": "",

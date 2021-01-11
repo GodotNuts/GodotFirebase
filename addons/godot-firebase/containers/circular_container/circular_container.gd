@@ -1,5 +1,5 @@
 tool
-extends "res://addons/godot-firebase/containers/container.gd"
+extends FirebaseContainer
 
 export (float) var radius : float setget set_radius
 export (float) var offset_in_radians : float setget set_offset
@@ -17,6 +17,7 @@ func set_offset(value : float) -> void:
 var tween : Tween
 
 func _ready() -> void:
+	return
 	tween = get_parent().get_node("Tween")
 
 func add_child(node : Node, legible_unique_name := false)  -> void:

@@ -9,32 +9,62 @@
 config_version=4
 
 _global_script_classes=[ {
+"base": "HTTPRequest",
+"class": "FirebaseAuth",
+"language": "GDScript",
+"path": "res://addons/godot-firebase/auth/auth.gd"
+}, {
+"base": "Control",
+"class": "FirebaseContainer",
+"language": "GDScript",
+"path": "res://addons/godot-firebase/containers/container.gd"
+}, {
+"base": "Node",
+"class": "FirebaseDatabase",
+"language": "GDScript",
+"path": "res://addons/godot-firebase/database/database.gd"
+}, {
+"base": "Node",
+"class": "FirebaseDatabaseReference",
+"language": "GDScript",
+"path": "res://addons/godot-firebase/database/reference.gd"
+}, {
+"base": "Node",
+"class": "FirebaseDatabaseStore",
+"language": "GDScript",
+"path": "res://addons/godot-firebase/database/database_store.gd"
+}, {
 "base": "Resource",
 "class": "FirebaseResource",
 "language": "GDScript",
-"path": "res://addons/godot-firebase/FirebaseResource.gd"
+"path": "res://addons/godot-firebase/database/resource.gd"
 }, {
-"base": "HTTPRequest",
+"base": "Reference",
 "class": "FirebaseStorage",
 "language": "GDScript",
-"path": "res://addons/godot-firebase/FirebaseStorage.gd"
+"path": "res://addons/godot-firebase/storage/storage.gd"
 }, {
 "base": "Reference",
 "class": "FirebaseUserData",
 "language": "GDScript",
-"path": "res://addons/godot-firebase/FirebaseUserData.gd"
+"path": "res://addons/godot-firebase/auth/user_data.gd"
 }, {
-"base": "Node",
+"base": "Reference",
 "class": "FirestoreCollection",
 "language": "GDScript",
-"path": "res://addons/godot-firebase/FirebaseFirestoreCollection.gd"
+"path": "res://addons/godot-firebase/firestore/firestore_collection.gd"
 }, {
-"base": "Node",
+"base": "Reference",
 "class": "FirestoreDocument",
 "language": "GDScript",
-"path": "res://addons/godot-firebase/FirebaseFirestoreDocument.gd"
+"path": "res://addons/godot-firebase/firestore/firestore_document.gd"
 } ]
 _global_script_class_icons={
+"FirebaseAuth": "",
+"FirebaseContainer": "",
+"FirebaseDatabase": "",
+"FirebaseDatabaseReference": "",
+"FirebaseDatabaseStore": "",
 "FirebaseResource": "",
 "FirebaseStorage": "",
 "FirebaseUserData": "",
@@ -50,7 +80,7 @@ config/icon="res://icon.png"
 
 [autoload]
 
-Firebase="*res://addons/godot-firebase/Firebase.tscn"
+Firebase="*res://addons/godot-firebase/firebase/firebase.tscn"
 
 [debug]
 
