@@ -35,7 +35,7 @@ func on_new_update(data):
 		var template = ItemTemplate.instance()
 		add_child(template)
 		template.set_item(item)
-	   
+			
 func on_item_added(item, key, template):
 	pass
 

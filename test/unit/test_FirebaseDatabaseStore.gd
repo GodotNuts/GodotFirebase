@@ -1,6 +1,6 @@
 extends "res://addons/gut/test.gd"
 
-const FirebaseDatabaseStore = preload("res://addons/godot-firebase/FirebaseDatabaseStore.gd")
+const FirebaseDatabaseStore = preload("res://addons/godot-firebase/database/database_store")
 const TestKey = "-MPrgu_F8OXiL-VpRxjq"
 const TestObject = {
     "I": "Some Value",

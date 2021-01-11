@@ -1,4 +1,4 @@
-extends "res://addons/godot-firebase/FirebaseContainer.gd"
+extends "res://addons/godot-firebase/containers/container.gd"
 
 signal chat_added
 

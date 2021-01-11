@@ -19,7 +19,7 @@ func _on_FirebaseAuth_login_succeeded(auth_result):
 
 func get_database_reference(path : String, filter : Dictionary):        
     var firebase_reference = Node.new()
-    firebase_reference.set_script(load("res://addons/godot-firebase/FirebaseReference.gd"))
+    firebase_reference.set_script(load("res://addons/godot-firebase/database/reference.gd"))
     var pusher = HTTPRequest.new()
     var listener = Node.new()
     listener.set_script(load("res://addons/http-sse-client/HTTPSSEClient.gd"))

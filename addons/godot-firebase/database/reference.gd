@@ -73,7 +73,7 @@ func set_store(store_ref):
 	if !store:
 		store = store_ref
 		add_child(store)
-		store.set_script(preload("res://addons/godot-firebase/FirebaseDatabaseStore.gd"))
+		store.set_script(preload("res://addons/godot-firebase/database/database_store.gd"))
 
 func update(path, data):
 	path = path.strip_edges(true, true)

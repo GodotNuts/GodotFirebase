@@ -20,7 +20,7 @@ func set_config(config_json):
 
 func collection(path):
     if !collections.has(path):
-        var coll = preload("res://addons/godot-firebase/FirebaseFirestoreCollection.gd")
+        var coll = preload("res://addons/godot-firebase/firestore/firestore_collection.gd")
         var node = Node.new()
         node.set_script(coll)
         node.extended_url = extended_url

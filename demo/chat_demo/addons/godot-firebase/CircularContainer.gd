@@ -1,5 +1,5 @@
 tool
-extends "res://addons/godot-firebase/FirebaseContainer.gd"
+extends "res://addons/godot-firebase/containers/container.gd"
 
 export (float) var Radius setget set_radius
 export (float) var OffsetInRadians setget set_offset
