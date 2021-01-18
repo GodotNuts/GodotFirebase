@@ -17,7 +17,7 @@ var _data : Dictionary = { }
 # Puts a new payload into this data store at the given path. Any existing values in this data store
 # at the specified path will be completely erased.
 #
-func put(path : String, payload : Dictionary) -> void:
+func put(path : String, payload) -> void:
 		_update_data(path, payload, false)
 
 #
@@ -28,7 +28,7 @@ func put(path : String, payload : Dictionary) -> void:
 #  data directly from the Firebase Realtime Database console, single-element patches will be sent
 #  out – which can cause issues here.
 #
-func patch(path : String, payload : Dictionary) -> void:
+func patch(path : String, payload) -> void:
 		_update_data(path, payload, true)
 
 #
@@ -41,7 +41,7 @@ func get_data() -> Dictionary:
 # Updates this data store by either putting or patching the provided payload into it at the given
 # path. The provided payload can technically be any value.
 #
-func _update_data(path: String, payload : Dictionary, patch: bool) -> void:
+func _update_data(path: String, payload, patch: bool) -> void:
 		print("Updating data store (patch = %s) (%s = %s)..." % [patch, path, payload])
 		
 		#
