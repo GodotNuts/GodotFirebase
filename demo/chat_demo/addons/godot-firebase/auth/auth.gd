@@ -61,10 +61,18 @@ var account_verification_body : Dictionary = {
 	"idToken":"",
 		}
 
+		
+var update_profile_body : Dictionary = {
+	"idToken":"",
+	"displayName":"",
+	"photoUrl":"",
+	"deleteAttribute":"",
+	"returnSecureToken":true
+	}
 
 # Sets the configuration needed for the plugin to talk to Firebase
 # These settings come from the Firebase.gd script automatically
-func set_config(config_json) -> void:
+func set_config(config_json : Dictionary) -> void:
 		_config = config_json
 		signup_request_url %= _config.apiKey
 		signin_request_url %= _config.apiKey
@@ -110,12 +118,11 @@ func signup_with_email_and_password(email : String, password : String) -> void:
 # This function is called whenever there is an authentication request to Firebase
 # On an error, this function with emit the signal 'login_failed' and print the error to the console
 func _on_FirebaseAuth_request_completed(result : int, response_code : int, headers : PoolStringArray, body : PoolByteArray) -> void:
+		is_busy = false
 		var bod = body.get_string_from_utf8()
 		var json_result = JSON.parse(bod)
-#		print(json_result.result)
 		if json_result.error != OK:
 				print_debug("Error while parsing body json")
-				is_busy = false
 				return
 		
 		var res = json_result.result
@@ -123,22 +130,18 @@ func _on_FirebaseAuth_request_completed(result : int, response_code : int, heade
 				if not res.has("kind"):
 						auth = get_clean_keys(res)
 						begin_refresh_countdown()
-						is_busy = false
 				else:
 						match res.kind:
 								RESPONSE_SIGNIN, RESPONSE_SIGNUP:
 										auth = get_clean_keys(res)
 										emit_signal("login_succeeded", auth)
 										begin_refresh_countdown()
-										is_busy = false
 								RESPONSE_USERDATA:
 										var userdata = FirebaseUserData.new(res.users[0])
 										emit_signal("userdata_received", userdata)
-										is_busy = false
 		else:
 				# error message would be INVALID_EMAIL, EMAIL_NOT_FOUND, INVALID_PASSWORD, USER_DISABLED or WEAK_PASSWORD
 				emit_signal("login_failed", res.error.code, res.error.message)
-				is_busy = false
 
 
 # Function used to change the email account for the currently logged in user
@@ -157,6 +160,19 @@ func change_user_password(password : String) -> void:
 				change_password_body.email = password
 				change_password_body.idToken = auth.idtoken
 				request(update_account_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print(change_password_body))
+
+
+# User Profile handlers 
+func update_account(idToken : String, displayName : String, photoUrl : String, deleteAttribute : PoolStringArray, returnSecureToken : bool) -> void:
+	if _is_ready():
+		is_busy = true
+		update_profile_body.idToken = idToken
+		update_profile_body.displayName = displayName
+		update_profile_body.photoUrl = photoUrl
+		update_profile_body.deleteAttribute = deleteAttribute
+		update_profile_body.returnSecureToken = returnSecureToken
+		request(update_account_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print(update_profile_body))	
+
 
 
 # Function to send a account verification email
@@ -220,6 +236,3 @@ func delete_user_account() -> void:
 		if _is_ready():
 				is_busy = true
 				request(delete_account_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print({"idToken":auth.idtoken}))
-
-
-				

@@ -35,11 +35,14 @@ const key_filter_tag : String = "$key"
 const documentId_tag : String = "documentId="
 
 var request : int
+var _requests_queue : Array = []
+
 enum REQUESTS {
 		ADD,
 		GET,
 		UPDATE,
-		DELETE
+		DELETE,
+		NONE
 }
 
 func _ready() -> void:
@@ -47,47 +50,48 @@ func _ready() -> void:
 		add_child(push_node)
 		pusher = push_node
 		pusher.connect("request_completed", self, "on_pusher_request_complete")
+		request = REQUESTS.NONE
 
 # ----------------------- REQUESTS
 
 # used to SAVE/ADD a new document to the collection, specify @documentID and @fields
 func add(documentId : String, fields : Dictionary = {}) -> void:
 		if auth:
-				request = REQUESTS.ADD
-				var url = _get_request_url()
-				url += query_tag + documentId_tag + documentId
-				
-				pusher.request(url, [authorization_header + auth.idtoken], true, HTTPClient.METHOD_POST, JSON.print(fields))
+				if is_pusher_available([REQUESTS.ADD, documentId, fields]):
+					request = REQUESTS.ADD
+					var url = _get_request_url()
+					url += query_tag + documentId_tag + documentId
+					pusher.request(url, [authorization_header + auth.idtoken], true, HTTPClient.METHOD_POST, JSON.print(fields))
 		else:
 				printerr("Unauthorized")
 
 # used to GET a document from the collection, specify @documentId
 func get(documentId : String) -> void:
 		if auth:
-				request = REQUESTS.GET
-				var url = _get_request_url() + separator + documentId.replace(" ", "%20")
-				
-				pusher.request(url, [authorization_header + auth.idtoken], true, HTTPClient.METHOD_GET)
+				if is_pusher_available([REQUESTS.GET, documentId]):
+					request = REQUESTS.GET
+					var url = _get_request_url() + separator + documentId.replace(" ", "%20")
+					pusher.request(url, [authorization_header + auth.idtoken], true, HTTPClient.METHOD_GET)
 		else:
 				printerr("Unauthorized")
 
 # used to UPDATE a document, specify @documentID and @fields
 func update(documentId : String, fields : Dictionary = {}) -> void:
 		if auth:
-				request = REQUESTS.UPDATE
-				var url = _get_request_url() + separator + documentId.replace(" ", "%20")
-				print(fields)
-				pusher.request(url, [authorization_header + auth.idtoken], true, HTTPClient.METHOD_PATCH, JSON.print(fields))
+				if is_pusher_available([REQUESTS.UPDATE, documentId, fields]):
+					request = REQUESTS.UPDATE
+					var url = _get_request_url() + separator + documentId.replace(" ", "%20")
+					pusher.request(url, [authorization_header + auth.idtoken], true, HTTPClient.METHOD_PATCH, JSON.print(fields))
 		else:
 				printerr("Unauthorized")
 
 # used to DELETE a document, specify @documentId
 func delete(documentId : String) -> void:
 		if auth:
-				request = REQUESTS.DELETE
-				var url = _get_request_url() + separator + documentId.replace(" ", "%20")
-				
-				pusher.request(url, [authorization_header + auth.idtoken], true, HTTPClient.METHOD_DELETE)
+				if is_pusher_available([REQUESTS.DELETE, documentId]):
+					request = REQUESTS.DELETE
+					var url = _get_request_url() + separator + documentId.replace(" ", "%20")
+					pusher.request(url, [authorization_header + auth.idtoken], true, HTTPClient.METHOD_DELETE)
 		else:
 				printerr("Unauthorized")
 
@@ -98,10 +102,11 @@ func _get_request_url() -> String:
 
 # ---------------- RESPONSES
 func on_pusher_request_complete(result, response_code, headers, body):
+		request = REQUESTS.NONE
 		var bod = JSON.parse(body.get_string_from_utf8()).result
 		if response_code == HTTPClient.RESPONSE_OK:
 				match request:
-						REQUESTS.ADD:	
+						REQUESTS.ADD:
 								var doc_infos : Dictionary = bod
 								var document : FirestoreDocument = FirestoreDocument.new(doc_infos, doc_infos.name, doc_infos.fields) 
 								emit_signal("add_document", document )
@@ -117,3 +122,28 @@ func on_pusher_request_complete(result, response_code, headers, body):
 								emit_signal("delete_document")
 		else:
 				emit_signal("error",bod.error.code,bod.error.status,bod.error.message)
+		process_queue()
+
+# Check whether the @pusher is available or not to issue a request. If not, append a @request_element.
+# A @request_element is a touple composed by the 'request_type' (@request) and the 'request_content' (@url)
+func is_pusher_available(request_element : Array = []) -> bool:
+	if request == REQUESTS.NONE : 
+		return true
+	else:
+		_requests_queue.append(request_element)
+		print("Firestore is busy processing another request - the current request has been added to queue.")
+		return false
+
+func process_queue() -> void:
+	if _requests_queue.size() > 0:
+		var next_request : Array = _requests_queue.pop_front()
+		match next_request[0]:
+			REQUESTS.ADD:
+				add(next_request[1], next_request[2])
+			REQUESTS.GET:
+				get(next_request[1])
+			REQUESTS.UPDATE:
+				update(next_request[1], next_request[2])
+			REQUESTS.DELETE:
+				delete(next_request[1])
+		print("request %s processed"%[str(next_request[0])])
