@@ -88,13 +88,27 @@ gdscript/warnings/enable=false
 
 [display]
 
-window/size/width=800
-window/size/height=1200
+window/size/width=480
+window/size/height=720
+window/dpi/allow_hidpi=true
 window/handheld/orientation="portrait"
 
 [editor_plugins]
 
 enabled=PoolStringArray( "godot-firebase", "http-sse-client" )
+
+[environment_variables]
+
+apiKey="AIzaSyBvl4-0960dIKF-P7V9c508xG72Qb_lO_I"
+authDomain="ristorantedigitaletest.firebaseapp.com"
+databaseURL="https://ristorantedigitaletest.firebaseio.com"
+projectId="ristorantedigitaletest"
+storageBucket="ristorantedigitaletest.appspot.com"
+messagingSenderId="340498762442"
+appId="1:340498762442:web:c4a0c1a7575c0e41d48233"
+measurementId="G-DTY4D8RZL1"
+googleId="340498762442-fo1ru5e6apibhbj1pq83gl4t0o81rhd5.apps.googleusercontent.com"
+googleSecret="8D0aTzsKQY8GfQVUe9P_GAk7"
 
 [input]
 

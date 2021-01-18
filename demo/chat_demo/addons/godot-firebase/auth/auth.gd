@@ -112,7 +112,7 @@ func signup_with_email_and_password(email : String, password : String) -> void:
 func _on_FirebaseAuth_request_completed(result : int, response_code : int, headers : PoolStringArray, body : PoolByteArray) -> void:
 		var bod = body.get_string_from_utf8()
 		var json_result = JSON.parse(bod)
-		print(json_result.result)
+#		print(json_result.result)
 		if json_result.error != OK:
 				print_debug("Error while parsing body json")
 				is_busy = false

@@ -17,7 +17,7 @@ var db_ref : FirebaseDatabaseReference
 func _ready() -> void:
 	Firebase.Auth.connect("login_succeeded", self, "on_login_succeeded")
 		
-func on_login_succeeded(auth_token : String):
+func on_login_succeeded(auth_token : Dictionary):
 	connect_to_database()
 	
 func connect_to_database() -> void:
