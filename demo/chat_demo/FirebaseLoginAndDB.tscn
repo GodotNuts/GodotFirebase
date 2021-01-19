@@ -5,6 +5,9 @@
 [node name="FirebaseLoginAndDB" type="Control"]
 anchor_right = 1.0
 anchor_bottom = 1.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
 
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
 anchor_right = 1.0
@@ -35,6 +38,5 @@ margin_top = 125.0
 margin_right = 800.0
 margin_bottom = 145.0
 text = "SIGNUP"
-
 [connection signal="pressed" from="VBoxContainer/Login" to="VBoxContainer" method="_on_Login_pressed"]
 [connection signal="pressed" from="VBoxContainer/Signup" to="VBoxContainer" method="_on_Signup_pressed"]
