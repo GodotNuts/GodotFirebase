@@ -1,8 +1,8 @@
 extends Node
 
 const ENVIRONMENT_VARIABLES : String = "firebase/environment_variables/"
-onready var Auth : Node = $Auth
-onready var Firestore : Node = $Firestore
+onready var Auth : FirebaseAuth = $Auth
+onready var Firestore : FirebaseFirestore = $Firestore
 onready var Database : Node = $Database
 
 # Configuration used by all files in this project
@@ -17,6 +17,8 @@ var config : Dictionary = {
 		"messagingSenderId": "",
 		"appId": "",
 		"measurementId": "",
+		"clientId": "",
+		"clientSecret": "",
 		}
 
 func load_config() -> void:

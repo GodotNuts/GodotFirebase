@@ -1,3 +1,4 @@
+class_name FirebaseFirestore
 extends Node
 
 signal listed_documents(documents)
@@ -32,10 +33,13 @@ func collection(path : String) -> FirestoreCollection:
 		else:
 				return collections[path]
 
-func list(path : String) -> void:
-		if path:
-				var url = base_url + extended_url + path + "/"
-				request_list_node.request(url, ["Authorization: Bearer " + auth.idtoken], true, HTTPClient.METHOD_GET)
+func list(path : String = "") -> void:
+		var url : String
+		if not path in [""," "]:
+				url = base_url + extended_url + path + "/"
+		else:
+				url = base_url + extended_url
+		request_list_node.request(url, ["Authorization: Bearer " + auth.idtoken], true, HTTPClient.METHOD_GET)
 
 func on_list_request_completed(result : int, response_code : int, headers : PoolStringArray, body : PoolByteArray):
 		print(JSON.parse(body.get_string_from_utf8()).result)

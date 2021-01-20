@@ -4,24 +4,36 @@ extends HTTPRequest
 signal login_succeeded(auth_result)
 signal login_failed(code, message)
 signal userdata_received(userdata)
+signal token_exchanged(successful)
 
-const RESPONSE_SIGNIN : String   = "identitytoolkit#VerifyPasswordResponse"
 const RESPONSE_SIGNUP : String   = "identitytoolkit#SignupNewUserResponse"
+const RESPONSE_SIGNIN : String   = "identitytoolkit#VerifyPasswordResponse"
+const RESPONSE_ASSERTION : String  = "identitytoolkit#VerifyAssertionResponse"
 const RESPONSE_USERDATA : String = "identitytoolkit#GetAccountInfoResponse"
 
-var signup_request_url : String = "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=%s" 
+var signup_request_url : String = "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=%s"
+var signin_with_oauth_request_url : String = "https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=%s"
 var signin_request_url : String = "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=%s" 
 var userdata_request_url : String = "https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=%s" 
 var refresh_request_url : String = "https://securetoken.googleapis.com/v1/token?key=%s"
 var oobcode_request_url : String = "https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=%s"
 var delete_account_request_url : String = "https://identitytoolkit.googleapis.com/v1/accounts:delete?key=%s"
 var update_account_request_url : String = "https://identitytoolkit.googleapis.com/v1/accounts:update?key=%s"
+var google_auth_request_url : String = "https://accounts.google.com/o/oauth2/v2/auth?"
+var google_token_request_url : String = "https://oauth2.googleapis.com/token?"
 
 var _config : Dictionary = {}
 var auth : Dictionary = {}
 var needs_refresh : bool = false
 var is_busy : bool = false
 
+var requesting : int = -1
+
+enum REQUESTS {
+	NONE = -1,
+	EXCHANGE_TOKEN,
+	LOGIN_WITH_OAUTH,
+}
 
 var login_request_body : Dictionary = {
 		"email":"",
@@ -29,6 +41,19 @@ var login_request_body : Dictionary = {
 		"returnSecureToken": true,
 		}
 
+var _post_body : String = "id_token=[GOOGLE_ID_TOKEN]&providerId=[PROVIDER_ID]"
+var _request_uri : String = "[REQUEST_URI]"
+
+var oauth_login_request_body : Dictionary = {
+	"postBody":"",
+	"requestUri":"",
+	"returnIdpCredential":true,
+	"returnSecureToken":true
+}
+
+var anonymous_login_request_body : Dictionary = {
+	"returnSecureToken":true
+	}
 
 var refresh_request_body : Dictionary = {
 		"grant_type":"refresh_token",
@@ -70,17 +95,35 @@ var update_profile_body : Dictionary = {
 	"returnSecureToken":true
 	}
 
+var google_auth_body : Dictionary = {
+	"scope":"email openid profile",
+	"response_type":"code",
+	"redirect_uri":"urn:ietf:wg:oauth:2.0:oob",
+	"client_id":"[CLIENT_ID]",
+}
+
+var google_token_body : Dictionary = {
+	"code":"",
+	"client_id":"",
+	"client_secret":"",
+	"redirect_uri":"urn:ietf:wg:oauth:2.0:oob",
+	"grant_type":"authorization_code"
+}
+
+
 # Sets the configuration needed for the plugin to talk to Firebase
 # These settings come from the Firebase.gd script automatically
 func set_config(config_json : Dictionary) -> void:
 		_config = config_json
 		signup_request_url %= _config.apiKey
 		signin_request_url %= _config.apiKey
+		signin_with_oauth_request_url %= _config.apiKey
 		userdata_request_url %= _config.apiKey
 		refresh_request_url %= _config.apiKey
 		oobcode_request_url %= _config.apiKey
 		delete_account_request_url %= _config.apiKey
 		update_account_request_url %= _config.apiKey
+		
 		connect("request_completed", self, "_on_FirebaseAuth_request_completed")
 
 
@@ -93,6 +136,25 @@ func _is_ready() -> bool:
 		else:
 				return true
 
+# Called with Firebase.Auth.signup_with_email_and_password(email, password)
+# You must pass in the email and password to this function for it to work correctly
+func signup_with_email_and_password(email : String, password : String) -> void:
+		if _is_ready():
+				is_busy = true
+				login_request_body.email = email
+				login_request_body.password = password
+				request(signup_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print(login_request_body))
+
+
+# Called with Firebase.Auth.anonymous_login()
+# A successful request is indicated by a 200 OK HTTP status code. 
+# The response contains the Firebase ID token and refresh token associated with the anonymous user.
+# The 'mail' field will be empty since no email is linked to an anonymous user
+func login_anonymous() -> void:
+	if _is_ready():
+		is_busy = true
+		request(signup_request_url, ["Content-Type : application/json"], true, HTTPClient.METHOD_POST, JSON.print(anonymous_login_request_body))
+
 
 # Called with Firebase.Auth.login_with_email_and_password(email, password)
 # You must pass in the email and password to this function for it to work correctly
@@ -104,15 +166,38 @@ func login_with_email_and_password(email : String, password : String) -> void:
 				login_request_body.password = password
 				request(signin_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print(login_request_body))
 
+# Open a web page in browser redirecting to Google oAuth2 page for the current project
+# Once given user's authorization, a token will be generated.
+# NOTE** with this method, the authorization process will be copy-pasted
+func get_google_auth(client_id : String = _config.clientId) -> void:
+	var url_endpoint : String = google_auth_request_url
+	for key in google_auth_body.keys():
+		url_endpoint+=key+"="+google_auth_body[key]+"&"
+	url_endpoint = url_endpoint.replace("[CLIENT_ID]&", client_id)
+	OS.shell_open(url_endpoint)
 
-# Called with Firebase.Auth.signup_with_email_and_password(email, password)
-# You must pass in the email and password to this function for it to work correctly
-func signup_with_email_and_password(email : String, password : String) -> void:
-		if _is_ready():
-				is_busy = true
-				login_request_body.email = email
-				login_request_body.password = password
-				request(signup_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print(login_request_body))
+# Exchange the authorization oAuth2 code obtained from browser with a proper access id_token
+func exchange_google_token(google_token : String) -> void:
+	if _is_ready():
+		is_busy = true
+		google_token_body.code = google_token
+		google_token_body.client_id = _config.clientId
+		google_token_body.client_secret = _config.clientSecret
+		requesting = REQUESTS.EXCHANGE_TOKEN
+		request(google_token_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print(google_token_body))
+
+# Login with Google oAuth2.
+# A token is automatically obtained using an authorization code using @get_google_auth()
+# @provider_id and @request_uri can be changed
+func login_with_oauth(google_token: String, provider_id : String = "google.com", request_uri : String = "http://localhost") -> void:
+	exchange_google_token(google_token)
+	var is_successful : bool = yield(self, "token_exchanged")
+	if is_successful and _is_ready():
+		is_busy = true
+		oauth_login_request_body.postBody = _post_body.replace("[GOOGLE_ID_TOKEN]", auth.idtoken).replace("[PROVIDER_ID]", provider_id)
+		oauth_login_request_body.requestUri = _request_uri.replace("[REQUEST_URI]", request_uri)
+		requesting = REQUESTS.LOGIN_WITH_OAUTH
+		request(signin_with_oauth_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print(oauth_login_request_body))
 
 
 # This function is called whenever there is an authentication request to Firebase
@@ -128,11 +213,14 @@ func _on_FirebaseAuth_request_completed(result : int, response_code : int, heade
 		var res = json_result.result
 		if response_code == HTTPClient.RESPONSE_OK:
 				if not res.has("kind"):
-						auth = get_clean_keys(res)
-						begin_refresh_countdown()
+					auth = get_clean_keys(res)
+					match requesting:
+						REQUESTS.EXCHANGE_TOKEN:
+							emit_signal("token_exchanged", true)
+					begin_refresh_countdown()
 				else:
 						match res.kind:
-								RESPONSE_SIGNIN, RESPONSE_SIGNUP:
+								RESPONSE_SIGNIN, RESPONSE_SIGNUP, RESPONSE_ASSERTION:
 										auth = get_clean_keys(res)
 										emit_signal("login_succeeded", auth)
 										begin_refresh_countdown()
@@ -141,8 +229,12 @@ func _on_FirebaseAuth_request_completed(result : int, response_code : int, heade
 										emit_signal("userdata_received", userdata)
 		else:
 				# error message would be INVALID_EMAIL, EMAIL_NOT_FOUND, INVALID_PASSWORD, USER_DISABLED or WEAK_PASSWORD
-				emit_signal("login_failed", res.error.code, res.error.message)
-
+				if requesting == REQUESTS.EXCHANGE_TOKEN:
+					emit_signal("token_exchanged", false)
+					emit_signal("login_failed", res.error, res.error_description)
+				else:
+					emit_signal("login_failed", res.error.code, res.error.message)
+		requesting = REQUESTS.NONE
 
 # Function used to change the email account for the currently logged in user
 func change_user_email(email : String) -> void:
@@ -192,6 +284,25 @@ func send_password_reset_email(email : String) -> void:
 				request(oobcode_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print(password_reset_body))
 
 
+# Function called to get all
+func get_user_data() -> void:
+		if _is_ready():
+				is_busy = true
+				if auth == null or auth.has("idtoken") == false:
+						print_debug("Not logged in")
+						is_busy = false
+						return
+						
+				request(userdata_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print({"idToken":auth.idtoken}))
+
+
+# Function used to delete the account of the currently authenticated user
+func delete_user_account() -> void:
+		if _is_ready():
+				is_busy = true
+				request(delete_account_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print({"idToken":auth.idtoken}))
+
+
 # Function is called when a new token is issued to a user. The function will yield until the token has expired, and then request a new one.
 func begin_refresh_countdown() -> void:
 		var refresh_token = null
@@ -219,20 +330,3 @@ func get_clean_keys(auth_result : Dictionary) -> Dictionary:
 		return cleaned
 
 
-# Function called to get all
-func get_user_data() -> void:
-		if _is_ready():
-				is_busy = true
-				if auth == null or auth.has("idtoken") == false:
-						print_debug("Not logged in")
-						is_busy = false
-						return
-						
-				request(userdata_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print({"idToken":auth.idtoken}))
-
-
-# Function used to delete the account of the currently authenticated user
-func delete_user_account() -> void:
-		if _is_ready():
-				is_busy = true
-				request(delete_account_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print({"idToken":auth.idtoken}))
