@@ -45,4 +45,4 @@ func fields2dict(doc : Dictionary) -> Dictionary:
 		return dict
 
 func _to_string() -> String:
-	return JSON.print(document)
+	return JSON.print(fields2dict(document))
