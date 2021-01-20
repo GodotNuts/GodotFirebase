@@ -43,3 +43,6 @@ func fields2dict(doc : Dictionary) -> Dictionary:
 		for field in (doc.fields).keys():
 				dict[field] = (doc.fields)[field].values()[0]
 		return dict
+
+func _to_string() -> String:
+	return JSON.print(document)

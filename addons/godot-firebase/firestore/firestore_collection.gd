@@ -102,7 +102,6 @@ func _get_request_url() -> String:
 
 # ---------------- RESPONSES
 func on_pusher_request_complete(result, response_code, headers, body):
-		request = REQUESTS.NONE
 		var bod = JSON.parse(body.get_string_from_utf8()).result
 		if response_code == HTTPClient.RESPONSE_OK:
 				match request:
@@ -122,6 +121,7 @@ func on_pusher_request_complete(result, response_code, headers, body):
 								emit_signal("delete_document")
 		else:
 				emit_signal("error",bod.error.code,bod.error.status,bod.error.message)
+		request = REQUESTS.NONE
 		process_queue()
 
 # Check whether the @pusher is available or not to issue a request. If not, append a @request_element.
