@@ -1,8 +1,8 @@
 class_name FirebaseUserData
 extends Reference
 
-var local_id := ""            # The uid of the current user.
-var email := ""
+var local_id : String = ""            # The uid of the current user.
+var email : String = ""
 var email_verified := false   # Whether or not the account's email has been verified.
 var password_updated_at : float = 0  # The timestamp, in milliseconds, that the account password was last changed.
 var last_login_at : float = 0        # The timestamp, in milliseconds, that the account last logged in at.
@@ -17,9 +17,10 @@ func _init(p_userdata : Dictionary) ->  void:
 	local_id = p_userdata.localId
 	email = p_userdata.email
 	email_verified = p_userdata.emailVerified
-	password_updated_at = int(p_userdata.passwordUpdatedAt)
 	last_login_at = int(p_userdata.lastLoginAt)
 	created_at = int(p_userdata.createdAt)
+	if p_userdata.has("passwordUpdatedAt"):
+		password_updated_at = int(p_userdata.passwordUpdatedAt)
 	if p_userdata.has("displayName"):
 		display_name = p_userdata.displayName
 	provider_user_info = p_userdata.providerUserInfo
@@ -31,6 +32,9 @@ func _init(p_userdata : Dictionary) ->  void:
 			display_name = provider_user_info[0].displayName
 
 func as_text() -> String:
+	return _to_string()
+
+func _to_string() -> String:
 	var txt = "local_id : %s\n" % local_id
 	txt += "email : %s\n" % email
 	txt += "email_verified : %s\n" % ("true" if email_verified else "false")

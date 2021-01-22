@@ -55,7 +55,7 @@ func set_listener(listener_ref : Node) -> void:
 		var extended_url = separator + db_path + _get_remaining_path(false)
 		listener.connect_to_host(base_url, extended_url)
 
-func on_new_sse_event(headers : PoolStringArray, event : String, data : Dictionary) -> void:
+func on_new_sse_event(headers : Dictionary, event : String, data : Dictionary) -> void:
 	if data:
 		var command = event        
 		if command and command != "keep-alive":
@@ -136,7 +136,7 @@ func _get_filter():
 # Appropriately updates the current local copy of the data stored at this reference in the Firebase
 # Realtime Database.
 #
-func _route_data(command : String, path : String, data : Dictionary) -> void:
+func _route_data(command : String, path : String, data) -> void:
 	if command == put_tag:
 		store.put(path, data)
 	elif command == patch_tag:

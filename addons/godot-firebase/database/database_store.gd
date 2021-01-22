@@ -4,14 +4,15 @@
 # events received from the service.
 #
 
-tool
 class_name FirebaseDatabaseStore
 extends Node
 
 const _DELIMITER : String = "/"
 const _ROOT : String = "_root"
 
+var debug : bool = false
 var _data : Dictionary = { }
+
 
 #
 # Puts a new payload into this data store at the given path. Any existing values in this data store
@@ -42,7 +43,8 @@ func get_data() -> Dictionary:
 # path. The provided payload can technically be any value.
 #
 func _update_data(path: String, payload, patch: bool) -> void:
-		print("Updating data store (patch = %s) (%s = %s)..." % [patch, path, payload])
+		if debug:
+			print("Updating data store (patch = %s) (%s = %s)..." % [patch, path, payload])
 		
 		#
 		# Remove any leading separators.
@@ -86,7 +88,8 @@ func _update_data(path: String, payload, patch: bool) -> void:
 		else:
 				dict[final_key] = payload
 		
-		print("...Data store updated (%s)." % _data)
+		if debug:
+			print("...Data store updated (%s)." % _data)
 
 #
 # Helper method to "blit" changes in an update dictionary payload onto an original dictionary.

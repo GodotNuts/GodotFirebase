@@ -80,6 +80,7 @@ func _process(delta):
 				if body:
 						var event_data = get_event_data(body)
 						if event_data.event != "keep-alive" and event_data.event != continue_internal:
+#								print(event_data.data)
 								var result = JSON.parse(event_data.data).result
 								if response_body.size() > 0 and result: # stop here if the value doesn't parse
 										response_body.resize(0)

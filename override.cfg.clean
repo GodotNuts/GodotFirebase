@@ -1,0 +1,12 @@
+[firebase/environment_variables]
+
+apiKey=""
+authDomain=""
+databaseURL=""
+projectId=""
+storageBucket=""
+messagingSenderId=""
+appId=""
+measurementId=""
+clientId=""
+clientSecret=""

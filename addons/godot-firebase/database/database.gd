@@ -1,4 +1,4 @@
-class_name FirebaseDatabase	
+class_name FirebaseDatabase
 extends Node
 
 const ORDER_BY : String = "orderBy"
