@@ -16,12 +16,12 @@ The following individuals and many more have contributed significantly to this p
 ## :arrow_down:  Cloning
 SSH:
 ```bash
-git clone git@github.com:WolfgangSenff/GodotFirebase.git
+git clone git@github.com:GodotNuts/GodotFirebase.git
 ```
 
 HTTPS:
 ```
-git clone https://github.com/WolfgangSenff/GodotFirebase.git
+git clone https://github.com/GodotNuts/GodotFirebase.git
 ```
 
 ## :question: How to Use
