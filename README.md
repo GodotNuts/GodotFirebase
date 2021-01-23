@@ -26,22 +26,16 @@ git clone https://github.com/GodotNuts/GodotFirebase.git
 
 ## :question: How to Use
 
-The best place to find any and all questions on how to install, activate, and use this plugin is [through the wiki](https://github.com/WolfgangSenff/GodotFirebase/wiki).
+The best place to find any and all questions on how to install, activate, and use this plugin is [through the wiki](https://github.com/GodotNuts/GodotFirebase/wiki).
 
 ## :bug: Reporting an Issue
 
-Please make sure to read [these guidelines](https://github.com/WolfgangSenff/GodotFirebase/wiki/Contributing#issues) before submitting an issue. This helps us all figure out what the problem is and how to solve it.
+Please make sure to read [these guidelines](https://github.com/GodotNuts/GodotFirebase/wiki/Contributing#issues) before submitting an issue. This helps us all figure out what the problem is and how to solve it.
 
 ## :computer: Making Contributions
 
-Contributions are always welcome. Please feel free to fork this repo and follow [these guidelines](https://github.com/WolfgangSenff/GodotFirebase/wiki/Contributing) 
+Contributions are always welcome. Please feel free to fork this repo and follow [these guidelines](https://github.com/GodotNuts/GodotFirebase/wiki/Contributing) 
 
 ## :memo:  License
 
-This plugin falls under the [MIT License](https://github.com/WolfgangSenff/GodotFirebase/blob/master/LICENSE)
-
-## :ballot_box_with_check: To Do
-
-1. Implement other Firebase features: Ads, Remote Config, Dynamic Links
-2. Add comments to code
-3. Create documentation
+This plugin falls under the [MIT License](https://github.com/GodotNuts/GodotFirebase/blob/main/LICENSE)
