@@ -9,4 +9,4 @@ func _init(key : String, data : Dictionary) -> void:
 		self.data = data
 
 func _to_string():
-	return "{ key:{key}, data:{data}".format({key = key, data = data})
+	return "{ key:{key}, data:{data} }".format({key = key, data = data})

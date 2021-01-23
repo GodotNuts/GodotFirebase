@@ -83,7 +83,7 @@ func update(path : String, data : Dictionary) -> void:
 	
 	var to_update = JSON.print(data)
 	if pusher.get_http_client_status() != HTTPClient.STATUS_REQUESTING:
-		var resolved_path = (_get_list_url() + db_path + path + _get_remaining_path())
+		var resolved_path = (_get_list_url() + db_path + "/" + path + _get_remaining_path())
 		
 		pusher.request(resolved_path, PoolStringArray(), true, HTTPClient.METHOD_PATCH, to_update)
 	else:
@@ -149,5 +149,4 @@ func on_push_request_complete(result : int, response_code : int, headers : PoolS
 		emit_signal("push_failed")
 	
 	if push_queue.size() > 0:
-		push(push_queue[0])
-		push_queue.remove(0)
+		push(push_queue.pop_front())
