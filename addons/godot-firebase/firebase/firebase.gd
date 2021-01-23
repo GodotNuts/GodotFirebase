@@ -3,7 +3,7 @@ extends Node
 const ENVIRONMENT_VARIABLES : String = "firebase/environment_variables/"
 onready var Auth : FirebaseAuth = $Auth
 onready var Firestore : FirebaseFirestore = $Firestore
-onready var Database : Node = $Database
+onready var Database : FirebaseDatabase = $Database
 
 # Configuration used by all files in this project
 # These values can be found in your Firebase Project
