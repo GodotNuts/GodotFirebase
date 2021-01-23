@@ -61,7 +61,7 @@ func add(documentId : String, fields : Dictionary = {}) -> void:
 					request = REQUESTS.ADD
 					var url = _get_request_url()
 					url += query_tag + documentId_tag + documentId
-					pusher.request(url, [authorization_header + auth.idtoken], true, HTTPClient.METHOD_POST, JSON.print(fields))
+					pusher.request(url, [authorization_header + auth.idtoken], true, HTTPClient.METHOD_POST, JSON.print(FirestoreDocument.dict2fields(fields)))
 		else:
 				printerr("Unauthorized")
 
@@ -81,7 +81,7 @@ func update(documentId : String, fields : Dictionary = {}) -> void:
 				if is_pusher_available([REQUESTS.UPDATE, documentId, fields]):
 					request = REQUESTS.UPDATE
 					var url = _get_request_url() + separator + documentId.replace(" ", "%20")
-					pusher.request(url, [authorization_header + auth.idtoken], true, HTTPClient.METHOD_PATCH, JSON.print(fields))
+					pusher.request(url, [authorization_header + auth.idtoken], true, HTTPClient.METHOD_PATCH, JSON.print(FirestoreDocument.dict2fields(fields)))
 		else:
 				printerr("Unauthorized")
 
@@ -107,21 +107,25 @@ func on_pusher_request_complete(result, response_code, headers, body):
 				match request:
 						REQUESTS.ADD:
 								var doc_infos : Dictionary = bod
-								var document : FirestoreDocument = FirestoreDocument.new(doc_infos, doc_infos.name, doc_infos.fields) 
+								var document : FirestoreDocument = FirestoreDocument.new(doc_infos) 
+								request = REQUESTS.NONE
 								emit_signal("add_document", document )
 						REQUESTS.GET:
 								var doc_infos : Dictionary = bod
-								var document : FirestoreDocument = FirestoreDocument.new(doc_infos, doc_infos.name, doc_infos.fields) 
+								var document : FirestoreDocument = FirestoreDocument.new(doc_infos) 
+								request = REQUESTS.NONE
 								emit_signal("get_document", document )
 						REQUESTS.UPDATE:
 								var doc_infos : Dictionary = bod
-								var document : FirestoreDocument = FirestoreDocument.new(doc_infos, doc_infos.name, doc_infos.fields) 
+								var document : FirestoreDocument = FirestoreDocument.new(doc_infos) 
+								request = REQUESTS.NONE
 								emit_signal("update_document", document )
 						REQUESTS.DELETE:
-								emit_signal("delete_document")
+							request = REQUESTS.NONE
+							emit_signal("delete_document")
 		else:
+				request = REQUESTS.NONE
 				emit_signal("error",bod.error.code,bod.error.status,bod.error.message)
-		request = REQUESTS.NONE
 		process_queue()
 
 # Check whether the @pusher is available or not to issue a request. If not, append a @request_element.
@@ -137,13 +141,18 @@ func is_pusher_available(request_element : Array = []) -> bool:
 func process_queue() -> void:
 	if _requests_queue.size() > 0:
 		var next_request : Array = _requests_queue.pop_front()
+		var request_code : String
 		match next_request[0]:
 			REQUESTS.ADD:
 				add(next_request[1], next_request[2])
+				request_code = "Add"
 			REQUESTS.GET:
 				get(next_request[1])
+				request_code = "Get"
 			REQUESTS.UPDATE:
 				update(next_request[1], next_request[2])
+				request_code = "Update"
 			REQUESTS.DELETE:
 				delete(next_request[1])
-		print("request %s processed"%[str(next_request[0])])
+				request_code = "Delete"
+		print("request [%s] -> [%s] processed" % [request_code, next_request[1]])

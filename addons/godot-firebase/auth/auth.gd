@@ -99,7 +99,7 @@ var google_auth_body : Dictionary = {
 	"scope":"email openid profile",
 	"response_type":"code",
 	"redirect_uri":"urn:ietf:wg:oauth:2.0:oob",
-	"client_id":"[CLIENT_ID]",
+	"client_id":"[CLIENT_ID]"
 }
 
 var google_token_body : Dictionary = {
