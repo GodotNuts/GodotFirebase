@@ -8,7 +8,7 @@ A Google Firebase SDK written in GDScript for use in Godot Engine projects.
 
 The following individuals and many more have contributed significantly to this project. If you would like to support this project's further development, consider supporting them.
 
-- Kyle Szklenski (creator) ([buy me a coffee](https://ko-fi.com/kyleszklenski))
+- [Kyle Szklenski](https://github.com/WolfgangSenff) (creator) ([buy me a coffee](https://ko-fi.com/kyleszklenski))
 - [Nicolò Santilio](https://github.com/fenix-hub) (creator)
 - [Chuck Lindblom](https://github.com/BearDooks)
 - [Luke Hollenback](https://github.com/lukehollenback) ([buy me a coffee](https://ko-fi.com/lukehollenback))
@@ -16,12 +16,12 @@ The following individuals and many more have contributed significantly to this p
 ## :arrow_down:  Cloning
 SSH:
 ```bash
-git clone git@github.com:WolfgangSenff/GodotFirebase.git
+git clone git@github.com:GodotNuts/GodotFirebase.git
 ```
 
 HTTPS:
 ```
-git clone https://github.com/WolfgangSenff/GodotFirebase.git
+git clone https://github.com/GodotNuts/GodotFirebase.git
 ```
 
 ## :question: How to Use
