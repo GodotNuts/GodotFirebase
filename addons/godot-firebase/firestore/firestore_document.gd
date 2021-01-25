@@ -21,9 +21,10 @@ func _init(doc : Dictionary = {}, _doc_name : String = "", _doc_fields : Diction
 
 # Pass a dictionary { 'key' : 'value' } to format it in a APIs usable .fields 
 static func dict2fields(dict : Dictionary) -> Dictionary:
-		var fields : Dictionary = dict
+		var fields : Dictionary = {}
 		var var_type : String = ""
 		for field in dict.keys():
+				var field_value = dict[field]
 				match typeof(dict[field]):
 						TYPE_NIL:
 								var_type = "nullValue"
@@ -37,9 +38,35 @@ static func dict2fields(dict : Dictionary) -> Dictionary:
 								var_type = "stringValue"
 						TYPE_ARRAY:
 								var_type = "arrayValue"
+								field_value = {"values": array2fields(field_value)}
 		
-				fields[field] = { var_type : dict[field] }
+				fields[field] = { var_type : field_value }
 		return {'fields' : fields}
+
+static func array2fields(array : Array) -> Array:
+		var fields : Array = array
+		var parsed_fields : Array = []
+		var var_type : String = ""
+		for field in fields:
+				if typeof(field) == TYPE_DICTIONARY:
+						parsed_fields.append({'mapValue': dict2fields(field) })
+						continue
+				match typeof(field):
+						TYPE_NIL:
+								var_type = "nullValue"
+						TYPE_BOOL:
+								var_type = "booleanValue"
+						TYPE_INT:
+								var_type = "integerValue"
+						TYPE_REAL:
+								var_type = "doubleValue"
+						TYPE_STRING:
+								var_type = "stringValue"
+						TYPE_ARRAY:
+								var_type = "arrayValue"
+						
+				parsed_fields.append({ var_type : field })
+		return parsed_fields
 
 # Pass the .fields inside a Firestore Document to print out the Dictionary { 'key' : 'value' }
 static func fields2dict(doc : Dictionary) -> Dictionary:
