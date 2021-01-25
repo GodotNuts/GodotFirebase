@@ -18,7 +18,7 @@ func set_config(config_json : Dictionary) -> void:
 func _on_FirebaseAuth_login_succeeded(auth_result : Dictionary) -> void:
 		auth = auth_result
 
-func get_database_reference(path : String, filter : Dictionary) -> FirebaseDatabaseReference:        
+func get_database_reference(path : String, filter : Dictionary = {}) -> FirebaseDatabaseReference:        
 		var firebase_reference : FirebaseDatabaseReference = FirebaseDatabaseReference.new()
 		var pusher : HTTPRequest = HTTPRequest.new()
 		var listener : Node = Node.new()
