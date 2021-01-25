@@ -34,4 +34,6 @@ func _ready() -> void:
 		Firestore.set_config(config)
 		Database.set_config(config)
 		Auth.connect("login_succeeded", Database, "_on_FirebaseAuth_login_succeeded")
+		Auth.connect("signup_succeeded", Database, "_on_FirebaseAuth_login_succeeded")
 		Auth.connect("login_succeeded", Firestore, "_on_FirebaseAuth_login_succeeded")
+		Auth.connect("signup_succeeded", Firestore, "_on_FirebaseAuth_login_succeeded")
