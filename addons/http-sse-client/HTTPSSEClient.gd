@@ -111,9 +111,3 @@ func get_event_data(body : String) -> Dictionary:
 func _exit_tree():
     if httpclient:
         httpclient.close()
-
-func _notification(what):
-    if what == MainLoop.NOTIFICATION_WM_QUIT_REQUEST:
-        if httpclient:
-            httpclient.close()
-        get_tree().quit()
