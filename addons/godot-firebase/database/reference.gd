@@ -57,7 +57,7 @@ func set_listener(listener_ref : Node) -> void:
 
 func on_new_sse_event(headers : Dictionary, event : String, data : Dictionary) -> void:
     if data:
-        var command = event        
+        var command = event
         if command and command != "keep-alive":
             _route_data(command, data.path, data.data)
             if command == _put_tag:
