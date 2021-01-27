@@ -200,6 +200,18 @@ func login_with_oauth(google_token: String, provider_id : String = "google.com",
 		requesting = REQUESTS.LOGIN_WITH_OAUTH
 		request(_signin_with_oauth_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print(_oauth_login_request_body))
 
+# Function is called when requesting a manual token refresh
+func manual_token_refresh(auth_data):
+    auth = auth_data
+    var refresh_token = null
+    auth = get_clean_keys(auth)
+    if auth.has("refreshtoken"):
+        refresh_token = auth.refreshtoken
+    elif auth.has("refresh_token"):
+        refresh_token = auth.refresh_token
+    _needs_refresh = true
+    _refresh_request_body.refresh_token = refresh_token
+    request(_refresh_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print(_refresh_request_body))
 
 # This function is called whenever there is an authentication request to Firebase
 # On an error, this function with emit the signal 'login_failed' and print the error to the console
@@ -240,6 +252,38 @@ func _on_FirebaseAuth_request_completed(result : int, response_code : int, heade
 		else:
 			emit_signal("login_failed", res.error.code, res.error.message)
 	requesting = REQUESTS.NONE
+
+# Function used to save the auth data provided by Firebase into an encrypted file
+# Note this does not work in HTML5 or UWP
+func save_auth(auth : Dictionary) -> void:
+    if (OS.get_name() != 'HTML5' and OS.get_name() != 'UWP'):
+        var encrypted_file = File.new()
+        encrypted_file.open_encrypted_with_pass("user://user.auth", File.WRITE, OS.get_unique_id())
+        encrypted_file.store_line(to_json(auth))
+        encrypted_file.close()
+    else:
+        printerr("OS Not supported for saving auth data")
+
+# Function used to load the auth data file that has been stored locally
+# Note this does not work in HTML5 or UWP
+func load_auth() -> void:
+    if (OS.get_name() != 'HTML5' and OS.get_name() != 'UWP'):
+        var encrypted_file = File.new()
+        encrypted_file.open_encrypted_with_pass("user://user.auth", File.READ, OS.get_unique_id())
+        var encrypted_file_data = parse_json(encrypted_file.get_line())
+        Firebase.Auth.manual_token_refresh(encrypted_file_data)
+    else:
+        printerr("OS Not supported for loading auth data")
+
+# Function to check if there is an encrypted auth data file
+# If there is, the game will load it and refresh the token
+func check_auth_file() -> void:
+    var dir = Directory.new()
+    if (dir.file_exists("user://user.auth")):
+        load_auth()
+        pass
+    else:
+        printerr("No encrypted auth file exists")
 
 # Function used to change the email account for the currently logged in user
 func change_user_email(email : String) -> void:
