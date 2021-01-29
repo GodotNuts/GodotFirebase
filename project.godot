@@ -44,7 +44,7 @@ _global_script_classes=[ {
 "language": "GDScript",
 "path": "res://addons/godot-firebase/database/resource.gd"
 }, {
-"base": "HTTPRequest",
+"base": "Node",
 "class": "FirebaseStorage",
 "language": "GDScript",
 "path": "res://addons/godot-firebase/storage/storage.gd"
@@ -64,6 +64,16 @@ _global_script_classes=[ {
 "language": "GDScript",
 "path": "res://addons/godot-firebase/firestore/firestore_document.gd"
 }, {
+"base": "Reference",
+"class": "StorageReference",
+"language": "GDScript",
+"path": "res://addons/godot-firebase/storage/storage_reference.gd"
+}, {
+"base": "Reference",
+"class": "StorageTask",
+"language": "GDScript",
+"path": "res://addons/godot-firebase/storage/storage_task.gd"
+}, {
 "base": "Object",
 "class": "TestUtils",
 "language": "GDScript",
@@ -81,6 +91,8 @@ _global_script_class_icons={
 "FirebaseUserData": "",
 "FirestoreCollection": "",
 "FirestoreDocument": "",
+"StorageReference": "",
+"StorageTask": "",
 "TestUtils": ""
 }
 
