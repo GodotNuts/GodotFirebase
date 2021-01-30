@@ -22,6 +22,7 @@ var _current_task : StorageTask
 var _response_code : int
 var _response_headers : PoolStringArray
 var _response_data : PoolByteArray
+var _content_length : int
 var _reading_body : bool
 
 func _notification(what : int) -> void:
@@ -54,8 +55,13 @@ func _internal_process(_delta : float) -> void:
 				_reading_body = true
 				
 				# If there is a response...
-				_response_headers = _http_client.get_response_headers() # Get response headers.
-				_response_code = _http_client.get_response_code()
+				if _response_headers.empty():
+					_response_headers = _http_client.get_response_headers() # Get response headers.
+					_response_code = _http_client.get_response_code()
+					
+					for header in _response_headers:
+						if "Content-Length" in header:
+							_content_length = header.trim_prefix("Content-Length: ").to_int()
 				
 				_http_client.poll()
 				var chunk = _http_client.read_response_body_chunk() # Get a chunk.
@@ -64,10 +70,14 @@ func _internal_process(_delta : float) -> void:
 					pass
 				else:
 					_response_data += chunk # Append to read buffer.
+					if _content_length != 0:
+						task.progress = float(_response_data.size()) / _content_length
 				
 				if _http_client.get_status() != HTTPClient.STATUS_BODY:
+					task.progress = 1.0
 					call_deferred("_finish_request", HTTPRequest.RESULT_SUCCESS)
 			else:
+				task.progress = 1.0
 				call_deferred("_finish_request", HTTPRequest.RESULT_SUCCESS)
 		
 		HTTPClient.STATUS_CANT_CONNECT:
@@ -81,7 +91,9 @@ func _internal_process(_delta : float) -> void:
 
 func set_config(config_json : Dictionary) -> void:
 	config = config_json
-	bucket = config.storageBucket
+	if bucket != config.storageBucket:
+		bucket = config.storageBucket
+		_http_client.close()
 
 func ref(path := "") -> StorageReference:
 	if not config:
@@ -107,61 +119,80 @@ func ref(path := "") -> StorageReference:
 	else:
 		return references[path]
 
-func _upload(data : PoolByteArray, file_path : String, headers : PoolStringArray, ref : StorageReference) -> StorageTask:
-#	if not (config and auth):
-#		return
+func _upload(data : PoolByteArray, headers : PoolStringArray, ref : StorageReference, meta_only : bool) -> StorageTask:
+	if not (config and auth):
+		return null
 	
 	var task := StorageTask.new()
 	task.ref = ref
-	task.url = _get_file_url(file_path)
-	task.action = StorageTask.TASK_UPLOAD
+	task.url = _get_file_url(ref.full_path)
+	task.action = StorageTask.TASK_UPLOAD_META if meta_only else StorageTask.TASK_UPLOAD
 	task.headers = headers
 	task.data = data
-	call_deferred("_process_request", task)
+	_process_request(task)
 	return task
 
-func _download(file_path : String, ref : StorageReference) -> StorageTask:
-#	if not (config and auth):
-#		return
+func _download(ref : StorageReference, meta_only : bool, url_only : bool) -> StorageTask:
+	if not (config and auth):
+		return null
 	
-	var meta_task := StorageTask.new()
-	meta_task.ref = ref
-	meta_task.url = _get_file_url(file_path)
-	meta_task.action = StorageTask.TASK_METADATA
-	_process_request(meta_task)
+	var info_task := StorageTask.new()
+	info_task.ref = ref
+	info_task.url = _get_file_url(ref.full_path)
+	info_task.action = StorageTask.TASK_DOWNLOAD_URL if url_only else StorageTask.TASK_DOWNLOAD_META
+	_process_request(info_task)
+	
+	if url_only or meta_only:
+		return info_task
 	
 	var task := StorageTask.new()
 	_pending_tasks.append(task)
-	yield(meta_task, "task_finished")
+	yield(info_task, "task_finished")
 	
 	task.ref = ref
+	task.url = _get_file_url(ref.full_path) + "?alt=media&token="
 	task.action = StorageTask.TASK_DOWNLOAD
-	task.url = _get_file_url(file_path) + "?alt=media&token="
 	
-	if meta_task.data:
-		task.url += meta_task.data.downloadTokens
+	if info_task.data and not info_task.data.has("error"):
+		task.url += info_task.data.downloadTokens
 		_process_request(task)
 	else:
-		task.data = PoolByteArray()
-		task.response_headers = meta_task.response_headers
+		task.data = info_task.data
+		task.response_headers = info_task.response_headers
+		task.response_code = info_task.response_code
 		task.finished = true
-		task.result = meta_task.result
+		task.result = info_task.result
 		task.emit_signal("task_finished")
 	
 	return task
 
-func _delete(file_path : String, ref : StorageReference) -> StorageTask:
-#	if not (config and auth):
-#		return
+func _list(ref : StorageReference, list_all : bool) -> StorageTask:
+	if not (config and auth):
+		return null
 	
 	var task := StorageTask.new()
 	task.ref = ref
-	task.url = _get_file_url(file_path)
+	task.url = _get_file_url("").trim_suffix("/")
+	task.action = StorageTask.TASK_LIST_ALL if list_all else StorageTask.TASK_LIST
+	_process_request(task)
+	return task
+
+func _delete(ref : StorageReference) -> StorageTask:
+	if not (config and auth):
+		return null
+	
+	var task := StorageTask.new()
+	task.ref = ref
+	task.url = _get_file_url(ref.full_path)
 	task.action = StorageTask.TASK_DELETE
-	call_deferred("_process_request", task)
+	_process_request(task)
 	return task
 
 func _process_request(task : StorageTask) -> void:
+	var headers = Array(task.headers)
+	headers.append("Authorization: Bearer " + auth.idtoken)
+	task.headers = PoolStringArray(headers)
+	
 	if requesting:
 		_pending_tasks.append(task)
 		return
@@ -171,25 +202,63 @@ func _process_request(task : StorageTask) -> void:
 	_response_code = 0
 	_response_headers = PoolStringArray()
 	_response_data = PoolByteArray()
+	_content_length = 0
 	_reading_body = false
+	
+	if not _http_client.get_status() in [HTTPClient.STATUS_CONNECTED, HTTPClient.STATUS_DISCONNECTED]:
+		_http_client.close()
 	set_process_internal(true)
 
 func _finish_request(result : int) -> void:
 	var task := _current_task
-	_http_client.close()
 	requesting = false
 	
 	task.result = result
 	task.response_code = _response_code
 	task.response_headers = _response_headers
 	
-	if task.action == StorageTask.TASK_DOWNLOAD:
-		task.data = _response_data
-	elif task.action == StorageTask.TASK_DELETE:
-		task.ref.valid = false
-		references.erase(task.ref.full_path)
-	else:
-		task.data = JSON.parse(_response_data.get_string_from_utf8()).result
+	match task.action:
+		StorageTask.TASK_DOWNLOAD:
+			task.data = _response_data
+		
+		StorageTask.TASK_DELETE:
+			task.ref.valid = false
+			references.erase(task.ref.full_path)
+		
+		StorageTask.TASK_DOWNLOAD_URL:
+			var json : Dictionary = JSON.parse(_response_data.get_string_from_utf8()).result
+			if json and json.has("downloadTokens"):
+				task.data = _base_url + _get_file_url(task.ref.full_path) + "?alt=media&token=" + json.downloadTokens
+			else:
+				task.data = ""
+		
+		StorageTask.TASK_LIST, StorageTask.TASK_LIST_ALL:
+			var json : Dictionary = JSON.parse(_response_data.get_string_from_utf8()).result
+			var items := []
+			if json and json.has("items"):
+				for item in json.items:
+					var item_name : String = item.name
+					if item.bucket != bucket:
+						continue
+					if not item_name.begins_with(task.ref.full_path):
+						continue
+					if task.action == StorageTask.TASK_LIST:
+						var dir_path : Array = item_name.split("/")
+						var slash_count : int = task.ref.full_path.count("/")
+						item_name = ""
+						for i in slash_count + 1:
+							item_name += dir_path[i]
+							if i != slash_count and slash_count != 0:
+								item_name += "/"
+						if item_name in items:
+							continue
+					
+					items.append(item_name)
+			task.data = items
+		
+		_:
+			task.data = JSON.parse(_response_data.get_string_from_utf8()).result
+	
 	task.finished = true
 	task.emit_signal("task_finished")
 	

@@ -1,6 +1,35 @@
 class_name StorageReference
 extends Reference
 
+const DEFAULT_MIME_TYPE = "application/octet-stream"
+const MIME_TYPES = {
+	"bmp": "image/bmp",
+	"css": "text/css",
+	"csv": "text/csv",
+	"gd": "text/plain",
+	"htm": "text/html",
+	"html": "text/html",
+	"jpeg": "image/jpeg",
+	"jpg": "image/jpeg",
+	"json": "application/json",
+	"mp3": "audio/mpeg",
+	"mpeg": "video/mpeg",
+	"ogg": "audio/ogg",
+	"ogv": "video/ogg",
+	"png": "image/png",
+	"shader": "text/plain",
+	"svg": "image/svg+xml",
+	"tif": "image/tiff",
+	"tiff": "image/tiff",
+	"tres": "text/plain",
+	"tscn": "text/plain",
+	"txt": "text/plain",
+	"wav": "audio/wav",
+	"webm": "video/webm",
+	"webp": "video/webm",
+	"xml": "text/xml",
+}
+
 var bucket : String = ""
 var full_path : String = ""
 var name : String = ""
@@ -14,31 +43,9 @@ func child(path : String) -> StorageReference:
 		return null
 	return storage.ref(full_path.plus_file(path))
 
-func delete() -> StorageTask:
+func put_data(data : PoolByteArray, metadata := {}) -> StorageTask:
 	if not valid:
 		return null
-	return storage._delete(full_path, self)
-
-# TODO: To be implemented
-func get_download_url() -> void:
-	pass
-
-# TODO: To be implemented
-func get_metadata() -> void:
-	pass
-
-# TODO: To be implemented
-func list() -> void:
-	pass
-
-# TODO: To be implemented
-func list_all() -> void:
-	pass
-
-func put(data : PoolByteArray, metadata := {}) -> StorageTask:
-	if not valid:
-		return null
-	
 	if not "Content-Length" in metadata:
 		metadata["Content-Length"] = data.size()
 	
@@ -46,31 +53,63 @@ func put(data : PoolByteArray, metadata := {}) -> StorageTask:
 	for key in metadata:
 		headers.append("%s: %s" % [key, metadata[key]])
 	
-	return storage._upload(data, full_path, headers, self)
+	return storage._upload(data, headers, self, false)
 
 func put_string(data : String, metadata := {}) -> StorageTask:
-	return put(data.to_utf8(), metadata)
+	return put_data(data.to_utf8(), metadata)
 
 func put_file(file_path : String, metadata := {}) -> StorageTask:
 	var file := File.new()
 	file.open(file_path, File.READ)
 	var data := file.get_buffer(file.get_len())
 	file.close()
-	return put(data, metadata)
+	
+	if "Content-Type" in metadata:
+		metadata["Content-Type"] = MIME_TYPES.get(file_path.get_extension(), DEFAULT_MIME_TYPE)
+	
+	return put_data(data, metadata)
 
 func get_data() -> StorageTask:
 	if not valid:
 		return null
-	
-	storage._download(full_path, self)
+	storage._download(self, false, false)
 	return storage._pending_tasks.pop_back()
 
-# TODO: To be implemented
-func update_metadata() -> void:
-	return
+func get_download_url() -> StorageTask:
+	if not valid:
+		return null
+	return storage._download(self, false, true)
+
+func get_metadata() -> StorageTask:
+	if not valid:
+		return null
+	return storage._download(self, true, false)
+
+func update_metadata(metadata : Dictionary) -> StorageTask:
+	if not valid:
+		return null
+	
+	var data := JSON.print(metadata).to_utf8()
+	var headers := PoolStringArray(["Content-Type: application/json"])
+	return storage._upload(data, headers, self, true)
+
+func list() -> StorageTask:
+	if not valid:
+		return null
+	return storage._list(self, false)
+
+func list_all() -> StorageTask:
+	if not valid:
+		return null
+	return storage._list(self, true)
+
+func delete() -> StorageTask:
+	if not valid:
+		return null
+	return storage._delete(self)
 
 func _to_string() -> String:
 	var string := "gs://%s/%s" % [bucket, full_path] 
 	if not valid:
-		string += " [Invalid reference]"
+		string += " [Invalid Reference]"
 	return string

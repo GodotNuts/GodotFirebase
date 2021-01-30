@@ -3,8 +3,12 @@ extends Reference
 
 enum {
 	TASK_UPLOAD,
+	TASK_UPLOAD_META,
 	TASK_DOWNLOAD,
-	TASK_METADATA,
+	TASK_DOWNLOAD_META,
+	TASK_DOWNLOAD_URL,
+	TASK_LIST,
+	TASK_LIST_ALL,
 	TASK_DELETE,
 	TASK_MAX
 }
@@ -30,9 +34,9 @@ func set_action(value : int) -> void:
 	match action:
 		TASK_UPLOAD:
 			method = HTTPClient.METHOD_POST
+		TASK_UPLOAD_META:
+			method = HTTPClient.METHOD_PATCH
 		TASK_DELETE:
 			method = HTTPClient.METHOD_DELETE
-		TASK_METADATA:
-			method = HTTPClient.METHOD_GET
-		TASK_DOWNLOAD:
+		_:
 			method = HTTPClient.METHOD_GET
