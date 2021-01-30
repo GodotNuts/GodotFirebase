@@ -46,7 +46,7 @@ func _internal_process(_delta : float) -> void:
 			_http_client.poll()
 		
 		HTTPClient.STATUS_CONNECTED:
-			var err := _http_client.request_raw(task.method, task.url, task.headers, task.data)
+			var err := _http_client.request_raw(task._method, task._url, task._headers, task.data)
 			if err:
 				call_deferred("_finish_request", HTTPRequest.RESULT_CONNECTION_ERROR)
 		
@@ -125,9 +125,9 @@ func _upload(data : PoolByteArray, headers : PoolStringArray, ref : StorageRefer
 	
 	var task := StorageTask.new()
 	task.ref = ref
-	task.url = _get_file_url(ref.full_path)
+	task._url = _get_file_url(ref)
 	task.action = StorageTask.TASK_UPLOAD_META if meta_only else StorageTask.TASK_UPLOAD
-	task.headers = headers
+	task._headers = headers
 	task.data = data
 	_process_request(task)
 	return task
@@ -138,7 +138,7 @@ func _download(ref : StorageReference, meta_only : bool, url_only : bool) -> Sto
 	
 	var info_task := StorageTask.new()
 	info_task.ref = ref
-	info_task.url = _get_file_url(ref.full_path)
+	info_task._url = _get_file_url(ref)
 	info_task.action = StorageTask.TASK_DOWNLOAD_URL if url_only else StorageTask.TASK_DOWNLOAD_META
 	_process_request(info_task)
 	
@@ -150,11 +150,11 @@ func _download(ref : StorageReference, meta_only : bool, url_only : bool) -> Sto
 	yield(info_task, "task_finished")
 	
 	task.ref = ref
-	task.url = _get_file_url(ref.full_path) + "?alt=media&token="
+	task._url = _get_file_url(ref) + "?alt=media&token="
 	task.action = StorageTask.TASK_DOWNLOAD
 	
 	if info_task.data and not info_task.data.has("error"):
-		task.url += info_task.data.downloadTokens
+		task._url += info_task.data.downloadTokens
 		_process_request(task)
 	else:
 		task.data = info_task.data
@@ -172,7 +172,7 @@ func _list(ref : StorageReference, list_all : bool) -> StorageTask:
 	
 	var task := StorageTask.new()
 	task.ref = ref
-	task.url = _get_file_url("").trim_suffix("/")
+	task._url = _get_file_url(_root_ref).trim_suffix("/")
 	task.action = StorageTask.TASK_LIST_ALL if list_all else StorageTask.TASK_LIST
 	_process_request(task)
 	return task
@@ -183,15 +183,15 @@ func _delete(ref : StorageReference) -> StorageTask:
 	
 	var task := StorageTask.new()
 	task.ref = ref
-	task.url = _get_file_url(ref.full_path)
+	task._url = _get_file_url(ref)
 	task.action = StorageTask.TASK_DELETE
 	_process_request(task)
 	return task
 
 func _process_request(task : StorageTask) -> void:
-	var headers = Array(task.headers)
+	var headers = Array(task._headers)
 	headers.append("Authorization: Bearer " + auth.idtoken)
-	task.headers = PoolStringArray(headers)
+	task._headers = PoolStringArray(headers)
 	
 	if requesting:
 		_pending_tasks.append(task)
@@ -222,8 +222,10 @@ func _finish_request(result : int) -> void:
 			task.data = _response_data
 		
 		StorageTask.TASK_DELETE:
-			task.ref.valid = false
 			references.erase(task.ref.full_path)
+			task.ref.valid = false
+			if typeof(task.data) == TYPE_RAW_ARRAY:
+				task.data = null
 		
 		StorageTask.TASK_DOWNLOAD_URL:
 			var json : Dictionary = JSON.parse(_response_data.get_string_from_utf8()).result
@@ -266,9 +268,9 @@ func _finish_request(result : int) -> void:
 		var next_task : StorageTask = _pending_tasks.pop_front()
 		_process_request(next_task)
 
-func _get_file_url(file_path : String) -> String:
-	var url := _extended_url.replace("[APP_ID]", bucket)
-	return url.replace("[FILE_PATH]", file_path.replace("/", "%2F"))
+func _get_file_url(ref : StorageReference) -> String:
+	var url := _extended_url.replace("[APP_ID]", ref.bucket)
+	return url.replace("[FILE_PATH]", ref.full_path.replace("/", "%2F"))
 
 # Removes any "../" or "./" in the file path.
 func _simplify_path(path : String) -> String:
@@ -282,7 +284,10 @@ func _simplify_path(path : String) -> String:
 		else:
 			new_dirs.push_back(dir)
 	
-	return PoolStringArray(new_dirs).join("/")
+	var new_path := PoolStringArray(new_dirs).join("/")
+	new_path = new_path.replace("//", "/")
+	new_path = new_path.replace("\\", "/")
+	return new_path
 
 func _on_FirebaseAuth_login_succeeded(auth_token : Dictionary) -> void:
 	auth = auth_token

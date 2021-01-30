@@ -75,6 +75,11 @@ func get_data() -> StorageTask:
 	storage._download(self, false, false)
 	return storage._pending_tasks.pop_back()
 
+func get_string() -> StorageTask:
+	var task := get_data()
+	task.connect("task_finished", self, "_on_task_finished", [task, "stringify"])
+	return task
+
 func get_download_url() -> StorageTask:
 	if not valid:
 		return null
@@ -113,3 +118,9 @@ func _to_string() -> String:
 	if not valid:
 		string += " [Invalid Reference]"
 	return string
+
+func _on_task_finished(task : StorageTask, action : String) -> void:
+	match action:
+		"stringify":
+			if typeof(task.data) == TYPE_RAW_ARRAY:
+				task.data = task.data.get_string_from_utf8()

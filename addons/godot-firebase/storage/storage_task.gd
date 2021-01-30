@@ -16,12 +16,9 @@ enum {
 signal task_finished
 
 var ref # Storage Reference (Can't static type due to cyclic reference)
-var url : String = ""
 var action : int = -1 setget set_action
-var headers : PoolStringArray = PoolStringArray()
 var data = PoolByteArray() # data can be of any type.
 
-var method : int = -1
 var progress : float = 0.0
 var result : int = -1
 var finished : bool = false
@@ -29,14 +26,18 @@ var finished : bool = false
 var response_headers : PoolStringArray = PoolStringArray()
 var response_code : int = 0
 
+var _method : int = -1
+var _url : String = ""
+var _headers : PoolStringArray = PoolStringArray()
+
 func set_action(value : int) -> void:
 	action = value
 	match action:
 		TASK_UPLOAD:
-			method = HTTPClient.METHOD_POST
+			_method = HTTPClient.METHOD_POST
 		TASK_UPLOAD_META:
-			method = HTTPClient.METHOD_PATCH
+			_method = HTTPClient.METHOD_PATCH
 		TASK_DELETE:
-			method = HTTPClient.METHOD_DELETE
+			_method = HTTPClient.METHOD_DELETE
 		_:
-			method = HTTPClient.METHOD_GET
+			_method = HTTPClient.METHOD_GET
