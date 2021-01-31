@@ -7,7 +7,7 @@ signal patch_data_update(data)
 signal push_successful()
 signal push_failed()
 
-var _pusher : HTTPRequest
+var _pusher : AutoQueueHTTPRequest
 var _listener : Node
 var _store : FirebaseDatabaseStore
 var _auth : Dictionary
@@ -76,25 +76,18 @@ func set_store(store_ref : FirebaseDatabaseStore) -> void:
 		add_child(_store)
 
 func update(path : String, data : Dictionary) -> void:
-	path = path.strip_edges(true, true)
+    path = path.strip_edges(true, true)
 
-	if path == _separator:
-		path = ""
-	
-	var to_update = JSON.print(data)
-	if _pusher.get_http_client_status() != HTTPClient.STATUS_REQUESTING:
-		var resolved_path = (_get_list_url() + _db_path + "/" + path + _get_remaining_path())
-		
-		_pusher.request(resolved_path, PoolStringArray(), true, HTTPClient.METHOD_PATCH, to_update)
-	else:
-		_push_queue.append(data)
+    if path == _separator:
+        path = ""
+    
+    var to_update = JSON.print(data)
+    var resolved_path = (_get_list_url() + _db_path + "/" + path + _get_remaining_path())    
+    _pusher.request(resolved_path, [FirestoreCollection.authorization_header + Firebase.Auth.auth.idtoken], true, HTTPClient.METHOD_PATCH, to_update)
 
 func push(data : Dictionary) -> void:
-	var to_push = JSON.print(data)
-	if _pusher.get_http_client_status() == HTTPClient.STATUS_DISCONNECTED:
-		_pusher.request(_get_list_url() + _db_path + _get_remaining_path(), PoolStringArray(), true, HTTPClient.METHOD_POST, to_push)
-	else:
-		_push_queue.append(data)
+    var to_push = JSON.print(data)
+    _pusher.request(_get_list_url() + _db_path + _get_remaining_path(), [FirestoreCollection.authorization_header + Firebase.Auth.auth.idtoken], true, HTTPClient.METHOD_POST, to_push)
 
 #
 # Returns a deep copy of the current local copy of the data stored at this reference in the Firebase
@@ -107,10 +100,10 @@ func get_data() -> Dictionary:
 	return _store.get_data()
 
 func _get_remaining_path(is_push : bool = true) -> String:
-	if !_filter_query or is_push:
-		return _json_list_tag + _query_tag + _auth_tag + Firebase.Auth.auth.idtoken
-	else:
-		return _json_list_tag + _query_tag + _get_filter() + _filter_tag + _auth_tag + Firebase.Auth.auth.idtoken
+    if !_filter_query or is_push:
+        return _json_list_tag + _query_tag
+    else:
+        return _json_list_tag + _query_tag + _get_filter() + _filter_tag
 
 func _get_list_url() -> String:
 	return _config.databaseURL + _separator # + ListName + _json_list_tag + _auth_tag + _auth.idtoken
@@ -143,10 +136,7 @@ func _route_data(command : String, path : String, data) -> void:
 		_store.patch(path, data)
 
 func on_push_request_complete(result : int, response_code : int, headers : PoolStringArray, body : PoolByteArray) -> void:
-	if response_code == HTTPClient.RESPONSE_OK:
-		emit_signal("push_successful")
-	else:
-		emit_signal("push_failed")
-	
-	if _push_queue.size() > 0:
-		push(_push_queue.pop_front())
+    if response_code == HTTPClient.RESPONSE_OK:
+        emit_signal("push_successful")
+    else:
+        emit_signal("push_failed")

@@ -10,14 +10,14 @@ config_version=4
 
 _global_script_classes=[ {
 "base": "HTTPRequest",
+"class": "AutoQueueHTTPRequest",
+"language": "GDScript",
+"path": "res://addons/godot-firebase/base/AutoQueueHTTPRequest.gd"
+}, {
+"base": "HTTPRequest",
 "class": "FirebaseAuth",
 "language": "GDScript",
 "path": "res://addons/godot-firebase/auth/auth.gd"
-}, {
-"base": "Control",
-"class": "FirebaseContainer",
-"language": "GDScript",
-"path": "res://addons/godot-firebase/containers/container.gd"
 }, {
 "base": "Node",
 "class": "FirebaseDatabase",
@@ -80,8 +80,8 @@ _global_script_classes=[ {
 "path": "res://test/TestUtils.gd"
 } ]
 _global_script_class_icons={
+"AutoQueueHTTPRequest": "",
 "FirebaseAuth": "",
-"FirebaseContainer": "",
 "FirebaseDatabase": "",
 "FirebaseDatabaseReference": "",
 "FirebaseDatabaseStore": "",
@@ -99,7 +99,6 @@ _global_script_class_icons={
 [application]
 
 config/name="godot-firebase"
-run/main_scene="res://scn/graph_modeler.tscn"
 config/icon="res://icon.png"
 
 [autoload]
