@@ -304,7 +304,7 @@ func load_auth() -> void:
         encrypted_file.open_encrypted_with_pass("user://user.auth", File.READ, OS.get_unique_id())
         var encrypted_file_data = parse_json(encrypted_file.get_line())
         Firebase.Auth.manual_token_refresh(encrypted_file_data)
-		emit_signal("login_succeeded", auth)
+        emit_signal("login_succeeded", auth)
     else:
         printerr("OS Not supported for loading auth data")
 
