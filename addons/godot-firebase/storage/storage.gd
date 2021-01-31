@@ -9,8 +9,6 @@ var references : Dictionary = {}
 
 var requesting : bool = false
 
-const HTTPSSEClient = preload("res://addons/http-sse-client/HTTPSSEClient.gd")
-
 var _base_url : String = "https://firebasestorage.googleapis.com"
 var _extended_url : String = "/v0/b/[APP_ID]/o/[FILE_PATH]"
 var _root_ref : StorageReference
