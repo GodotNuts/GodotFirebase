@@ -289,12 +289,6 @@ func _simplify_path(path : String) -> String:
 
 func _on_FirebaseAuth_login_succeeded(auth_result : Dictionary) -> void:
     auth = auth_result
-    for collection_key in collections.keys():
-        collections[collection_key].auth = auth
-    pass
 
 func _on_FirebaseAuth_token_refresh_succeeded(auth_result : Dictionary) -> void:
     auth = auth_result
-    for collection_key in collections.keys():
-        collections[collection_key].auth = auth
-    pass
