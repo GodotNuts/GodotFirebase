@@ -272,12 +272,14 @@ func _finish_request(result : int) -> void:
     
     task.finished = true
     task.emit_signal("task_finished")
-    if typeof(task.data) == TYPE_DICTIONARY:
-        if task.data.has("error"):
-            emit_signal("task_failed", task.result, task.response_code, task.data)
-            return
-    emit_signal("task_successful", task.result, task.response_code, task.data)
-        
+    match typeof(task.data):
+        TYPE_DICTIONARY:
+            if task.data.has("error"):
+                emit_signal("task_failed", task.result, task.response_code, task.data)
+            else:
+                emit_signal("task_successful", task.result, task.response_code, task.data)
+        _:
+            emit_signal("task_successful", task.result, task.response_code, task.data)
     
     if not _pending_tasks.empty():
         var next_task : StorageTask = _pending_tasks.pop_front()
@@ -306,3 +308,6 @@ func _simplify_path(path : String) -> String:
 
 func _on_FirebaseAuth_login_succeeded(auth_token : Dictionary) -> void:
     auth = auth_token
+
+func _on_FirebaseAuth_token_refresh_succeeded(auth_result : Dictionary) -> void:
+    auth = auth_result
