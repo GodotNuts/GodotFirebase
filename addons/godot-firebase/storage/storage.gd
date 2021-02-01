@@ -271,11 +271,12 @@ func _finish_request(result : int) -> void:
             task.data = JSON.parse(_response_data.get_string_from_utf8()).result
     
     task.finished = true
-    if task.data.has("error"):
-        emit_signal("task_failed", task.result, task.response_code, task.data)
-    else:
-        emit_signal("task_successful", task.result, task.response_code, task.data)
     task.emit_signal("task_finished")
+    if typeof(task.data) == TYPE_DICTIONARY:
+        if task.data.has("error"):
+            emit_signal("task_failed", task.result, task.response_code, task.data)
+            return
+    emit_signal("task_successful", task.result, task.response_code, task.data)
         
     
     if not _pending_tasks.empty():
