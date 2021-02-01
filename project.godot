@@ -14,11 +14,6 @@ _global_script_classes=[ {
 "language": "GDScript",
 "path": "res://addons/godot-firebase/auth/auth.gd"
 }, {
-"base": "Control",
-"class": "FirebaseContainer",
-"language": "GDScript",
-"path": "res://addons/godot-firebase/containers/container.gd"
-}, {
 "base": "Node",
 "class": "FirebaseDatabase",
 "language": "GDScript",
@@ -81,7 +76,6 @@ _global_script_classes=[ {
 } ]
 _global_script_class_icons={
 "FirebaseAuth": "",
-"FirebaseContainer": "",
 "FirebaseDatabase": "",
 "FirebaseDatabaseReference": "",
 "FirebaseDatabaseStore": "",
@@ -99,7 +93,6 @@ _global_script_class_icons={
 [application]
 
 config/name="godot-firebase"
-run/main_scene="res://scn/graph_modeler.tscn"
 config/icon="res://icon.png"
 
 [autoload]

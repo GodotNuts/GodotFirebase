@@ -1,3 +1,11 @@
+# ---------------------------------------------------- #
+#                 SCRIPT VERSION = 2.1                 #
+#                 ====================                 #
+# please, remember to increment the version to +0.1    #
+# if you are going to make changes that will commited  #
+# ---------------------------------------------------- #
+
+
 #
 # Data structure that holds the currently-known data at a given path (a.k.a. reference) in a
 # Firebase Realtime Database. Can process both puts and patches into the data based on realtime
