@@ -69,10 +69,10 @@ _global_script_classes=[ {
 "language": "GDScript",
 "path": "res://addons/godot-firebase/storage/storage_task.gd"
 }, {
-"base": "Object",
+"base": "Reference",
 "class": "TestUtils",
 "language": "GDScript",
-"path": "res://test/TestUtils.gd"
+"path": "res://scn/TestUtils.gd"
 } ]
 _global_script_class_icons={
 "FirebaseAuth": "",
