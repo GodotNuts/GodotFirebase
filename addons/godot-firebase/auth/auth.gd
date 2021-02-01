@@ -285,39 +285,6 @@ func check_auth_file() -> void:
     else:
         printerr("No encrypted auth file exists")
 
-# Function used to save the auth data provided by Firebase into an encrypted file
-# Note this does not work in HTML5 or UWP
-func save_auth(auth : Dictionary) -> void:
-    if (OS.get_name() != 'HTML5' and OS.get_name() != 'UWP'):
-        var encrypted_file = File.new()
-        encrypted_file.open_encrypted_with_pass("user://user.auth", File.WRITE, OS.get_unique_id())
-        encrypted_file.store_line(to_json(auth))
-        encrypted_file.close()
-    else:
-        printerr("OS Not supported for saving auth data")
-
-# Function used to load the auth data file that has been stored locally
-# Note this does not work in HTML5 or UWP
-func load_auth() -> void:
-    if (OS.get_name() != 'HTML5' and OS.get_name() != 'UWP'):
-        var encrypted_file = File.new()
-        encrypted_file.open_encrypted_with_pass("user://user.auth", File.READ, OS.get_unique_id())
-        var encrypted_file_data = parse_json(encrypted_file.get_line())
-        Firebase.Auth.manual_token_refresh(encrypted_file_data)
-        emit_signal("login_succeeded", auth)
-    else:
-        printerr("OS Not supported for loading auth data")
-
-# Function to check if there is an encrypted auth data file
-# If there is, the game will load it and refresh the token
-func check_auth_file() -> void:
-    var dir = Directory.new()
-    if (dir.file_exists("user://user.auth")):
-        load_auth()
-        pass
-    else:
-        printerr("No encrypted auth file exists")
-
 # Function used to change the email account for the currently logged in user
 func change_user_email(email : String) -> void:
 	if _is_ready():
