@@ -372,7 +372,7 @@ func begin_refresh_countdown() -> void:
         refresh_token = auth.refresh_token
         expires_in = auth.expires_in
     _needs_refresh = true
-    emit_signal("refresh_token_succeeded", auth)
+    emit_signal("token_refresh_succeeded", auth)
     yield(get_tree().create_timer(float(expires_in)), "timeout")
     _refresh_request_body.refresh_token = refresh_token
     request(_refresh_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print(_refresh_request_body))
