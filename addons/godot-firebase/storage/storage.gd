@@ -272,14 +272,10 @@ func _finish_request(result : int) -> void:
     
     task.finished = true
     task.emit_signal("task_finished")
-    match typeof(task.data):
-        TYPE_DICTIONARY:
-            if task.data.has("error"):
-                emit_signal("task_failed", task.result, task.response_code, task.data)
-            else:
-                emit_signal("task_successful", task.result, task.response_code, task.data)
-        _:
-            emit_signal("task_successful", task.result, task.response_code, task.data)
+    if typeof(task.data) == TYPE_DICTIONARY and task.data.has("error"):
+        emit_signal("task_failed", task.result, task.response_code, task.data)
+    else:
+        emit_signal("task_successful", task.result, task.response_code, task.data)
     
     if not _pending_tasks.empty():
         var next_task : StorageTask = _pending_tasks.pop_front()
