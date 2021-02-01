@@ -287,5 +287,8 @@ func _simplify_path(path : String) -> String:
 	new_path = new_path.replace("\\", "/")
 	return new_path
 
-func _on_FirebaseAuth_login_succeeded(auth_token : Dictionary) -> void:
-	auth = auth_token
+func _on_FirebaseAuth_login_succeeded(auth_result : Dictionary) -> void:
+    auth = auth_result
+
+func _on_FirebaseAuth_token_refresh_succeeded(auth_result : Dictionary) -> void:
+    auth = auth_result
