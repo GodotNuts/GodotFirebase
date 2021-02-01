@@ -1,4 +1,5 @@
-scn/
+# Project specific ignores
+test/
 
 #
 # Godot-specific ignores

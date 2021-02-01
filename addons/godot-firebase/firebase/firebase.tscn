@@ -1,11 +1,13 @@
-[gd_scene load_steps=5 format=2]
+[gd_scene load_steps=6 format=2]
 
 [ext_resource path="res://addons/godot-firebase/database/database.gd" type="Script" id=1]
 [ext_resource path="res://addons/godot-firebase/firestore/firestore.gd" type="Script" id=2]
 [ext_resource path="res://addons/godot-firebase/firebase/firebase.gd" type="Script" id=3]
 [ext_resource path="res://addons/godot-firebase/auth/auth.gd" type="Script" id=4]
+[ext_resource path="res://addons/godot-firebase/storage/storage.gd" type="Script" id=5]
 
 [node name="Firebase" type="Node"]
+pause_mode = 2
 script = ExtResource( 3 )
 
 [node name="Firestore" type="Node" parent="."]
@@ -13,6 +15,9 @@ script = ExtResource( 2 )
 
 [node name="Database" type="Node" parent="."]
 script = ExtResource( 1 )
+
+[node name="Storage" type="Node" parent="."]
+script = ExtResource( 5 )
 
 [node name="Auth" type="HTTPRequest" parent="."]
 script = ExtResource( 4 )

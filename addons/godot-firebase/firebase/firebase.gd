@@ -1,9 +1,17 @@
+# ---------------------------------------------------- #
+#                 SCRIPT VERSION = 2.1                 #
+#                 ====================                 #
+# please, remember to increment the version to +0.1    #
+# if you are going to make changes that will commited  #
+# ---------------------------------------------------- #
+
 extends Node
 
 const ENVIRONMENT_VARIABLES : String = "firebase/environment_variables/"
 onready var Auth : FirebaseAuth = $Auth
 onready var Firestore : FirebaseFirestore = $Firestore
 onready var Database : FirebaseDatabase = $Database
+onready var Storage : FirebaseStorage = $Storage
 
 # Configuration used by all files in this project
 # These values can be found in your Firebase Project
@@ -33,7 +41,10 @@ func _ready() -> void:
     Auth.set_config(config)
     Firestore.set_config(config)
     Database.set_config(config)
+    Storage.set_config(config)
     Auth.connect("login_succeeded", Database, "_on_FirebaseAuth_login_succeeded")
     Auth.connect("signup_succeeded", Database, "_on_FirebaseAuth_login_succeeded")
     Auth.connect("login_succeeded", Firestore, "_on_FirebaseAuth_login_succeeded")
     Auth.connect("signup_succeeded", Firestore, "_on_FirebaseAuth_login_succeeded")
+    Auth.connect("login_succeeded", Storage, "_on_FirebaseAuth_login_succeeded")
+    Auth.connect("signup_succeeded", Storage, "_on_FirebaseAuth_login_succeeded")

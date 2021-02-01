@@ -14,11 +14,6 @@ _global_script_classes=[ {
 "language": "GDScript",
 "path": "res://addons/godot-firebase/auth/auth.gd"
 }, {
-"base": "Control",
-"class": "FirebaseContainer",
-"language": "GDScript",
-"path": "res://addons/godot-firebase/containers/container.gd"
-}, {
 "base": "Node",
 "class": "FirebaseDatabase",
 "language": "GDScript",
@@ -44,7 +39,7 @@ _global_script_classes=[ {
 "language": "GDScript",
 "path": "res://addons/godot-firebase/database/resource.gd"
 }, {
-"base": "HTTPRequest",
+"base": "Node",
 "class": "FirebaseStorage",
 "language": "GDScript",
 "path": "res://addons/godot-firebase/storage/storage.gd"
@@ -64,6 +59,16 @@ _global_script_classes=[ {
 "language": "GDScript",
 "path": "res://addons/godot-firebase/firestore/firestore_document.gd"
 }, {
+"base": "Reference",
+"class": "StorageReference",
+"language": "GDScript",
+"path": "res://addons/godot-firebase/storage/storage_reference.gd"
+}, {
+"base": "Reference",
+"class": "StorageTask",
+"language": "GDScript",
+"path": "res://addons/godot-firebase/storage/storage_task.gd"
+}, {
 "base": "Object",
 "class": "TestUtils",
 "language": "GDScript",
@@ -71,7 +76,6 @@ _global_script_classes=[ {
 } ]
 _global_script_class_icons={
 "FirebaseAuth": "",
-"FirebaseContainer": "",
 "FirebaseDatabase": "",
 "FirebaseDatabaseReference": "",
 "FirebaseDatabaseStore": "",
@@ -81,13 +85,15 @@ _global_script_class_icons={
 "FirebaseUserData": "",
 "FirestoreCollection": "",
 "FirestoreDocument": "",
+"StorageReference": "",
+"StorageTask": "",
 "TestUtils": ""
 }
 
 [application]
 
 config/name="godot-firebase"
-run/main_scene="res://scn/graph_modeler.tscn"
+run/main_scene="res://firestore_modeler/modeler/modeler.tscn"
 config/icon="res://icon.png"
 
 [autoload]
@@ -104,20 +110,20 @@ enabled=PoolStringArray( "godot-firebase" )
 
 [firebase]
 
-environment_variables/apiKey=""
-environment_variables/authDomain=""
-environment_variables/databaseURL=""
-environment_variables/projectId=""
-environment_variables/storageBucket=""
-environment_variables/messagingSenderId=""
-environment_variables/appId=""
-environment_variables/measurementId=""
+environment_variables/apiKey="AIzaSyDU6T2yrMVEpjTPNZpqt5fHUjIyvUYtK4w"
+environment_variables/authDomain="fluted-gantry-245320.firebaseapp.com"
+environment_variables/databaseURL="https://fluted-gantry-245320.firebaseio.com"
+environment_variables/projectId="fluted-gantry-245320"
+environment_variables/storageBucket="fluted-gantry-245320.appspot.com"
+environment_variables/messagingSenderId="642802608856"
+environment_variables/appId="1:642802608856:web:1050141a83b3a2e78885ad"
+environment_variables/measurementId="G-72P3G0WHKG"
 environment_variables/googleId=""
 environment_variables/googleSecret=""
 environment_variables/googleClientId=""
 environment_variables/googleClientSecret=""
-environment_variables/clientId=""
-environment_variables/clientSecret=""
+environment_variables/clientId="642802608856-8h1ie43dmg3961bcjkfgjn1k2qij83a2.apps.googleusercontent.com"
+environment_variables/clientSecret="Spd6nr8n2x-UpfBDA6gdnHlY"
 
 [rendering]
 
