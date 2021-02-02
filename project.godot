@@ -69,7 +69,7 @@ _global_script_classes=[ {
 "language": "GDScript",
 "path": "res://addons/godot-firebase/storage/storage_task.gd"
 }, {
-"base": "Reference",
+"base": "Object",
 "class": "TestUtils",
 "language": "GDScript",
 "path": "res://test/TestUtils.gd"

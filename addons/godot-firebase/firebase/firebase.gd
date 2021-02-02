@@ -32,7 +32,8 @@ var config : Dictionary = {
 func load_config() -> void:
     if ProjectSettings.has_setting(ENVIRONMENT_VARIABLES+"apiKey"):
         for key in config.keys():
-            config[key] = ProjectSettings.get_setting(ENVIRONMENT_VARIABLES+key)
+            if ProjectSettings.get_setting(ENVIRONMENT_VARIABLES+key)!="":
+                config[key] = ProjectSettings.get_setting(ENVIRONMENT_VARIABLES+key)
     else:
         printerr("No configuration settings found, add them in override.cfg file.")
 
