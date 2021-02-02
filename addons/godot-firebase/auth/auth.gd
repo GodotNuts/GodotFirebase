@@ -266,9 +266,12 @@ func _on_FirebaseAuth_request_completed(result : int, response_code : int, heade
 func save_auth(auth : Dictionary) -> void:
     if (OS.get_name() != 'HTML5' and OS.get_name() != 'UWP'):
         var encrypted_file = File.new()
-        encrypted_file.open_encrypted_with_pass("user://user.auth", File.WRITE, OS.get_unique_id())
-        encrypted_file.store_line(to_json(auth))
-        encrypted_file.close()
+        var err = encrypted_file.open_encrypted_with_pass("user://user.auth", File.WRITE, OS.get_unique_id())
+        if err != OK:
+            printerr("Error Opening File. Error Code: ", err)
+        else:
+            encrypted_file.store_line(to_json(auth))
+            encrypted_file.close()
     else:
         printerr("OS Not supported for saving auth data")
 
@@ -277,9 +280,12 @@ func save_auth(auth : Dictionary) -> void:
 func load_auth() -> void:
     if (OS.get_name() != 'HTML5' and OS.get_name() != 'UWP'):
         var encrypted_file = File.new()
-        encrypted_file.open_encrypted_with_pass("user://user.auth", File.READ, OS.get_unique_id())
-        var encrypted_file_data = parse_json(encrypted_file.get_line())
-        Firebase.Auth.manual_token_refresh(encrypted_file_data)
+        var err = encrypted_file.open_encrypted_with_pass("user://user.auth", File.READ, OS.get_unique_id())
+        if err != OK:
+            printerr("Error Opening File. Error Code: ", err)
+        else:
+            var encrypted_file_data = parse_json(encrypted_file.get_line())
+            Firebase.Auth.manual_token_refresh(encrypted_file_data)
     else:
         printerr("OS Not supported for loading auth data")
 
