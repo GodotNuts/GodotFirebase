@@ -72,7 +72,7 @@ _global_script_classes=[ {
 "base": "Reference",
 "class": "TestUtils",
 "language": "GDScript",
-"path": "res://scn/TestUtils.gd"
+"path": "res://test/TestUtils.gd"
 } ]
 _global_script_class_icons={
 "FirebaseAuth": "",
