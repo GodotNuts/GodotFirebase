@@ -87,7 +87,7 @@ func update(documentId : String, fields : Dictionary = {}) -> void:
     if auth:
         if is_pusher_available([REQUESTS.UPDATE, documentId, fields]):
             request = REQUESTS.UPDATE
-			var url = _get_request_url() + separator + documentId.replace(" ", "%20") + "?"
+            var url = _get_request_url() + separator + documentId.replace(" ", "%20") + "?"
             for key in fields.keys():
                 url+="updateMask.fieldPaths={key}&".format({key = key})
             url = url.rstrip("&")
