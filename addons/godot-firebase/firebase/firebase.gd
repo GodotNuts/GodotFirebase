@@ -17,14 +17,12 @@ onready var Storage : FirebaseStorage = $Storage
 # These values can be found in your Firebase Project
 # See the README on Github for how to access
 var config : Dictionary = {
-    "apiKey": "",
-    "authDomain": "",
-    "databaseURL": "",
-    "projectId": "",
-    "storageBucket": "",
-    "messagingSenderId": "",
-    "appId": "",
-    "measurementId": "",
+    "apiKey": "AIzaSyBdarlkNQO0rqZnDgv8P914R_dkSfp3S1c",
+    "authDomain": "instadot.firebaseapp.com",
+    "projectId": "instadot",
+    "storageBucket": "instadot.appspot.com",
+    "messagingSenderId": "283726603535",
+    "appId": "1:283726603535:web:14132220da1c119f62ca7a",
     "clientId": "",
     "clientSecret": "",
     }
