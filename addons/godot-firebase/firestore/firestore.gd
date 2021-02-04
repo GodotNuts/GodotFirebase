@@ -9,28 +9,40 @@ class_name FirebaseFirestore
 extends Node
 
 signal listed_documents(documents)
+signal result_query(result)
+signal error(error)
 
-var base_url : String = "https://firestore.googleapis.com/v1/"
-var extended_url : String = "projects/[PROJECT_ID]/databases/(default)/documents/"
+enum REQUESTS {
+    NONE = -1,
+    LIST,
+    QUERY
+   }
+
+var request : int = -1
+
+var _base_url : String = "https://firestore.googleapis.com/v1/"
+var _extended_url : String = "projects/[PROJECT_ID]/databases/(default)/documents/"
+var _query_suffix : String = ":runQuery"
+
 
 var config : Dictionary = {}
 
 var collections : Dictionary = {}
 var auth : Dictionary
-var request_list_node : HTTPRequest
+var _request_list_node : HTTPRequest
 
 func set_config(config_json : Dictionary) -> void:
     config = config_json
-    extended_url = extended_url.replace("[PROJECT_ID]", config.projectId)
-    request_list_node = HTTPRequest.new()
-    request_list_node.connect("request_completed", self, "on_list_request_completed")
-    add_child(request_list_node)
+    _extended_url = _extended_url.replace("[PROJECT_ID]", config.projectId)
+    _request_list_node = HTTPRequest.new()
+    _request_list_node.connect("request_completed", self, "_on_request_completed")
+    add_child(_request_list_node)
 
 func collection(path : String) -> FirestoreCollection:
     if !collections.has(path):
         var coll : FirestoreCollection = FirestoreCollection.new()
-        coll.extended_url = extended_url
-        coll.base_url = base_url
+        coll._extended_url = _extended_url
+        coll._base_url = _base_url
         coll.config = config
         coll.auth = auth
         coll.collection_name = path
@@ -40,27 +52,49 @@ func collection(path : String) -> FirestoreCollection:
     else:
         return collections[path]
 
+
+func query(query : FirestoreQuery):
+    request = REQUESTS.QUERY
+    var body : Dictionary = {
+        structuredQuery = query.query,
+       }
+    var url : String = _base_url + _extended_url + _query_suffix
+    _request_list_node.request(url, ["Authorization: Bearer " + auth.idtoken], true, HTTPClient.METHOD_POST, JSON.print(body))
+    
+
 func list(path : String, page_size : int = 0, page_token : String = "", order_by : String = "") -> void:
+    request = REQUESTS.LIST
     var url : String
     if not path in [""," "]:
-        url = base_url + extended_url + path + "/"
+        url = _base_url + _extended_url + path + "/"
     else:
-        url = base_url + extended_url
+        url = _base_url + _extended_url
     if page_size != 0:
         url+="?pageSize="+str(page_size)
     if page_token != "":
         url+="&pageToken="+page_token
     if order_by != "":
         url+="&orderBy="+order_by
-    request_list_node.request(url, ["Authorization: Bearer " + auth.idtoken], true, HTTPClient.METHOD_GET)
+    _request_list_node.request(url, ["Authorization: Bearer " + auth.idtoken], true, HTTPClient.METHOD_GET)
 
-func on_list_request_completed(result : int, response_code : int, headers : PoolStringArray, body : PoolByteArray):
-    var result_body : Dictionary = JSON.parse(body.get_string_from_utf8()).result
+func _on_request_completed(result : int, response_code : int, headers : PoolStringArray, body : PoolByteArray):
     match result:
         0:
             match response_code:
                 200:
-                    emit_signal("listed_documents", result_body.documents)
+                    match request:
+                        REQUESTS.LIST:
+                            var result_body : Dictionary = JSON.parse(body.get_string_from_utf8()).result
+                            emit_signal("listed_documents", result_body.documents)
+                        REQUESTS.QUERY:
+                            var result_body : Array = JSON.parse(body.get_string_from_utf8()).result
+                            emit_signal("result_query", result_body)
+                400:
+                    var error : Array = JSON.parse(body.get_string_from_utf8()).result
+                    emit_signal("error", error[0].error.message)
+                    
+    request = REQUESTS.NONE
+
 
 func _on_FirebaseAuth_login_succeeded(auth_result : Dictionary) -> void:
     auth = auth_result
