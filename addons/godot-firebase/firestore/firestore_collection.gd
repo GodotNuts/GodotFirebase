@@ -15,31 +15,31 @@ signal update_document(doc)
 signal delete_document()
 signal error(code,status,message)
 
-var base_url : String
-var extended_url : String
+var _base_url : String
+var _extended_url : String
 var config : Dictionary
 var auth : Dictionary
 var collection_name : String
 
-var pusher : HTTPRequest
+var _pusher : HTTPRequest
 
 
-const event_tag : String = "event: "
-const data_tag : String = "data: "
-const put_tag : String = "put"
-const patch_tag : String = "patch"
-const separator : String = "/"
-const json_list_tag : String = ".json"
-const query_tag : String = "?"
-const auth_tag : String = "auth="
-const authorization_header : String = "Authorization: Bearer "
-const auth_variable_begin : String = "["
-const auth_variable_end : String = "]"
-const filter_tag : String = "&"
-const escaped_quote : String = "\""
-const equal_tag : String = "="
-const key_filter_tag : String = "$key"
-const documentId_tag : String = "documentId="
+const _event_tag : String = "event: "
+const _data_tag : String = "data: "
+const _put_tag : String = "put"
+const _patch_tag : String = "patch"
+const _separator : String = "/"
+const _json_list_tag : String = ".json"
+const _query_tag : String = "?"
+const _auth_tag : String = "auth="
+const _authorization_header : String = "Authorization: Bearer "
+const _auth_variable_begin : String = "["
+const _auth_variable_end : String = "]"
+const _filter_tag : String = "&"
+const _escaped_quote : String = "\""
+const _equal_tag : String = "="
+const _key_filter_tag : String = "$key"
+const _documentId_tag : String = "documentId="
 
 var request : int
 var _requests_queue : Array = []
@@ -55,8 +55,8 @@ enum REQUESTS {
 func _ready() -> void:
     var push_node = HTTPRequest.new()
     add_child(push_node)
-    pusher = push_node
-    pusher.connect("request_completed", self, "on_pusher_request_complete")
+    _pusher = push_node
+    _pusher.connect("request_completed", self, "on_pusher_request_complete")
     request = REQUESTS.NONE
 
 # ----------------------- REQUESTS
@@ -67,8 +67,8 @@ func add(documentId : String, fields : Dictionary = {}) -> void:
         if is_pusher_available([REQUESTS.ADD, documentId, fields]):
             request = REQUESTS.ADD
             var url = _get_request_url()
-            url += query_tag + documentId_tag + documentId
-            pusher.request(url, [authorization_header + auth.idtoken], true, HTTPClient.METHOD_POST, JSON.print(FirestoreDocument.dict2fields(fields)))
+            url += _query_tag + _documentId_tag + documentId
+            _pusher.request(url, [_authorization_header + auth.idtoken], true, HTTPClient.METHOD_POST, JSON.print(FirestoreDocument.dict2fields(fields)))
     else:
         printerr("Unauthorized")
 
@@ -77,8 +77,8 @@ func get(documentId : String) -> void:
     if auth:
         if is_pusher_available([REQUESTS.GET, documentId]):
             request = REQUESTS.GET
-            var url = _get_request_url() + separator + documentId.replace(" ", "%20")
-            pusher.request(url, [authorization_header + auth.idtoken], true, HTTPClient.METHOD_GET)
+            var url = _get_request_url() + _separator + documentId.replace(" ", "%20")
+            _pusher.request(url, [_authorization_header + auth.idtoken], true, HTTPClient.METHOD_GET)
     else:
         printerr("Unauthorized")
 
@@ -87,11 +87,11 @@ func update(documentId : String, fields : Dictionary = {}) -> void:
     if auth:
         if is_pusher_available([REQUESTS.UPDATE, documentId, fields]):
             request = REQUESTS.UPDATE
-            var url = _get_request_url() + separator + documentId.replace(" ", "%20") + "?"
+            var url = _get_request_url() + _separator + documentId.replace(" ", "%20") + "?"
             for key in fields.keys():
                 url+="updateMask.fieldPaths={key}&".format({key = key})
             url = url.rstrip("&")
-            pusher.request(url, [authorization_header + auth.idtoken], true, HTTPClient.METHOD_PATCH, JSON.print(FirestoreDocument.dict2fields(fields)))
+            _pusher.request(url, [_authorization_header + auth.idtoken], true, HTTPClient.METHOD_PATCH, JSON.print(FirestoreDocument.dict2fields(fields)))
     else:
         printerr("Unauthorized")
 
@@ -100,14 +100,14 @@ func delete(documentId : String) -> void:
     if auth:
         if is_pusher_available([REQUESTS.DELETE, documentId]):
             request = REQUESTS.DELETE
-            var url = _get_request_url() + separator + documentId.replace(" ", "%20")
-            pusher.request(url, [authorization_header + auth.idtoken], true, HTTPClient.METHOD_DELETE)
+            var url = _get_request_url() + _separator + documentId.replace(" ", "%20")
+            _pusher.request(url, [_authorization_header + auth.idtoken], true, HTTPClient.METHOD_DELETE)
     else:
         printerr("Unauthorized")
 
 # ----------------- Functions
 func _get_request_url() -> String:
-    return base_url + extended_url + collection_name
+    return _base_url + _extended_url + collection_name
 
 
 # ---------------- RESPONSES
@@ -138,7 +138,7 @@ func on_pusher_request_complete(result, response_code, headers, body):
         emit_signal("error",bod.error.code,bod.error.status,bod.error.message)
     process_queue()
 
-# Check whether the @pusher is available or not to issue a request. If not, append a @request_element.
+# Check whether the @_pusher is available or not to issue a request. If not, append a @request_element.
 # A @request_element is a touple composed by the 'request_type' (@request) and the 'request_content' (@url)
 func is_pusher_available(request_element : Array = []) -> bool:
     if request == REQUESTS.NONE :
