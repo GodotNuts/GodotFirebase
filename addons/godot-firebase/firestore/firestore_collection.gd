@@ -56,7 +56,7 @@ func _ready() -> void:
     var push_node = HTTPRequest.new()
     add_child(push_node)
     _pusher = push_node
-    _pusher.connect("request_completed", self, "on__pusher_request_complete")
+    _pusher.connect("request_completed", self, "on_pusher_request_complete")
     request = REQUESTS.NONE
 
 # ----------------------- REQUESTS
@@ -64,7 +64,7 @@ func _ready() -> void:
 # used to SAVE/ADD a new document to the collection, specify @documentID and @fields
 func add(documentId : String, fields : Dictionary = {}) -> void:
     if auth:
-        if is__pusher_available([REQUESTS.ADD, documentId, fields]):
+        if is_pusher_available([REQUESTS.ADD, documentId, fields]):
             request = REQUESTS.ADD
             var url = _get_request_url()
             url += _query_tag + _documentId_tag + documentId
@@ -75,7 +75,7 @@ func add(documentId : String, fields : Dictionary = {}) -> void:
 # used to GET a document from the collection, specify @documentId
 func get(documentId : String) -> void:
     if auth:
-        if is__pusher_available([REQUESTS.GET, documentId]):
+        if is_pusher_available([REQUESTS.GET, documentId]):
             request = REQUESTS.GET
             var url = _get_request_url() + _separator + documentId.replace(" ", "%20")
             _pusher.request(url, [_authorization_header + auth.idtoken], true, HTTPClient.METHOD_GET)
@@ -85,7 +85,7 @@ func get(documentId : String) -> void:
 # used to UPDATE a document, specify @documentID and @fields
 func update(documentId : String, fields : Dictionary = {}) -> void:
     if auth:
-        if is__pusher_available([REQUESTS.UPDATE, documentId, fields]):
+        if is_pusher_available([REQUESTS.UPDATE, documentId, fields]):
             request = REQUESTS.UPDATE
             var url = _get_request_url() + _separator + documentId.replace(" ", "%20") + "?"
             for key in fields.keys():
@@ -98,7 +98,7 @@ func update(documentId : String, fields : Dictionary = {}) -> void:
 # used to DELETE a document, specify @documentId
 func delete(documentId : String) -> void:
     if auth:
-        if is__pusher_available([REQUESTS.DELETE, documentId]):
+        if is_pusher_available([REQUESTS.DELETE, documentId]):
             request = REQUESTS.DELETE
             var url = _get_request_url() + _separator + documentId.replace(" ", "%20")
             _pusher.request(url, [_authorization_header + auth.idtoken], true, HTTPClient.METHOD_DELETE)
@@ -111,7 +111,7 @@ func _get_request_url() -> String:
 
 
 # ---------------- RESPONSES
-func on__pusher_request_complete(result, response_code, headers, body):
+func on_pusher_request_complete(result, response_code, headers, body):
     var bod = JSON.parse(body.get_string_from_utf8()).result
     if response_code == HTTPClient.RESPONSE_OK:
         match request:
@@ -140,7 +140,7 @@ func on__pusher_request_complete(result, response_code, headers, body):
 
 # Check whether the @_pusher is available or not to issue a request. If not, append a @request_element.
 # A @request_element is a touple composed by the 'request_type' (@request) and the 'request_content' (@url)
-func is__pusher_available(request_element : Array = []) -> bool:
+func is_pusher_available(request_element : Array = []) -> bool:
     if request == REQUESTS.NONE :
         return true
     else:
