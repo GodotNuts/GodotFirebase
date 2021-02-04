@@ -40,16 +40,27 @@ func collection(path : String) -> FirestoreCollection:
     else:
         return collections[path]
 
-func list(path : String = "") -> void:
+func list(path : String, page_size : int = 0, page_token : String = "", order_by : String = "") -> void:
     var url : String
     if not path in [""," "]:
         url = base_url + extended_url + path + "/"
     else:
         url = base_url + extended_url
+    if page_size != 0:
+        url+="?pageSize="+str(page_size)
+    if page_token != "":
+        url+="&pageToken="+page_token
+    if order_by != "":
+        url+="&orderBy="+order_by
     request_list_node.request(url, ["Authorization: Bearer " + auth.idtoken], true, HTTPClient.METHOD_GET)
 
 func on_list_request_completed(result : int, response_code : int, headers : PoolStringArray, body : PoolByteArray):
-    print(JSON.parse(body.get_string_from_utf8()).result)
+    var result_body : Dictionary = JSON.parse(body.get_string_from_utf8()).result
+    match result:
+        0:
+            match response_code:
+                200:
+                    emit_signal("listed_documents", result_body.documents)
 
 func _on_FirebaseAuth_login_succeeded(auth_result : Dictionary) -> void:
     auth = auth_result
