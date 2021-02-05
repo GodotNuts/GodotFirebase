@@ -1,3 +1,11 @@
+# ---------------------------------------------------- #
+#                 SCRIPT VERSION = 2.0                 #
+#                 ====================                 #
+# please, remember to increment the version to +0.1    #
+# if you are going to make changes that will commited  #
+# ---------------------------------------------------- #
+
+tool
 extends Reference
 class_name FirestoreQuery
 
