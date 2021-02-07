@@ -1,5 +1,5 @@
 # ---------------------------------------------------- #
-#                 SCRIPT VERSION = 2.2                 #
+#                 SCRIPT VERSION = 2.1                 #
 #                 ====================                 #
 # please, remember to increment the version to +0.1    #
 # if you are going to make changes that will commited  #
@@ -12,7 +12,6 @@
 # events received from the service.
 #
 
-tool
 class_name FirebaseDatabaseStore
 extends Node
 
