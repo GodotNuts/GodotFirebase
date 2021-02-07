@@ -377,6 +377,8 @@ func begin_refresh_countdown() -> void:
     elif auth.has("refresh_token"):
         refresh_token = auth.refresh_token
         expires_in = auth.expires_in
+    if auth.has("userid"):
+        auth["localid"] = auth.userid
     _needs_refresh = true
     emit_signal("token_refresh_succeeded", auth)
     yield(get_tree().create_timer(float(expires_in)), "timeout")
