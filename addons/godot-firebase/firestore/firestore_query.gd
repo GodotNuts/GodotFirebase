@@ -1,11 +1,3 @@
-# ---------------------------------------------------- #
-#                 SCRIPT VERSION = 2.0                 #
-#                 ====================                 #
-# please, remember to increment the version to +0.1    #
-# if you are going to make changes that will commited  #
-# ---------------------------------------------------- #
-
-tool
 extends Reference
 class_name FirestoreQuery
 
@@ -143,7 +135,7 @@ func where(field : String, operator : int, value = null, chain : int = -1):
 # Order by a field, defining its name and the order direction
 # default directoin = Ascending
 func order_by(field : String, direction : int = DIRECTION.ASCENDING) -> FirestoreQuery:
-    query["orderBy"] = [_order_object(field, direction)]
+    query["orderBy"] = [_order_object(field, direction).obj]
     return self
 
 
@@ -155,7 +147,7 @@ func order_by_fields(order_field_list : Array) -> FirestoreQuery:
     var order_list : Array = []
     for order in order_field_list:
         if order is Array:
-            order_list.append(_order_object(order[0], order[1]))
+            order_list.append(_order_object(order[0], order[1]).obj)
         elif order is Order:
             order_list.append(order.obj)
     query["orderBy"] = order_list

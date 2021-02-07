@@ -1,11 +1,10 @@
 # ---------------------------------------------------- #
-#                 SCRIPT VERSION = 2.2                 #
+#                 SCRIPT VERSION = 2.1                 #
 #                 ====================                 #
 # please, remember to increment the version to +0.1    #
 # if you are going to make changes that will commited  #
 # ---------------------------------------------------- #
 
-tool
 class_name FirestoreCollection
 extends Node
 
@@ -16,6 +15,8 @@ signal update_document(doc)
 signal delete_document()
 signal error(code,status,message)
 
+const _authorization_header : String = "Authorization: Bearer "
+
 var _base_url : String
 var _extended_url : String
 var config : Dictionary
@@ -24,22 +25,8 @@ var collection_name : String
 
 var _pusher : HTTPRequest
 
-
-const _event_tag : String = "event: "
-const _data_tag : String = "data: "
-const _put_tag : String = "put"
-const _patch_tag : String = "patch"
 const _separator : String = "/"
-const _json_list_tag : String = ".json"
 const _query_tag : String = "?"
-const _auth_tag : String = "auth="
-const _authorization_header : String = "Authorization: Bearer "
-const _auth_variable_begin : String = "["
-const _auth_variable_end : String = "]"
-const _filter_tag : String = "&"
-const _escaped_quote : String = "\""
-const _equal_tag : String = "="
-const _key_filter_tag : String = "$key"
 const _documentId_tag : String = "documentId="
 
 var request : int

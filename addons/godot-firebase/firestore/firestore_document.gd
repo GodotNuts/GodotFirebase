@@ -1,11 +1,10 @@
 # ---------------------------------------------------- #
-#                 SCRIPT VERSION = 2.2                 #
+#                 SCRIPT VERSION = 2.1                 #
 #                 ====================                 #
 # please, remember to increment the version to +0.1    #
 # if you are going to make changes that will commited  #
 # ---------------------------------------------------- #
 
-tool
 class_name FirestoreDocument
 extends Node
 
@@ -21,9 +20,9 @@ var create_time : String        # createTime
 
 func _init(doc : Dictionary = {}, _doc_name : String = "", _doc_fields : Dictionary = {}) -> void:
     self.document = doc
-    self.doc_name = document.name
+    self.doc_name = doc.name
     if self.doc_name.count("/") > 2:
-        self.doc_name = self.doc_name.substr(self.doc_name.find_last("/")+1, self.doc_name.length())
+        self.doc_name = (self.doc_name.split("/") as Array).back()
     self.doc_fields = fields2dict(document)
     self.create_time = doc.createTime
 
@@ -70,20 +69,30 @@ static func array2fields(array : Array) -> Array:
 # Pass a Firebase arrayValue Dictionary to convert it back to an Array
 static func fields2array(array : Dictionary) -> Array:
     var fields : Array = []
-    for field in array.values:
-        fields.append(field.values()[0])
+    if array.has("values"):
+        for field in array.values:
+            fields.append(field.values()[0])
     return fields
 
 # Pass the .fields inside a Firestore Document to print out the Dictionary { 'key' : 'value' }
 static func fields2dict(doc : Dictionary) -> Dictionary:
-    var dict : Dictionary = doc.fields
-    for field in (doc.fields).keys():
-        if (doc.fields)[field].has("mapValue"):
-            dict[field] = fields2dict((doc.fields)[field].mapValue)
-        elif (doc.fields)[field].has("arrayValue"):
-            dict[field] = fields2array((doc.fields)[field].arrayValue)
-        else:
-            dict[field] = (doc.fields)[field].values()[0]
+    var dict : Dictionary = {}
+    if doc.has("fields"):
+        for field in (doc.fields).keys():
+            if (doc.fields)[field].has("mapValue"):
+                dict[field] = fields2dict((doc.fields)[field].mapValue)
+            elif (doc.fields)[field].has("arrayValue"):
+                dict[field] = fields2array((doc.fields)[field].arrayValue)
+            elif (doc.fields)[field].has("integerValue"):
+                dict[field] = (doc.fields)[field].values()[0] as int
+            elif (doc.fields)[field].has("doubleValue"):
+                dict[field] = (doc.fields)[field].values()[0] as float
+            elif (doc.fields)[field].has("booleanValue"):
+                dict[field] = (doc.fields)[field].values()[0] as bool
+            elif (doc.fields)[field].has("nullValue"):
+                dict[field] = null
+            else:
+                dict[field] = (doc.fields)[field].values()[0]
     return dict
 
 # Call print(document) to return directly this document formatted

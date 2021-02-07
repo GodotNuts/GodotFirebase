@@ -1,11 +1,10 @@
 # ---------------------------------------------------- #
-#                 SCRIPT VERSION = 2.2                 #
+#                 SCRIPT VERSION = 2.1                 #
 #                 ====================                 #
 # please, remember to increment the version to +0.1    #
 # if you are going to make changes that will commited  #
 # ---------------------------------------------------- #
 
-tool
 class_name FirebaseFirestore
 extends Node
 
@@ -19,12 +18,13 @@ enum REQUESTS {
     QUERY
    }
 
+const _authorization_header : String = "Authorization: Bearer "
+
 var request : int = -1
 
 var _base_url : String = "https://firestore.googleapis.com/v1/"
 var _extended_url : String = "projects/[PROJECT_ID]/databases/(default)/documents/"
 var _query_suffix : String = ":runQuery"
-
 
 var config : Dictionary = {}
 
@@ -60,7 +60,7 @@ func query(query : FirestoreQuery):
         structuredQuery = query.query,
        }
     var url : String = _base_url + _extended_url + _query_suffix
-    _request_list_node.request(url, ["Authorization: Bearer " + auth.idtoken], true, HTTPClient.METHOD_POST, JSON.print(body))
+    _request_list_node.request(url, [_authorization_header + auth.idtoken], true, HTTPClient.METHOD_POST, JSON.print(body))
     
 
 func list(path : String, page_size : int = 0, page_token : String = "", order_by : String = "") -> void:
@@ -76,7 +76,7 @@ func list(path : String, page_size : int = 0, page_token : String = "", order_by
         url+="&pageToken="+page_token
     if order_by != "":
         url+="&orderBy="+order_by
-    _request_list_node.request(url, ["Authorization: Bearer " + auth.idtoken], true, HTTPClient.METHOD_GET)
+    _request_list_node.request(url, [_authorization_header + auth.idtoken], true, HTTPClient.METHOD_GET)
 
 func _on_request_completed(result : int, response_code : int, headers : PoolStringArray, body : PoolByteArray):
     match result:
@@ -91,6 +91,13 @@ func _on_request_completed(result : int, response_code : int, headers : PoolStri
                             var result_body : Array = JSON.parse(body.get_string_from_utf8()).result
                             emit_signal("result_query", result_body)
                 400:
+                    match request:
+                        REQUESTS.LIST:
+                            var result_body : Dictionary = JSON.parse(body.get_string_from_utf8()).result
+                            emit_signal("listed_documents", result_body.documents)
+                        REQUESTS.QUERY:
+                            var result_body : Array = JSON.parse(body.get_string_from_utf8()).result
+                            emit_signal("result_query", result_body)
                     var error : Array = JSON.parse(body.get_string_from_utf8()).result
                     emit_signal("error", error[0].error.message)
                     
