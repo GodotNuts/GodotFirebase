@@ -20,7 +20,7 @@ onready var Storage : FirebaseStorage = $Storage
 var config : Dictionary = {
     "apiKey": "",
     "authDomain": "",
-	"databaseURL": "",
+    "databaseURL": "",
     "projectId": "",
     "storageBucket": "",
     "messagingSenderId": "",
