@@ -26,20 +26,16 @@ enum {
     TASK_LIST
 }
 
-var ref # Storage Reference (Can't static type due to cyclic reference)
 var action : int = -1 setget set_action
-var data = PoolByteArray() # data can be of any type.
 
-var progress : float = 0.0
-var result : int = -1
-var finished : bool = false
-
-var response_headers : PoolStringArray = PoolStringArray()
-var response_code : int = 0
+var _response_headers : PoolStringArray = PoolStringArray()
+var _response_code : int = 0
 
 var _method : int = -1
 var _url : String = ""
 var _headers : PoolStringArray = PoolStringArray()
+
+var data
 
 func _ready():
     connect("request_completed", self, "_on_request_completed")
@@ -76,25 +72,31 @@ func _on_request_completed(result, response_code, headers, body):
                 var document : FirestoreDocument = FirestoreDocument.new(doc_infos)
                 emit_signal("add_document", document )
                 emit_signal("task_finished", document)
+                data = bod
             TASK_GET:
                 var doc_infos : Dictionary = bod
                 var document : FirestoreDocument = FirestoreDocument.new(doc_infos)
                 emit_signal("get_document", document )
                 emit_signal("task_finished", document)
+                data = bod
             TASK_PATCH:
                 var doc_infos : Dictionary = bod
                 var document : FirestoreDocument = FirestoreDocument.new(doc_infos)
                 emit_signal("update_document", document )
                 emit_signal("task_finished", document)
+                data = bod
             TASK_DELETE:
                 emit_signal("delete_document")
                 emit_signal("task_finished")
+                data = null
             TASK_QUERY:
                 emit_signal("result_query", bod)
                 emit_signal("task_finished", bod)
+                data = null
             TASK_LIST:
                 emit_signal("listed_documents", bod.documents)
                 emit_signal("task_finished", bod.documents)
+                data = null
     else:
         var code : int = bod.error.code
         var status : int = bod.error.status
@@ -103,9 +105,11 @@ func _on_request_completed(result, response_code, headers, body):
             TASK_LIST, TASK_QUERY:
                 emit_signal("error", bod[0].error)
                 emit_signal("task_finished", bod[0].error)
+                data = bod[0].error
             _:
                 emit_signal("error", bod.error)
                 emit_signal("task_finished", bod.error)
+                data = bod.error
     queue_free()
 
 
