@@ -212,6 +212,7 @@ func login_with_oauth(google_token: String, provider_id : String = "google.com",
 # Function used to logout of the system, this will also remove the local encrypted auth file if there is one
 func logout() -> void:
     auth = {}
+    remove_auth()
     emit_signal("logout")
 
 # Function is called when requesting a manual token refresh
