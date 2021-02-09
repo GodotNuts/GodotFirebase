@@ -1,3 +1,10 @@
+# ---------------------------------------------------- #
+#                 SCRIPT VERSION = 1.1                 #
+#                 ====================                 #
+# please, remember to increment the version to +0.1    #
+# if you are going to make changes that will commited  #
+# ---------------------------------------------------- #
+
 extends Reference
 class_name FirestoreQuery
 
@@ -11,6 +18,8 @@ class Cursor:
     func _init(v : Array, b : bool):
         values = v
         before = b
+
+signal query_result(query_result)
 
 const TEMPLATE_QUERY : Dictionary = {
     select = {},

@@ -64,6 +64,11 @@ _global_script_classes=[ {
 "language": "GDScript",
 "path": "res://addons/godot-firebase/firestore/firestore_query.gd"
 }, {
+"base": "HTTPRequest",
+"class": "FirestoreTask",
+"language": "GDScript",
+"path": "res://addons/godot-firebase/firestore/firestore_task.gd"
+}, {
 "base": "Reference",
 "class": "StorageReference",
 "language": "GDScript",
@@ -91,6 +96,7 @@ _global_script_class_icons={
 "FirestoreCollection": "",
 "FirestoreDocument": "",
 "FirestoreQuery": "",
+"FirestoreTask": "",
 "StorageReference": "",
 "StorageTask": "",
 "TestUtils": ""

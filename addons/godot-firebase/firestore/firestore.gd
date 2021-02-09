@@ -1,5 +1,5 @@
 # ---------------------------------------------------- #
-#                 SCRIPT VERSION = 2.1                 #
+#                 SCRIPT VERSION = 2.2                 #
 #                 ====================                 #
 # please, remember to increment the version to +0.1    #
 # if you are going to make changes that will commited  #
@@ -18,6 +18,7 @@ enum REQUESTS {
     QUERY
    }
 
+
 const _authorization_header : String = "Authorization: Bearer "
 
 var request : int = -1
@@ -31,6 +32,10 @@ var config : Dictionary = {}
 var collections : Dictionary = {}
 var auth : Dictionary
 var _request_list_node : HTTPRequest
+
+var _requests_queue : Array = []
+
+var _current_query : FirestoreQuery
 
 func set_config(config_json : Dictionary) -> void:
     config = config_json
@@ -54,55 +59,59 @@ func collection(path : String) -> FirestoreCollection:
         return collections[path]
 
 
-func query(query : FirestoreQuery):
-    request = REQUESTS.QUERY
-    var body : Dictionary = {
-        structuredQuery = query.query,
-       }
-    var url : String = _base_url + _extended_url + _query_suffix
-    _request_list_node.request(url, [_authorization_header + auth.idtoken], true, HTTPClient.METHOD_POST, JSON.print(body))
-    
-
-func list(path : String, page_size : int = 0, page_token : String = "", order_by : String = "") -> void:
-    request = REQUESTS.LIST
-    var url : String
-    if not path in [""," "]:
-        url = _base_url + _extended_url + path + "/"
+func query(query : FirestoreQuery) -> FirestoreTask:
+    if auth:
+        var firestore_task : FirestoreTask = FirestoreTask.new()
+        add_child(firestore_task)
+        firestore_task.connect("listed_documents", self, "_on_listed_documents")
+        firestore_task.connect("error", self, "_on_error")
+        firestore_task.set_action(FirestoreTask.TASK_QUERY)
+        var body : Dictionary = { structuredQuery = query.query }
+        var url : String = _base_url + _extended_url + _query_suffix
+        firestore_task.push_request(url, _authorization_header + auth.idtoken, JSON.print(body))
+        return firestore_task
     else:
-        url = _base_url + _extended_url
-    if page_size != 0:
-        url+="?pageSize="+str(page_size)
-    if page_token != "":
-        url+="&pageToken="+page_token
-    if order_by != "":
-        url+="&orderBy="+order_by
-    _request_list_node.request(url, [_authorization_header + auth.idtoken], true, HTTPClient.METHOD_GET)
+        printerr("Unauthorized")
+        return null
 
-func _on_request_completed(result : int, response_code : int, headers : PoolStringArray, body : PoolByteArray):
-    match result:
-        0:
-            match response_code:
-                200:
-                    match request:
-                        REQUESTS.LIST:
-                            var result_body : Dictionary = JSON.parse(body.get_string_from_utf8()).result
-                            emit_signal("listed_documents", result_body.documents)
-                        REQUESTS.QUERY:
-                            var result_body : Array = JSON.parse(body.get_string_from_utf8()).result
-                            emit_signal("result_query", result_body)
-                400:
-                    match request:
-                        REQUESTS.LIST:
-                            var result_body : Dictionary = JSON.parse(body.get_string_from_utf8()).result
-                            emit_signal("listed_documents", result_body.documents)
-                        REQUESTS.QUERY:
-                            var result_body : Array = JSON.parse(body.get_string_from_utf8()).result
-                            emit_signal("result_query", result_body)
-                    var error : Array = JSON.parse(body.get_string_from_utf8()).result
-                    emit_signal("error", error[0].error.message)
-                    
-    request = REQUESTS.NONE
 
+func list(path : String, page_size : int = 0, page_token : String = "", order_by : String = "") -> FirestoreTask:
+    if auth: 
+        var firestore_task : FirestoreTask = FirestoreTask.new()
+        add_child(firestore_task)
+        firestore_task.connect("result_query", self, "_on_result_query")
+        firestore_task.connect("error", self, "_on_error")
+        firestore_task.set_action(FirestoreTask.TASK_LIST)
+        var url : String
+        if not path in [""," "]:
+            url = _base_url + _extended_url + path + "/"
+        else:
+            url = _base_url + _extended_url
+        if page_size != 0:
+            url+="?pageSize="+str(page_size)
+        if page_token != "":
+            url+="&pageToken="+page_token
+        if order_by != "":
+            url+="&orderBy="+order_by
+        firestore_task.push_request(url, _authorization_header + auth.idtoken)
+        return firestore_task
+    else:
+        printerr("Unauthorized")
+        return null
+
+
+# -------------
+
+func _on_listed_documents(listed_documents : Array):
+    emit_signal("listed_documents", listed_documents)
+
+
+func _on_result_query(result : Dictionary):
+    emit_signal("result_query", result)
+
+
+func _on_error(error : Dictionary):
+    printerr(JSON.print(error))
 
 func _on_FirebaseAuth_login_succeeded(auth_result : Dictionary) -> void:
     auth = auth_result
