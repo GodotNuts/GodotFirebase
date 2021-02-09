@@ -76,7 +76,7 @@ func select(fields) -> FirestoreQuery:
     match typeof(fields):
         TYPE_STRING:
             query["select"] = { fields = { fieldPath = fields } }
-        TYPE_ARRAY:
+        TYPE_ARRAY, TYPE_STRING_ARRAY:
             for field in fields:
                 field = ({ fieldPath = field })
             query["select"] = { fields = fields }
