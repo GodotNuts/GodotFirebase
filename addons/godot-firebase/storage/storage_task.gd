@@ -5,10 +5,11 @@
 # if you are going to make changes that will commited  #
 # ---------------------------------------------------- #
 
+## An object that keeps track of an operation performed by [StorageReference].
 class_name StorageTask
 extends Reference
 
-enum {
+enum Task {
     TASK_UPLOAD,
     TASK_UPLOAD_META,
     TASK_DOWNLOAD,
@@ -17,20 +18,46 @@ enum {
     TASK_LIST,
     TASK_LIST_ALL,
     TASK_DELETE,
-    TASK_MAX
+    TASK_MAX ## The number of [enum Task] constants.
 }
 
+## Emitted when the task is finished.
 signal task_finished
 
+## @type StorageReference
+## The [StorageReference] that created this [StorageTask].
 var ref # Storage Reference (Can't static type due to cyclic reference)
+
+## @enum Task
+## @default -1
+## @setter set_action
+## The kind of operation this [StorageTask] is keeping track of.
 var action : int = -1 setget set_action
+
+## @default PoolStringArray()
+## Data that the tracked task will/has returned.
 var data = PoolByteArray() # data can be of any type.
 
+## @default 0.0
+## The percentage of data that has been received.
 var progress : float = 0.0
+
+## @default -1
+## @enum HTTPRequest.Result
+## The resulting status of the task. Anyting other than [constant HTTPRequest.RESULT_SUCCESS] means an error has occured.
 var result : int = -1
+
+## @default false
+## Whether the task is finished processing.
 var finished : bool = false
 
-var response_headers : PoolStringArray = PoolStringArray()
+## @default PoolStringArray
+## The returned HTTP response headers.
+var response_headers := PoolStringArray()
+
+## @default 0
+## @enum HTTPClient.ResponseCode
+## The returned HTTP response code.
 var response_code : int = 0
 
 var _method : int = -1
@@ -40,11 +67,11 @@ var _headers : PoolStringArray = PoolStringArray()
 func set_action(value : int) -> void:
     action = value
     match action:
-        TASK_UPLOAD:
+        Task.TASK_UPLOAD:
             _method = HTTPClient.METHOD_POST
-        TASK_UPLOAD_META:
+        Task.TASK_UPLOAD_META:
             _method = HTTPClient.METHOD_PATCH
-        TASK_DELETE:
+        Task.TASK_DELETE:
             _method = HTTPClient.METHOD_DELETE
         _:
             _method = HTTPClient.METHOD_GET

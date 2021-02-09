@@ -5,19 +5,33 @@
 # if you are going to make changes that will commited  #
 # ---------------------------------------------------- #
 
+## The Storage API for Firebase.
+## This object handles all firebase storage tasks, variables and references.
+## To use this API, you must first create a [StorageReference] with [method ref]. With the reference, you can then query and manipulate the file or folder in the cloud storage.
 class_name FirebaseStorage
 extends Node
 
+## @arg-types int, int, PoolStringArray
+## @arg-enums HTTPRequest.Result, HTTPClient.ResponseCode
+## Emitted when a [StorageTask] has finished successful.
 signal task_successful(result, response_code, data)
+
+## @arg-types int, int, PoolStringArray
+## @arg-enums HTTPRequest.Result, HTTPClient.ResponseCode
+## Emitted when a [StorageTask] has finished with an error.
 signal task_failed(result, response_code, data)
 
-var auth : Dictionary
-var config : Dictionary
+## The current storage bucket the Storage API is referencing.
 var bucket : String
 
-var references : Dictionary = {}
-
+## @default false
+## Whether a task is currently being processed.
 var requesting : bool = false
+
+var _auth : Dictionary
+var _config : Dictionary
+
+var _references : Dictionary = {}
 
 var _base_url : String = "https://firebasestorage.googleapis.com"
 var _extended_url : String = "/v0/b/[APP_ID]/o/[FILE_PATH]"
@@ -97,14 +111,12 @@ func _internal_process(_delta : float) -> void:
         HTTPClient.STATUS_SSL_HANDSHAKE_ERROR:
             call_deferred("_finish_request", HTTPRequest.RESULT_SSL_HANDSHAKE_ERROR)
 
-func set_config(config_json : Dictionary) -> void:
-    config = config_json
-    if bucket != config.storageBucket:
-        bucket = config.storageBucket
-        _http_client.close()
-
+## @args path
+## @return StorageReference
+## Returns a reference to a file or folder in the storage bucket.
+## It's this reference that should be used to control the file/folder on the server end.
 func ref(path := "") -> StorageReference:
-    if not config:
+    if not _config:
         return null
     
     # Create a root storage reference if there's none
@@ -113,9 +125,9 @@ func ref(path := "") -> StorageReference:
         _root_ref = ref()
     
     path = _simplify_path(path)
-    if not references.has(path):
+    if not _references.has(path):
         var ref := StorageReference.new()
-        references[path] = ref
+        _references[path] = ref
         ref.valid = true
         ref.bucket = bucket
         ref.full_path = path
@@ -125,10 +137,16 @@ func ref(path := "") -> StorageReference:
         ref.storage = self
         return ref
     else:
-        return references[path]
+        return _references[path]
+
+func _set_config(config_json : Dictionary) -> void:
+    _config = config_json
+    if bucket != _config.storageBucket:
+        bucket = _config.storageBucket
+        _http_client.close()
 
 func _upload(data : PoolByteArray, headers : PoolStringArray, ref : StorageReference, meta_only : bool) -> StorageTask:
-    if not (config and auth):
+    if not (_config and _auth):
         return null
     
     var task := StorageTask.new()
@@ -141,7 +159,7 @@ func _upload(data : PoolByteArray, headers : PoolStringArray, ref : StorageRefer
     return task
 
 func _download(ref : StorageReference, meta_only : bool, url_only : bool) -> StorageTask:
-    if not (config and auth):
+    if not (_config and _auth):
         return null
     
     var info_task := StorageTask.new()
@@ -176,7 +194,7 @@ func _download(ref : StorageReference, meta_only : bool, url_only : bool) -> Sto
     return task
 
 func _list(ref : StorageReference, list_all : bool) -> StorageTask:
-    if not (config and auth):
+    if not (_config and _auth):
         return null
     
     var task := StorageTask.new()
@@ -187,7 +205,7 @@ func _list(ref : StorageReference, list_all : bool) -> StorageTask:
     return task
 
 func _delete(ref : StorageReference) -> StorageTask:
-    if not (config and auth):
+    if not (_config and _auth):
         return null
     
     var task := StorageTask.new()
@@ -199,7 +217,7 @@ func _delete(ref : StorageReference) -> StorageTask:
 
 func _process_request(task : StorageTask) -> void:
     var headers = Array(task._headers)
-    headers.append("Authorization: Bearer " + auth.idtoken)
+    headers.append("Authorization: Bearer " + _auth.idtoken)
     task._headers = PoolStringArray(headers)
     
     if requesting:
@@ -231,7 +249,7 @@ func _finish_request(result : int) -> void:
             task.data = _response_data
         
         StorageTask.TASK_DELETE:
-            references.erase(task.ref.full_path)
+            _references.erase(task.ref.full_path)
             task.ref.valid = false
             if typeof(task.data) == TYPE_RAW_ARRAY:
                 task.data = null
@@ -304,7 +322,7 @@ func _simplify_path(path : String) -> String:
     return new_path
 
 func _on_FirebaseAuth_login_succeeded(auth_token : Dictionary) -> void:
-    auth = auth_token
+    _auth = auth_token
 
 func _on_FirebaseAuth_token_refresh_succeeded(auth_result : Dictionary) -> void:
-    auth = auth_result
+    _auth = auth_result

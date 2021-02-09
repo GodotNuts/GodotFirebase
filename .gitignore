@@ -17,3 +17,8 @@ override.cfg
 #
 .mono/
 .DS_Store
+
+#
+# VSCode-specific ignores
+#
+.vscode/

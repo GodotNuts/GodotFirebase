@@ -32,7 +32,7 @@ var collections : Dictionary = {}
 var auth : Dictionary
 var _request_list_node : HTTPRequest
 
-func set_config(config_json : Dictionary) -> void:
+func _set_config(config_json : Dictionary) -> void:
     config = config_json
     _extended_url = _extended_url.replace("[PROJECT_ID]", config.projectId)
     _request_list_node = HTTPRequest.new()
