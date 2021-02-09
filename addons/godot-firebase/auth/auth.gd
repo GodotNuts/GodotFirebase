@@ -1,8 +1,8 @@
 # ---------------------------------------------------- #
-#                 SCRIPT VERSION = 2.1                 #
+#                 SCRIPT VERSION = 2.2                 #
 #                 ====================                 #
 # please, remember to increment the version to +0.1    #
-# if you are going to make changes that will commited  #
+# if you are going to make changes that will committed #
 # ---------------------------------------------------- #
 
 class_name FirebaseAuth
