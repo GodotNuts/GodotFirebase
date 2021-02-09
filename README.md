@@ -12,6 +12,7 @@ The following individuals and many more have contributed significantly to this p
 - [Nicolò Santilio](https://github.com/fenix-hub) (creator)
 - [Chuck Lindblom](https://github.com/BearDooks)
 - [Luke Hollenback](https://github.com/lukehollenback) ([buy me a coffee](https://ko-fi.com/lukehollenback))
+- [SISilicon](https://github.com/SISilicon)
 
 ## :arrow_down:  Cloning
 SSH:

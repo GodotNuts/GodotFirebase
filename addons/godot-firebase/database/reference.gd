@@ -1,5 +1,5 @@
 # ---------------------------------------------------- #
-#                 SCRIPT VERSION = 2.1                 #
+#                 SCRIPT VERSION = 2.2                 #
 #                 ====================                 #
 # please, remember to increment the version to +0.1    #
 # if you are going to make changes that will commited  #
@@ -30,7 +30,7 @@ const _patch_tag : String = "patch"
 const _separator : String = "/"
 const _json_list_tag : String = ".json"
 const _query_tag : String = "?"
-const _auth_tag : String = "_auth="
+const _auth_tag : String = "auth="
 const _accept_header : String = "accept: text/event-stream"
 const _auth_variable_begin : String = "["
 const _auth_variable_end : String = "]"
