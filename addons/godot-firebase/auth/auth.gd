@@ -1,8 +1,8 @@
 # ---------------------------------------------------- #
-#                 SCRIPT VERSION = 2.1                 #
+#                 SCRIPT VERSION = 2.2                 #
 #                 ====================                 #
 # please, remember to increment the version to +0.1    #
-# if you are going to make changes that will commited  #
+# if you are going to make changes that will committed #
 # ---------------------------------------------------- #
 
 class_name FirebaseAuth
@@ -14,6 +14,7 @@ signal login_failed(code, message)
 signal userdata_received(userdata)
 signal token_exchanged(successful)
 signal token_refresh_succeeded(auth_result)
+signal logged_out
 
 const RESPONSE_SIGNUP : String   = "identitytoolkit#SignupNewUserResponse"
 const RESPONSE_SIGNIN : String   = "identitytoolkit#VerifyPasswordResponse"
@@ -208,6 +209,12 @@ func login_with_oauth(google_token: String, provider_id : String = "google.com",
         requesting = REQUESTS.LOGIN_WITH_OAUTH
         request(_signin_with_oauth_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print(_oauth_login_request_body))
 
+# Function used to logout of the system, this will also remove the local encrypted auth file if there is one
+func logout() -> void:
+    auth = {}
+    remove_auth()
+    emit_signal("logged_out")
+
 # Function is called when requesting a manual token refresh
 func manual_token_refresh(auth_data):
     auth = auth_data
@@ -289,13 +296,20 @@ func load_auth() -> void:
     else:
         printerr("OS Not supported for loading auth data")
 
+# Function used to remove the local encrypted auth file
+func remove_auth() -> void:
+    var dir = Directory.new()
+    if (dir.file_exists("user://user.auth")):
+        dir.remove("user://user.auth")
+    else:
+        printerr("No encrypted auth file exists")
+
 # Function to check if there is an encrypted auth data file
 # If there is, the game will load it and refresh the token
 func check_auth_file() -> void:
     var dir = Directory.new()
     if (dir.file_exists("user://user.auth")):
         load_auth()
-        pass
     else:
         printerr("No encrypted auth file exists")
 
