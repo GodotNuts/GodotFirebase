@@ -14,7 +14,7 @@ signal login_failed(code, message)
 signal userdata_received(userdata)
 signal token_exchanged(successful)
 signal token_refresh_succeeded(auth_result)
-signal logout
+signal logged_out
 
 const RESPONSE_SIGNUP : String   = "identitytoolkit#SignupNewUserResponse"
 const RESPONSE_SIGNIN : String   = "identitytoolkit#VerifyPasswordResponse"
@@ -213,7 +213,7 @@ func login_with_oauth(google_token: String, provider_id : String = "google.com",
 func logout() -> void:
     auth = {}
     remove_auth()
-    emit_signal("logout")
+    emit_signal("logged_out")
 
 # Function is called when requesting a manual token refresh
 func manual_token_refresh(auth_data):
