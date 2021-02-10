@@ -163,7 +163,7 @@ func signup_with_email_and_password(email : String, password : String) -> void:
 func login_anonymous() -> void:
     if _is_ready():
         is_busy = true
-        request(_signup_request_url, ["Content-Type : application/json"], true, HTTPClient.METHOD_POST, JSON.print(_anonymous_login_request_body))
+        request(_signup_request_url, ["Content-Type: application/json"], true, HTTPClient.METHOD_POST, JSON.print(_anonymous_login_request_body))
 
 
 # Called with Firebase.Auth.login_with_email_and_password(email, password)
