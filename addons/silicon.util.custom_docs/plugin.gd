@@ -106,23 +106,23 @@ func _process(delta: float) -> void:
 		
 		for name in class_docs:
 			if fits_search(name, ITEM_CLASS):
-				_process_custom_item(name, ITEM_CLASS)
+				process_custom_item(name, ITEM_CLASS)
 			
 			for method in class_docs[name].methods:
 				if fits_search(method.name, ITEM_METHOD):
-					_process_custom_item(name + "." + method.name, ITEM_METHOD)
+					process_custom_item(name + "." + method.name, ITEM_METHOD)
 			
 			for _signal in class_docs[name].signals:
 				if fits_search(_signal.name, ITEM_SIGNAL):
-					_process_custom_item(name + "." + _signal.name, ITEM_SIGNAL)
+					process_custom_item(name + "." + _signal.name, ITEM_SIGNAL)
 			
 			for constant in class_docs[name].constants:
 				if fits_search(constant.name, ITEM_CONSTANT):
-					_process_custom_item(name + "." + constant.name, ITEM_CONSTANT)
+					process_custom_item(name + "." + constant.name, ITEM_CONSTANT)
 			
 			for property in class_docs[name].properties:
 				if fits_search(property.name, ITEM_PROPERTY):
-					_process_custom_item(name + "." + property.name, ITEM_PROPERTY)
+					process_custom_item(name + "." + property.name, ITEM_PROPERTY)
 	
 	var custom_doc_open := false
 	var doc_open := false
@@ -152,12 +152,13 @@ func _process(delta: float) -> void:
 			custom_doc_open = true
 			
 			var label: RichTextLabel = editor_help.get_child(0)
-			if current_label:
-				current_label.disconnect("meta_clicked", self, "_on_EditorHelpLabel_meta_clicked")
 			if current_label != label:
-				call_deferred("_update_doc", label, text)
-			current_label = label
-			current_label.connect("meta_clicked", self, "_on_EditorHelpLabel_meta_clicked", [current_label])
+				if current_label:
+					current_label.disconnect("meta_clicked", self, "_on_EditorHelpLabel_meta_clicked")
+				
+				call_deferred("update_doc", label, text)
+				current_label = label
+				current_label.connect("meta_clicked", self, "_on_EditorHelpLabel_meta_clicked", [current_label])
 		
 		script_list.call_deferred("set_item_text", i, text)
 	
@@ -196,7 +197,7 @@ func fits_search(name: String, type: int) -> bool:
 	return true
 
 
-func _update_doc(label: RichTextLabel, _class: String) -> void:
+func update_doc(label: RichTextLabel, _class: String) -> void:
 	rich_label_doc_exporter.label = label
 	rich_label_doc_exporter._generate(class_docs[_class])
 	
@@ -207,7 +208,7 @@ func _update_doc(label: RichTextLabel, _class: String) -> void:
 		section_list.set_item_metadata(i, section_lines[i][1])
 
 
-func _process_custom_item(name: String, type := ITEM_CLASS) -> TreeItem:
+func process_custom_item(name: String, type := ITEM_CLASS) -> TreeItem:
 	# Create tree item if it's not their.
 	if doc_items.get(name + str(type)):
 		doc_items[name + str(type)].clear_custom_color(0)
@@ -221,11 +222,11 @@ func _process_custom_item(name: String, type := ITEM_CLASS) -> TreeItem:
 		name = split[0]
 		sub_name = split[1]
 	
-	var _class: ClassDocItem = class_docs[name]
+	var doc: DocItem = class_docs[name]
 	
 	if search_flags & SEARCH_TREE:
 		# Get inheritance chain of the class.
-		var inherit_chain = [_class.base]
+		var inherit_chain = [doc.base]
 		while not inherit_chain[-1].empty():
 			inherit_chain.append(get_parent_class(inherit_chain[-1]))
 		inherit_chain.pop_back()
@@ -247,7 +248,7 @@ func _process_custom_item(name: String, type := ITEM_CLASS) -> TreeItem:
 			if failed:
 				var new_parent: TreeItem
 				if inherit in class_docs:
-					new_parent = _process_custom_item(inherit)
+					new_parent = process_custom_item(inherit)
 				if not new_parent:
 					new_parent = tree.create_item(parent)
 					new_parent.set_text(0, inherit)
@@ -266,49 +267,70 @@ func _process_custom_item(name: String, type := ITEM_CLASS) -> TreeItem:
 		ITEM_CLASS:
 			item.set_text(0, name)
 			item.set_text(1, "Class")
-			item.set_tooltip(0, _class.brief)
-			item.set_tooltip(1, _class.brief)
+			item.set_tooltip(0, doc.brief)
+			item.set_tooltip(1, doc.brief)
 			item.set_metadata(0, "class_name:" + name)
 			item.set_icon(0, _get_class_icon("Object"))
 			
 		ITEM_METHOD:
+			doc = doc.get_method_doc(sub_name)
 			item.set_text(0, display_name)
 			item.set_text(1, "Method")
-			var method := _class.get_method_doc(sub_name)
-			item.set_tooltip(0, method.return_type + " " + name + "()")
+			item.set_tooltip(0, doc.return_type + " " + name + "()")
 			item.set_tooltip(1, item.get_tooltip(0))
 			item.set_metadata(0, "class_method:" + name.replace(".", ":"))
 			item.set_icon(0, theme.get_icon("MemberMethod", "EditorIcons"))
 			
 		ITEM_SIGNAL:
+			doc = doc.get_signal_doc(sub_name)
 			item.set_text(0, display_name)
 			item.set_text(1, "Signal")
-			var _signal := _class.get_signal_doc(sub_name)
 			item.set_tooltip(0, name + "()")
 			item.set_tooltip(1, item.get_tooltip(0))
 			item.set_metadata(0, "class_signal:" + name.replace(".", ":"))
 			item.set_icon(0, theme.get_icon("MemberSignal", "EditorIcons"))
 			
 		ITEM_CONSTANT:
+			doc = doc.get_constant_doc(sub_name)
 			item.set_text(0, display_name)
 			item.set_text(1, "Constant")
-			var constant := _class.get_constant_doc(sub_name)
 			item.set_tooltip(0, name)
 			item.set_tooltip(1, item.get_tooltip(0))
 			item.set_metadata(0, "class_constant:" + name.replace(".", ":"))
 			item.set_icon(0, theme.get_icon("MemberConstant", "EditorIcons"))
 			
 		ITEM_PROPERTY:
+			doc = doc.get_property_doc(sub_name)
 			item.set_text(0, display_name)
 			item.set_text(1, "Property")
-			var property := _class.get_property_doc(sub_name)
-			item.set_tooltip(0, property.type + " " + name)
+			item.set_tooltip(0, doc.type + " " + name)
 			item.set_tooltip(1, item.get_tooltip(0))
 			item.set_metadata(0, "class_property:" + name.replace(".", ":"))
 			item.set_icon(0, theme.get_icon("MemberProperty", "EditorIcons"))
 	
+	var tooltip = item.get_tooltip(0)
+	for key in doc.meta:
+		tooltip += "\n" + snakekebab2pascal(key) + ": " + doc.meta[key]
+	item.set_tooltip(0, tooltip)
+	
 	doc_items[name + str(type)] = item
 	return item
+
+
+func snakekebab2pascal(string: String) -> String:
+	var result := PoolStringArray()
+	var prev_is_underscore := true # Make false for camelCase
+	for ch in string:
+		if ch == "_" or ch == "-":
+			prev_is_underscore = true
+		else:
+			if prev_is_underscore:
+				result.append(ch.to_upper())
+			else:
+				result.append(ch)
+			prev_is_underscore = false
+	
+	return result.join("")
 
 
 func _on_Timer_timeout() -> void:
@@ -316,18 +338,78 @@ func _on_Timer_timeout() -> void:
 	
 	var classes: Array = ProjectSettings.get("_global_script_classes")
 	var class_icons: Dictionary = ProjectSettings.get("_global_script_class_icons")
+	
+	# Include autoloads
+	var file := File.new()
+	while not file.open("res://project.godot", File.READ):
+		var project_string := file.get_as_text()
+		var autoload_loc := project_string.find("[autoload]\n")
+		if autoload_loc == -1:
+			break
+		autoload_loc += "[autoload]\n\n".length()
+		
+		var list := project_string.right(autoload_loc).split("\n")
+		for i in list.size():
+			var line := list[i]
+			if line.empty():
+				continue
+			if line.begins_with("["):
+				break
+			
+			var entry := line.split("=")
+			# An asterisk indicates that the singleton's enabled.
+			if entry[1][1] != "*":
+				continue
+			
+			# Only gdscript and scenes are supported.
+			var type := "other"
+			var base := ""
+			var path := entry[1].trim_prefix("\"*").trim_suffix("\"")
+			var script: GDScript
+			
+			if path.ends_with(".tscn") or path.ends_with(".scn"):
+				type = "scene"
+			elif type.ends_with(".gd"):
+				type = "script"
+			
+			if type == "other":
+				continue
+			elif type == "scene":
+				script = load(path).instance().get_script()
+			else:
+				script = load(path)
+			
+			if not script:
+				continue
+			if script.resource_path.empty():
+				continue
+			else:
+				path = script.resource_path
+			base = script.get_instance_base_type()
+		
+			classes.append({
+				"base": base,
+				"class": entry[0],
+				"language": "GDScript" if path.find(".gd") != -1 else "Other",
+				"path": path,
+				"is_autoload": true
+			})
+		
+		break
+	file.close()
+	
 	var docs := {}
 	for _class in classes:
 		var doc := doc_generator.generate(_class["class"], _class["base"], _class["path"])
-		doc.icon = class_icons[doc.name]
+		if not doc:
+			continue
+		
+		doc.icon = class_icons.get(doc.name, "")
+		doc.is_singleton = _class.has("is_autoload")
 		docs[doc.name] = doc
 		class_docs[doc.name] = doc
 		if not doc.name in rich_label_doc_exporter.class_list:
 			rich_label_doc_exporter.class_list.append(doc.name)
-	
-	# TODO Implement autoload classes
-#	var autoloads = ProjectSettings.get_setting("autoload")
-#	print(autoloads)
 	
 	# Periodically clean up tree items
 	for name in doc_items:

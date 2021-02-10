@@ -3,4 +3,10 @@ tool
 extends Reference
 class_name DocItem
 
-var name := "" ## The name of the documentation item.
+## @default ""
+## The name of the documentation item.
+var name := ""
+
+## @default {}
+## The item's metadata.
+var meta := {}

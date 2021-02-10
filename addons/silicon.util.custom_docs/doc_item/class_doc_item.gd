@@ -4,20 +4,49 @@ tool
 extends DocItem
 class_name ClassDocItem
 
-var base := "" ## The base class this class extends from.
-var brief := "" ## A brief description of the class.
-var description := "" ## A full description of the class.
+## @default ""
+## The base class this class extends from.
+var base := ""
 
-var methods := [] ## A list of method documents.
-var properties := [] ## A list of property documents.
-var signals := [] ## A list of signal documents.
-var constants := [] ## A list of constant documents, including enumerators.
+## @default ""
+## A brief description of the class.
+var brief := ""
 
-var tutorials := [] ## A list of tutorials that helps to understand this class.
+## @default ""
+## A full description of the class.
+var description := ""
 
-var contriute_url := "" ## A link to where the user can contribute to the class' documentation.
+## @default []
+## A list of method documents.
+var methods := []
 
-var icon := "" ## A path to the class icon if any.
+## @default []
+## A list of property documents.
+var properties := []
+
+## @default []
+## A list of signal documents.
+var signals := []
+
+## @default []
+## A list of constant documents, including enumerators.
+var constants := []
+
+## @default []
+## A list of tutorials that helps to understand this class.
+var tutorials := []
+
+## @default ""
+## A link to where the user can contribute to the class' documentation.
+var contriute_url := ""
+
+## @default false
+## Whether the class is a singleton.
+var is_singleton := false
+
+## @default ""
+## A path to the class icon if any.
+var icon := ""
 
 func _init(args := {}) -> void:
 	for arg in args:

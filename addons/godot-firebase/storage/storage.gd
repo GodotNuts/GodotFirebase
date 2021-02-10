@@ -1,13 +1,14 @@
 # ---------------------------------------------------- #
-#                 SCRIPT VERSION = 2.1                 #
+#                 SCRIPT VERSION = 2.2                 #
 #                 ====================                 #
 # please, remember to increment the version to +0.1    #
 # if you are going to make changes that will commited  #
 # ---------------------------------------------------- #
 
+## @meta-authors SIsilicon
+## @meta-version 2.2
 ## The Storage API for Firebase.
-## This object handles all firebase storage tasks, variables and references.
-## To use this API, you must first create a [StorageReference] with [method ref]. With the reference, you can then query and manipulate the file or folder in the cloud storage.
+## This object handles all firebase storage tasks, variables and references. To use this API, you must first create a [StorageReference] with [method ref]. With the reference, you can then query and manipulate the file or folder in the cloud storage.
 class_name FirebaseStorage
 extends Node
 
@@ -112,9 +113,9 @@ func _internal_process(_delta : float) -> void:
             call_deferred("_finish_request", HTTPRequest.RESULT_SSL_HANDSHAKE_ERROR)
 
 ## @args path
+## @arg-defaults ""
 ## @return StorageReference
-## Returns a reference to a file or folder in the storage bucket.
-## It's this reference that should be used to control the file/folder on the server end.
+## Returns a reference to a file or folder in the storage bucket. It's this reference that should be used to control the file/folder on the server end.
 func ref(path := "") -> StorageReference:
     if not _config:
         return null

@@ -1,3 +1,4 @@
+## @doc-ignore
 ## Some brief description.
 ##
 ## A longer description. You can use most bbcode stuff in the docs.

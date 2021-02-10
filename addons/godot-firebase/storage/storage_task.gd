@@ -1,10 +1,12 @@
 # ---------------------------------------------------- #
-#                 SCRIPT VERSION = 2.1                 #
+#                 SCRIPT VERSION = 2.2                 #
 #                 ====================                 #
 # please, remember to increment the version to +0.1    #
 # if you are going to make changes that will commited  #
 # ---------------------------------------------------- #
 
+## @meta-authors SIsilicon
+## @meta-version 2.2
 ## An object that keeps track of an operation performed by [StorageReference].
 class_name StorageTask
 extends Reference
@@ -51,7 +53,7 @@ var result : int = -1
 ## Whether the task is finished processing.
 var finished : bool = false
 
-## @default PoolStringArray
+## @default PoolStringArray()
 ## The returned HTTP response headers.
 var response_headers := PoolStringArray()
 

@@ -1,12 +1,13 @@
 # ---------------------------------------------------- #
-#                 SCRIPT VERSION = 2.1                 #
+#                 SCRIPT VERSION = 2.2                 #
 #                 ====================                 #
 # please, remember to increment the version to +0.1    #
 # if you are going to make changes that will commited  #
 # ---------------------------------------------------- #
 
-## A reference to a file or folder in the Firebase cloud storage.
-## This object is used to interact with the cloud storage. You may get data from the server, as well as upload your own back to it.
+## @meta-authors SIsilicon
+## @meta-version 2.2
+## A reference to a file or folder in the Firebase cloud storage. This object is used to interact with the cloud storage. You may get data from the server, as well as upload your own back to it.
 class_name StorageReference
 extends Reference
 
