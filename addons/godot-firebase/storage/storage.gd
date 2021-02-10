@@ -97,7 +97,7 @@ func _internal_process(_delta : float) -> void:
         HTTPClient.STATUS_SSL_HANDSHAKE_ERROR:
             call_deferred("_finish_request", HTTPRequest.RESULT_SSL_HANDSHAKE_ERROR)
 
-func set_config(config_json : Dictionary) -> void:
+func _set_config(config_json : Dictionary) -> void:
     config = config_json
     if bucket != config.storageBucket:
         bucket = config.storageBucket
