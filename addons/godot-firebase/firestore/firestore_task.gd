@@ -1,32 +1,64 @@
-# ---------------------------------------------------- #
-#                 SCRIPT VERSION = 1.0                 #
-#                 ====================                 #
-# please, remember to increment the version to +0.1    #
-# if you are going to make changes that will commited  #
-# ---------------------------------------------------- #
+## @meta-authors Nicolò 'fenix' Santilio,
+## @meta-version 1.1
+##
+## A [code]FirestoreTask[/code] is an indipendent node inheriting [code]HTTPRequest[/code] that processes a [code]Firestore[/code] request.
+## Once the Task is completed (both if successfully or not) it will emit the relative signal (or a general purpose signal [code]task_finished()[/code]) and will destroy automatically.
+## 
+## Being a [code]Node[/code] it can be stored in a variable to yield on it, and receive its result as a callback.
+## All signals emitted by a [code]FirestoreTask[/code] represent a direct level of signal communication, which can be high ([code]get_document(document), result_query(result)[/code]) or low ([code]task_finished(result)[/code]).
+## An indirect level of communication with Tasks is also provided, redirecting signals to the [class FirebaseFirestore] module.
+##
+## ex.
+## [code]var task : FirestoreTask = Firebase.Firestore.query(query)[/code]
+## [code]var result : Array = yield(task, "task_finished")[/code]
+## [code]var result : Array = yield(task, "result_query")[/code]
+## [code]var result : Array = yield(Firebase.Firestore, "task_finished")[/code]
+## [code]var result : Array = yield(Firebase.Firestore, "result_query")[/code]
+## 
+## @tutorial https://github.com/GodotNuts/GodotFirebase/wiki/Firestore#FirestoreTask
 
 class_name FirestoreTask
 extends HTTPRequest
 
+## Emitted when a request is completed. The request can be successful or not successful: if not, an [code]error[/code] Dictionary will be passed as a result.
+## @arg-types Variant
 signal task_finished(result)
+## Emitted when a [code]add(document)[/code] request on a [class FirebaseCollection] is successfully completed. [code]error()[/code] signal will be emitted otherwise.
+## @arg-types FirestoreDocument
 signal add_document(doc)
+## Emitted when a [code]get(document)[/code] request on a [class FirebaseCollection] is successfully completed. [code]error()[/code] signal will be emitted otherwise.
+## @arg-types FirestoreDocument
 signal get_document(doc)
+## Emitted when a [code]update(document)[/code] request on a [class FirebaseCollection] is successfully completed. [code]error()[/code] signal will be emitted otherwise.
+## @arg-types FirestoreDocument
 signal update_document(doc)
+## Emitted when a [code]delete(document)[/code] request on a [class FirebaseCollection] is successfully completed. [code]error()[/code] signal will be emitted otherwise.
+## @arg-types FirestoreDocument
 signal delete_document()
+## Emitted when a [code]list(collection_id)[/code] request on [class FirebaseFirestore] is successfully completed. [code]error()[/code] signal will be emitted otherwise.
+## @arg-types Array
 signal listed_documents(documents)
+## Emitted when a [code]query(collection_id)[/code] request on [class FirebaseFirestore] is successfully completed. [code]error()[/code] signal will be emitted otherwise.
+## @arg-types Array
 signal result_query(result)
+## Emitted when a request is [b]not[/b] successfully completed.
+## @arg-types Dictionary
 signal error(error)
 
+## @enum TASK_TYPES
 enum {
-    TASK_GET,
-    TASK_POST,
-    TASK_PATCH,
-    TASK_DELETE,
-    TASK_QUERY,
-    TASK_LIST
+    TASK_GET,       ## A GET Request Task, processing a get() request
+    TASK_POST,      ## A POST Request TASK, processing add() request 
+    TASK_PATCH,     ## A PATCH Request TASK, processing a update() request
+    TASK_DELETE,    ## A DELETE Request TASK, processing a delete() request
+    TASK_QUERY,     ## A POST Request TASK, processing a query() request
+    TASK_LIST       ## A POST Request TASK, processing a list() request
 }
 
-var action : int = -1 setget set_action
+## The code indicating the request Firestore is processing.
+## See @[enum FirebaseFirestore.REQUESTS] to get a full list of codes identifiers.
+## @type int
+var action : int = -1 setget _set_action
 
 var _response_headers : PoolStringArray = PoolStringArray()
 var _response_code : int = 0
@@ -35,13 +67,15 @@ var _method : int = -1
 var _url : String = ""
 var _headers : PoolStringArray = PoolStringArray()
 
+## A variable, temporary holding the result of the request
+## @type Variant
 var data
 
 func _ready():
     connect("request_completed", self, "_on_request_completed")
 
 
-func set_action(value : int) -> void:
+func _set_action(value : int) -> void:
     action = value
     match action:
         TASK_GET, TASK_LIST:
@@ -54,7 +88,7 @@ func set_action(value : int) -> void:
             _method = HTTPClient.METHOD_DELETE
             
 
-func push_request(url : String, headers : String, fields : String = ""):
+func _push_request(url : String, headers : String, fields : String = ""):
     _url = url
     _headers = [headers] as PoolStringArray
     if fields == "":
