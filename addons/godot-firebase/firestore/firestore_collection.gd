@@ -174,3 +174,6 @@ func _on_delete_document():
 func _on_error(code : int, status : int, message : String):
     emit_signal("error", code, status, message)
     printerr(message)
+
+
+
