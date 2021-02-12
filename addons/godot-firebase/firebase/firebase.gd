@@ -5,6 +5,7 @@
 # if you are going to make changes that will committed #
 # ---------------------------------------------------- #
 
+tool
 extends Node
 
 const ENVIRONMENT_VARIABLES : String = "firebase/environment_variables/"
@@ -60,4 +61,4 @@ func _ready() -> void:
     Auth.connect("login_succeeded", DynamicLinks, "_on_FirebaseAuth_login_succeeded")
     Auth.connect("signup_succeeded", DynamicLinks, "_on_FirebaseAuth_login_succeeded")
     Auth.connect("token_refresh_succeeded", DynamicLinks, "_on_FirebaseAuth_token_refresh_succeeded")
-	Auth.connect("logged_out", DynamicLinks, "_on_FirebaseAuth_logout")
+  	Auth.connect("logged_out", DynamicLinks, "_on_FirebaseAuth_logout")

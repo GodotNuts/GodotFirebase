@@ -1,3 +1,4 @@
+tool
 extends Node
 
 signal new_sse_event(headers, event, data)
