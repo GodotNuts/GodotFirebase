@@ -21,7 +21,7 @@ enum {
 }
 
 var doc_generator := preload("class_doc_generator.gd").new()
-var rich_label_doc_exporter := preload("doc_exporter/editor_help_doc_exporter.gd").new()
+var doc_exporter := preload("doc_exporter/editor_help_doc_exporter.gd").new()
 
 var script_editor: ScriptEditor
 
@@ -37,65 +37,90 @@ var section_list: ItemList
 
 var class_docs := {}
 var doc_items := {}
-var current_label: RichTextLabel
+var current_label: RichTextLabel setget set_current_label
 
 var theme: Theme
 var disabled_color: Color
 
-var timer := Timer.new()
+var doc_timer: Timer
 
 func _enter_tree() -> void:
 	theme = get_editor_interface().get_base_control().theme
 	disabled_color = theme.get_color("disabled_font_color", "Editor")
 	
 	script_editor = get_editor_interface().get_script_editor()
-	script_list = _find_node_by_class(script_editor, "ItemList")
-	script_tabs = _get_child_chain(script_editor, [0, 1, 1])
-	search_help = _find_node_by_class(script_editor, "EditorHelpSearch")
-	search_controls = _find_node_by_class(search_help, "LineEdit").get_parent()
-	tree = _find_node_by_class(search_help, "Tree")
+	script_list = find_node_by_class(script_editor, "ItemList")
+	script_tabs = get_child_chain(script_editor, [0, 1, 1])
+	search_help = find_node_by_class(script_editor, "EditorHelpSearch")
+	search_controls = find_node_by_class(search_help, "LineEdit").get_parent()
+	tree = find_node_by_class(search_help, "Tree")
 	
-	search_help.connect("go_to_help", self, "_on_SearchHelp_go_to_help")
+	if not search_help.is_connected("go_to_help", self, "_on_SearchHelp_go_to_help"):
+		search_help.connect("go_to_help", self, "_on_SearchHelp_go_to_help", [], CONNECT_DEFERRED)
 	
 	section_list = ItemList.new()
 	section_list.allow_reselect = true
 	section_list.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	section_list.connect("item_selected", self, "_on_SectionList_item_selected")
-	_get_child_chain(script_editor, [0, 1, 0, 1]).add_child(section_list)
+	get_child_chain(script_editor, [0, 1, 0, 1]).add_child(section_list)
 	
-	rich_label_doc_exporter.plugin = self
-	rich_label_doc_exporter.theme = theme
-	rich_label_doc_exporter.editor_settings = get_editor_interface().get_editor_settings()
-	rich_label_doc_exporter.class_docs = class_docs
-	rich_label_doc_exporter.class_list = Array(ClassDB.get_class_list()) + [
-		"Variant", "bool", "int", "float",
-		"String", "Vector2", "Rect2", "Vector3",
-		"Transform2D", "Plane", "Quat", "AABB",
-		"Basis", "Transform", "Color", "NodePath",
-		"RID", "Object", "Dictionary", "Array",
-		"PoolByteArray", "PoolIntArray", "PoolRealArray",
-		"PoolStringArray", "PoolVector2Array",
-		"PoolVector3Array", "PoolColorArray"
-	]
-	rich_label_doc_exporter.update_theme_vars()
+	if not section_list.is_connected("item_selected", self, "_on_SectionList_item_selected"):
+		section_list.connect("item_selected", self, "_on_SectionList_item_selected")
+	
+	doc_exporter.plugin = self
+	doc_exporter.theme = theme
+	doc_exporter.editor_settings = get_editor_interface().get_editor_settings()
+	doc_exporter.class_docs = class_docs
+	doc_exporter.update_theme_vars()
 	
 	doc_generator.plugin = self
 	
-	add_child(timer)
-	timer.wait_time = 0.5
-	timer.one_shot = false
-	timer.start()
-	timer.connect("timeout", self, "_on_Timer_timeout")
+	doc_timer = Timer.new()
+	doc_timer.wait_time = 0.5
+	add_child(doc_timer)
+	doc_timer.start()
+	if not doc_timer.is_connected("timeout", self, "_on_DocTimer_timeout"):
+		doc_timer.connect("timeout", self, "_on_DocTimer_timeout")
+	
+	# Load opened custom docs from last session.
+	var settings_path := get_editor_interface().get_editor_settings().get_project_settings_dir() + "/opened_custom_docs.json"
+	var file := File.new()
+	if not file.open(settings_path, File.READ):
+		var opened_tabs := []
+		for i in script_list.get_item_count():
+			opened_tabs.append(script_list.get_item_text(i))
+
+		var selected := script_list.get_selected_items()
+		var list: Array = JSON.parse(file.get_as_text()).result
+		for item in list:
+			if not item in opened_tabs:
+				search_help.call_deferred("emit_signal", "go_to_help", "class_name:" + item)
+		
+		if not selected.empty():
+			script_list.call_deferred("select", selected[0])
+			script_list.call_deferred("emit_signal", "item_selected", selected[0])
+	file.close()
 
 
 func _exit_tree() -> void:
-	## TODO: Save opened custom doc tabs.
+	# Save opened custom docs for next session.
+	var settings_path := get_editor_interface().get_editor_settings().get_project_settings_dir() + "/opened_custom_docs.json"
+	var file := File.new()
+	if not file.open(settings_path, File.WRITE):
+		var opened_docs := []
+		for i in script_tabs.get_children():
+			if i.name in class_docs:
+				opened_docs.append(i.name)
+		file.store_string(JSON.print(opened_docs))
+	file.close()
+	
 	section_list.queue_free()
 
 
-func _process(delta: float) -> void:
+func _process(_delta := 0.0) -> void:
 	if not tree:
-		return
+		_enter_tree()
+		if not tree:
+			return
 	
 	# Update search help tree items
 	if tree.get_root():
@@ -138,27 +163,11 @@ func _process(delta: float) -> void:
 		
 		if editor_help.name != text:
 			text = editor_help.name
-			
-			# Possible duplicate
-			if text[-1].is_valid_integer():
-				for doc in class_docs:
-					if text.find(doc) != -1 and text.right(doc.length()).is_valid_integer():
-						text = doc
-						break
-			
 			script_list.set_item_tooltip(i, text + " Class Reference")
 		
 		if editor_help.is_visible_in_tree() and text in class_docs:
 			custom_doc_open = true
-			
-			var label: RichTextLabel = editor_help.get_child(0)
-			if current_label != label:
-				if current_label:
-					current_label.disconnect("meta_clicked", self, "_on_EditorHelpLabel_meta_clicked")
-				
-				call_deferred("update_doc", label, text)
-				current_label = label
-				current_label.connect("meta_clicked", self, "_on_EditorHelpLabel_meta_clicked", [current_label])
+			set_current_label(editor_help.get_child(0))
 		
 		script_list.call_deferred("set_item_text", i, text)
 	
@@ -197,15 +206,22 @@ func fits_search(name: String, type: int) -> bool:
 	return true
 
 
-func update_doc(label: RichTextLabel, _class: String) -> void:
-	rich_label_doc_exporter.label = label
-	rich_label_doc_exporter._generate(class_docs[_class])
+func update_doc(label: RichTextLabel) -> void:
+	doc_exporter.label = label
+	doc_exporter._generate(class_docs[label.get_parent().name])
 	
-	var section_lines := rich_label_doc_exporter.section_lines
+	var section_lines := doc_exporter.section_lines
 	section_list.clear()
-	for i in section_lines.size():
-		section_list.add_item(section_lines[i][0])
-		section_list.set_item_metadata(i, section_lines[i][1])
+	var lines := []
+	var offset := 0
+	for i in len(section_lines):
+		if section_lines[i][0] in lines:
+			offset += 1
+			continue
+		else:
+			lines.append(section_lines[i][0])
+			section_list.add_item(section_lines[i][0])
+		section_list.set_item_metadata(i - offset, section_lines[i][1])
 
 
 func process_custom_item(name: String, type := ITEM_CLASS) -> TreeItem:
@@ -253,7 +269,7 @@ func process_custom_item(name: String, type := ITEM_CLASS) -> TreeItem:
 					new_parent = tree.create_item(parent)
 					new_parent.set_text(0, inherit)
 					new_parent.set_text(1, "Class")
-					new_parent.set_icon(0, _get_class_icon(inherit))
+					new_parent.set_icon(0, get_class_icon(inherit))
 					new_parent.set_metadata(0, "class_name:" + inherit)
 					new_parent.set_custom_color(0, disabled_color)
 					new_parent.set_custom_color(1, disabled_color)
@@ -270,7 +286,7 @@ func process_custom_item(name: String, type := ITEM_CLASS) -> TreeItem:
 			item.set_tooltip(0, doc.brief)
 			item.set_tooltip(1, doc.brief)
 			item.set_metadata(0, "class_name:" + name)
-			item.set_icon(0, _get_class_icon("Object"))
+			item.set_icon(0, get_class_icon("Object"))
 			
 		ITEM_METHOD:
 			doc = doc.get_method_doc(sub_name)
@@ -333,8 +349,101 @@ func snakekebab2pascal(string: String) -> String:
 	return result.join("")
 
 
-func _on_Timer_timeout() -> void:
-	rich_label_doc_exporter.update_theme_vars()
+func purge_duplicate_tabs() -> void:
+	var selected_duplicate := ""
+	var i := 0
+	while i < script_list.get_item_count():
+		if script_list.get_item_icon(i) != theme.get_icon("Help", "EditorIcons"):
+			i += 1
+			continue
+		
+		var text := script_tabs.get_child(script_list.get_item_metadata(i)).name
+		# Possible duplicate
+		var is_duplicate := false
+		if text[-1].is_valid_integer():
+			for doc in class_docs:
+				if text.find(doc) != -1 and text.right(len(doc)).is_valid_integer():
+					text = doc
+					is_duplicate = true
+					break
+		
+		if is_duplicate:
+			# HACK: Creating a couple input events to simulate deleting the duplicate tab
+			if script_list.is_visible_in_tree():
+				var prev_count := script_list.get_item_count()
+				
+				if script_list.is_selected(i):
+					selected_duplicate = text
+				
+				script_list.select(i)
+				var event := InputEventKey.new()
+				event.scancode = KEY_W
+				event.control = true
+				event.pressed = true
+				get_tree().input_event(event)
+				event = event.duplicate()
+				event.pressed = false
+				get_tree().input_event(event)
+				
+				# Makes sure that we don't run into an infinite loop.
+				i -= prev_count - script_list.get_item_count()
+		i += 1
+	
+	if not selected_duplicate.empty():
+		for j in script_list.get_item_count():
+			var editor_help := script_tabs.get_child(script_list.get_item_metadata(j))
+			if editor_help.name == selected_duplicate:
+				script_list.select(j)
+				script_list.emit_signal("item_selected", j)
+				set_current_label(editor_help.get_child(0))
+				break
+
+
+func set_current_label(label: RichTextLabel) -> void:
+	if current_label != label:
+		if current_label:
+			current_label.disconnect("meta_clicked", self, "_on_EditorHelpLabel_meta_clicked")
+		
+		if label:
+			update_doc(label)
+			current_label = label
+			current_label.connect("meta_clicked", self, "_on_EditorHelpLabel_meta_clicked", [current_label], CONNECT_DEFERRED)
+
+
+func get_class_icon(_class: String) -> Texture:
+	if theme.has_icon(_class, "EditorIcons"):
+		return theme.get_icon(_class, "EditorIcons")
+	elif _class in class_docs:
+		var path: String = class_docs[_class].icon
+		if not path.empty() and load(path) is Texture:
+			return load(path) as Texture
+	return get_class_icon("Object")
+
+
+func get_child_chain(node: Node, indices: Array) -> Node:
+	var child := node
+	for index in indices:
+		child = child.get_child(index)
+		if not child:
+			return null
+	return child
+
+
+func find_node_by_class(node: Node, _class: String) -> Node:
+	if node.is_class(_class):
+		return node
+	
+	for child in node.get_children():
+		var result = find_node_by_class(child, _class)
+		if result:
+			return result
+	
+	return null
+
+
+func _on_DocTimer_timeout() -> void:
+	doc_generator.plugin = self
+	doc_exporter.plugin = self
 	
 	var classes: Array = ProjectSettings.get("_global_script_classes")
 	var class_icons: Dictionary = ProjectSettings.get("_global_script_class_icons")
@@ -346,10 +455,10 @@ func _on_Timer_timeout() -> void:
 		var autoload_loc := project_string.find("[autoload]\n")
 		if autoload_loc == -1:
 			break
-		autoload_loc += "[autoload]\n\n".length()
+		autoload_loc += len("[autoload]\n\n")
 		
 		var list := project_string.right(autoload_loc).split("\n")
-		for i in list.size():
+		for i in len(list):
 			var line := list[i]
 			if line.empty():
 				continue
@@ -400,6 +509,7 @@ func _on_Timer_timeout() -> void:
 	
 	var docs := {}
 	for _class in classes:
+		# TODO: Add file path to class document item
 		var doc := doc_generator.generate(_class["class"], _class["base"], _class["path"])
 		if not doc:
 			continue
@@ -408,8 +518,8 @@ func _on_Timer_timeout() -> void:
 		doc.is_singleton = _class.has("is_autoload")
 		docs[doc.name] = doc
 		class_docs[doc.name] = doc
-		if not doc.name in rich_label_doc_exporter.class_list:
-			rich_label_doc_exporter.class_list.append(doc.name)
+		if not doc.name in doc_exporter.class_list:
+			doc_exporter.class_list.append(doc.name)
 	
 	# Periodically clean up tree items
 	for name in doc_items:
@@ -418,17 +528,97 @@ func _on_Timer_timeout() -> void:
 	
 	for _class in class_docs:
 		if not docs.has(_class):
-			rich_label_doc_exporter.class_list.erase(_class)
+			doc_exporter.class_list.erase(_class)
 			class_docs.erase(_class)
 
 
-func _on_EditorHelpLabel_meta_clicked(meta, label: RichTextLabel) -> void:
-	print(meta)
+func _on_EditorHelpLabel_meta_clicked(meta: String, label: RichTextLabel) -> void:
+	if meta.begins_with("$"):
+		var select := meta.substr(1, len(meta))
+		var _class_name := ""
+		if select.find(".") != -1:
+			_class_name = select.split(".")[0]
+		else:
+			_class_name = "@GlobalScope"
+		search_help.emit_signal("go_to_help", "class_enum:" + _class_name + ":" + select)
+	elif meta.begins_with("#"):
+		search_help.emit_signal("go_to_help", "class_name:" + meta.substr(1, len(meta)))
+	elif meta.begins_with("@"):
+		var tag_end := meta.find(" ")
+		var tag := meta.substr(1, tag_end - 1)
+		var link := meta.substr(tag_end + 1, meta.length()).lstrip(" ")
+		
+		var topic := ""
+		var table: Dictionary
+		
+		if tag == "method":
+			topic = "class_method"
+			table = doc_exporter.method_line
+		elif tag == "member":
+			topic = "class_property"
+			table = doc_exporter.property_line
+		elif tag == "enum":
+			topic = "class_enum"
+			table = doc_exporter.enum_line
+		elif tag == "signal":
+			topic = "class_signal"
+			table = doc_exporter.signal_line
+		elif tag == "constant":
+			topic = "class_constant"
+			table = doc_exporter.constant_line
+		else:
+			return
+		
+		if link.find(".") != -1:
+			search_help.emit_signal("go_to_help", topic + ":" + link.split(".")[0] + ":" + link.split(".")[1])
+		else:
+			if table.has(link):
+				# Found in the current page
+				current_label.scroll_to_line(table[link])
+			else:
+				pass # Oh well.
 
 
 func _on_SearchHelp_go_to_help(tag: String) -> void:
-	pass
-#	print(tag)
+	purge_duplicate_tabs()
+	var editor_help := script_tabs.get_child(script_list.get_selected_items()[0])
+	if editor_help.name in class_docs.keys():
+		set_current_label(editor_help.get_child(0))
+		
+		var what := tag.split(":")[0]
+		var clss := tag.split(":")[1]
+		var name := ""
+		if len(tag.split(":")) == 3:
+			name = tag.split(":")[2]
+		
+		var de := doc_exporter
+		var line := 0
+		if what == "class_desc":
+			line = de.description_line
+		elif what == "class_signal":
+			if de.signal_line.has(name):
+				line = de.signal_line[name]
+		elif what == "class_method" or what == "class_method_desc":
+			if de.method_line.has(name):
+				line = de.method_line[name]
+		elif what == "class_property":
+			if de.property_line.has(name):
+				line = de.property_line[name]
+		elif what == "class_enum":
+			if de.enum_line.has(name):
+				line = de.enum_line[name]
+#		elif what == "class_theme_item":
+#			if (theme_property_line.has(name))
+#				line = theme_property_line[name]
+		elif what == "class_constant":
+			if de.constant_line.has(name):
+				line = de.constant_line[name]
+		elif what == "class_name":
+			pass
+		else:
+			printerr("Could not go to help: " + tag)
+		
+		current_label.call_deferred("scroll_to_line", line)
 
 
 func _on_SectionList_item_selected(index: int) -> void:
@@ -436,30 +626,4 @@ func _on_SectionList_item_selected(index: int) -> void:
 		return
 	current_label.scroll_to_line(section_list.get_item_metadata(index))
 
-
-func _get_class_icon(_class: String) -> Texture:
-	if theme.has_icon(_class, "EditorIcons"):
-		return theme.get_icon(_class, "EditorIcons")
-	return _get_class_icon("Object")
-
-
-func _get_child_chain(node: Node, indices: Array) -> Node:
-	var child := node
-	for index in indices:
-		child = child.get_child(index)
-		if not child:
-			return null
-	return child
-
-
-func _find_node_by_class(node: Node, _class: String) -> Node:
-	if node.is_class(_class):
-		return node
-	
-	for child in node.get_children():
-		var result = _find_node_by_class(child, _class)
-		if result:
-			return result
-	
-	return null
 

@@ -1,14 +1,13 @@
-# ---------------------------------------------------- #
-#                 SCRIPT VERSION = 2.4                 #
-#                 ====================                 #
-# please, remember to increment the version to +0.1    #
-# if you are going to make changes that will commited  #
-# ---------------------------------------------------- #
-
 ## @meta-authors SIsilicon
 ## @meta-version 2.4
-## The Firebase Godot API
-## Description W.I.P.
+## The Firebase Godot API.
+## This singleton gives you access to your Firebase project and its capabilities. Using this requires you to fill out some Firebase configuration settings. It currently comes with four modules.
+## 	- [code]Auth[/code]: Manages user authentication (logging and out, etc...)
+## 	- [code]Database[/code]: A NonSQL realtime database for managing data in JSON structures.
+## 	- [code]Firestore[/code]: Similar to Database, but stores data in collections and documents, among other things.
+## 	- [code]Storage[/code]: Gives access to Cloud Storage; perfect for storing files like images and other assets.
+## 
+## @tutorial https://github.com/GodotNuts/GodotFirebase/wiki
 tool
 extends Node
 

@@ -4,12 +4,23 @@ tool
 extends DocItem
 class_name ConstantDocItem
 
-var description := "" ## A description of the constant.
+## @default ""
+## A description of the constant.
+var description := ""
 
-var value := "" ## The value of the constant in a string form.
-var enumeration := "" ## The [member value]'s enumeration/
+## @default ""
+## The value of the constant in a string form.
+var value := ""
+
+## @default ""
+## The [member value]'s enumeration.
+var enumeration := ""
 
 
 func _init(args := {}) -> void:
 	for arg in args:
 		set(arg, args[arg])
+
+
+func _to_string() -> String:
+	return "[Constant doc: " + name + "]"

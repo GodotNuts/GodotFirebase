@@ -4,15 +4,34 @@ tool
 extends DocItem
 class_name PropertyDocItem
 
-var description := "" ## A description of the property.
+## @default ""
+## A description of the property.
+var description := ""
 
-var default :=  "" ## The default of the property in string form.
-var enumeration := "" ## The enumeration of [member default].
-var type := "" ## The class/built-in type of [member default].
+## @default ""
+## The default of the property in string form.
+var default := ""
 
-var setter := "" ## The setter method of the property.
-var getter := "" ## The getter method of the property.
+## @default ""
+## The enumeration of [member default].
+var enumeration := ""
+
+## @default ""
+## The class/built-in type of [member default].
+var type := ""
+
+## @default ""
+## The setter method of the property.
+var setter := ""
+
+## @default ""
+## The getter method of the property.
+var getter := ""
 
 func _init(args := {}) -> void:
 	for arg in args:
 		set(arg, args[arg])
+
+
+func _to_string() -> String:
+	return "[Property doc: " + name + "]"

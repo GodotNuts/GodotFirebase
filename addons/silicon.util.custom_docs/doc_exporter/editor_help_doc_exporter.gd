@@ -5,11 +5,28 @@ var plugin: EditorPlugin
 
 var label: RichTextLabel
 var class_docs: Dictionary
-var section_lines := []
 
 var editor_settings: EditorSettings
 var theme: Theme
-var class_list: Array
+var class_list := Array(ClassDB.get_class_list()) + [
+	"Variant", "bool", "int", "float",
+	"String", "Vector2", "Rect2", "Vector3",
+	"Transform2D", "Plane", "Quat", "AABB",
+	"Basis", "Transform", "Color", "NodePath",
+	"RID", "Object", "Dictionary", "Array",
+	"PoolByteArray", "PoolIntArray", "PoolRealArray",
+	"PoolStringArray", "PoolVector2Array",
+	"PoolVector3Array", "PoolColorArray"
+]
+
+var section_lines := []
+var description_line := 0
+var signal_line := {}
+var method_line := {}
+var property_line := {}
+var enum_line := {}
+var constant_line := {}
+
 
 var doc_font: Font
 var doc_bold_font: Font
@@ -32,6 +49,11 @@ func _generate(doc: ClassDocItem) -> String:
 	var link_color_text := title_color.to_html()
 	if is_current:
 		section_lines.clear()
+		signal_line.clear()
+		method_line.clear()
+		property_line.clear()
+		enum_line.clear()
+		constant_line.clear()
 	
 	label.visible = true
 	label.clear()
@@ -108,6 +130,7 @@ func _generate(doc: ClassDocItem) -> String:
 	if doc.description != "":
 		if is_current:
 			section_lines.append(["Description", label.get_line_count() - 2])
+			description_line = label.get_line_count() - 2
 		label.push_color(title_color)
 		label.push_font(doc_title_font)
 		label.add_text("Description")
@@ -176,7 +199,7 @@ func _generate(doc: ClassDocItem) -> String:
 		label.set_table_column_expand(1, true, 1)
 		
 		for property in doc.properties:
-#			property_line[doc.properties[i].name] = label.get_line_count() - 2 #gets overridden if description
+			property_line[property.name] = label.get_line_count() - 2 #gets overridden if description
 			label.push_cell()
 			label.push_align(RichTextLabel.ALIGN_RIGHT)
 			label.push_font(doc_code_font)
@@ -385,28 +408,28 @@ func _generate(doc: ClassDocItem) -> String:
 		
 		label.push_indent(1)
 		
-		for i in signals.size():
-#			signal_line[signals[i].name] = label.get_line_count() - 2 #gets overridden if description
+		for _signal in signals:
+			signal_line[_signal.name] = label.get_line_count() - 2 #gets overridden if description
 			label.push_font(doc_code_font) # monofont
 			label.push_color(headline_color)
-			add_text(signals[i].name)
+			add_text(_signal.name)
 			label.pop()
 			label.push_color(symbol_color)
 			label.add_text("(")
 			label.pop()
-			for j in signals[i].args.size():
+			for j in _signal.args.size():
 				label.push_color(text_color)
 				if j > 0:
 					label.add_text(", ")
 				
-				add_text(signals[i].args[j].name)
+				add_text(_signal.args[j].name)
 				label.add_text(": ")
-				add_type(signals[i].args[j].type, signals[i].args[j].enumeration)
-				if signals[i].args[j].default != "":
+				add_type(_signal.args[j].type, _signal.args[j].enumeration)
+				if _signal.args[j].default != "":
 					label.push_color(symbol_color)
 					label.add_text(" = ")
 					label.pop()
-					add_text(signals[i].args[j].default)
+					add_text(_signal.args[j].default)
 				
 				label.pop()
 			
@@ -414,11 +437,11 @@ func _generate(doc: ClassDocItem) -> String:
 			label.add_text(")")
 			label.pop()
 			label.pop() # end monofont
-			if signals[i].description != "":
+			if _signal.description != "":
 				label.push_font(doc_font)
 				label.push_color(comment_color)
 				label.push_indent(1)
-				add_text(signals[i].description)
+				add_text(_signal.description)
 				label.pop() # indent
 				label.pop()
 				label.pop() # font
@@ -453,7 +476,7 @@ func _generate(doc: ClassDocItem) -> String:
 			label.add_text("\n")
 			
 			for e in enums:
-#				enum_line[e] = label.get_line_count() - 2
+				enum_line[e] = label.get_line_count() - 2
 				
 				label.push_color(title_color)
 				label.add_text("enum  ")
@@ -474,30 +497,27 @@ func _generate(doc: ClassDocItem) -> String:
 				label.push_indent(1)
 				var enum_list: Array = enums[e]
 				
-				var enum_values_container := []
-#				var enum_starting_line: int = enum_line[enums[e]]
-				
-				for i in enum_list.size():
+				for _enum in enum_list:
 					# Add the enum constant line to the constant_line map so we can locate it as a constant
-#					constant_line[enum_list[i].name] = label.get_line_count() - 2
+					constant_line[_enum.name] = label.get_line_count() - 2
 					
 					label.push_font(doc_code_font)
 					label.push_color(headline_color)
-					add_text(enum_list[i].name)
+					add_text(_enum.name)
 					label.pop()
 					label.push_color(symbol_color)
 					label.add_text(" = ")
 					label.pop()
 					label.push_color(value_color)
-					add_text(enum_list[i].value)
+					add_text(_enum.value)
 					label.pop()
 					label.pop()
-					if enum_list[i].description != "":
+					if _enum.description != "":
 						label.push_font(doc_font)
 						#label.add_text("  ")
 						label.push_indent(1)
 						label.push_color(comment_color)
-						add_text(enum_list[i].description)
+						add_text(_enum.description)
 						label.pop()
 						label.pop()
 						label.pop() # indent
@@ -577,7 +597,7 @@ func _generate(doc: ClassDocItem) -> String:
 #			if doc.properties[i].overridden:
 #				continue
 			
-#			property_line[prop.name] = label.get_line_count() - 2
+			property_line[prop.name] = label.get_line_count() - 2
 			label.push_table(2)
 			label.set_table_column_expand(1, true, 1)
 			
@@ -634,7 +654,7 @@ func _generate(doc: ClassDocItem) -> String:
 				label.pop() # color
 				label.pop() # font
 				label.pop() # cell
-#				method_line[prop.setter] = property_line[prop.name]
+				method_line[prop.setter] = property_line[prop.name]
 			
 			if prop.getter != "":
 				label.push_cell()
@@ -656,7 +676,7 @@ func _generate(doc: ClassDocItem) -> String:
 				label.pop() #color
 				label.pop() #font
 				label.pop() #cell
-#				method_line[prop.getter] = property_line[doc.properties[i].name]
+				method_line[prop.getter] = property_line[prop.name]
 			
 			label.pop() # table
 			
@@ -772,7 +792,7 @@ func add_type(type: String, _enum: String):
 
 
 func add_method(method: MethodDocItem, overview: bool) -> void:
-#	method_line[method.name] = label.get_line_count() - 2 #gets overridden if description
+	method_line[method.name] = label.get_line_count() - 2 # gets overridden if description
 	if overview:
 		label.push_cell()
 		label.push_align(RichTextLabel.ALIGN_RIGHT)

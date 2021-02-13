@@ -1,10 +1,3 @@
-# ---------------------------------------------------- #
-#                 SCRIPT VERSION = 2.2                 #
-#                 ====================                 #
-# please, remember to increment the version to +0.1    #
-# if you are going to make changes that will commited  #
-# ---------------------------------------------------- #
-
 ## @meta-authors SIsilicon
 ## @meta-version 2.2
 ## The Storage API for Firebase.
@@ -153,7 +146,7 @@ func _upload(data : PoolByteArray, headers : PoolStringArray, ref : StorageRefer
     var task := StorageTask.new()
     task.ref = ref
     task._url = _get_file_url(ref)
-    task.action = StorageTask.TASK_UPLOAD_META if meta_only else StorageTask.TASK_UPLOAD
+    task.action = StorageTask.Task.TASK_UPLOAD_META if meta_only else StorageTask.Task.TASK_UPLOAD
     task._headers = headers
     task.data = data
     _process_request(task)
@@ -166,7 +159,7 @@ func _download(ref : StorageReference, meta_only : bool, url_only : bool) -> Sto
     var info_task := StorageTask.new()
     info_task.ref = ref
     info_task._url = _get_file_url(ref)
-    info_task.action = StorageTask.TASK_DOWNLOAD_URL if url_only else StorageTask.TASK_DOWNLOAD_META
+    info_task.action = StorageTask.Task.TASK_DOWNLOAD_URL if url_only else StorageTask.Task.TASK_DOWNLOAD_META
     _process_request(info_task)
     
     if url_only or meta_only:
@@ -178,7 +171,7 @@ func _download(ref : StorageReference, meta_only : bool, url_only : bool) -> Sto
     
     task.ref = ref
     task._url = _get_file_url(ref) + "?alt=media&token="
-    task.action = StorageTask.TASK_DOWNLOAD
+    task.action = StorageTask.Task.TASK_DOWNLOAD
     
     if info_task.data and not info_task.data.has("error"):
         task._url += info_task.data.downloadTokens
@@ -201,7 +194,7 @@ func _list(ref : StorageReference, list_all : bool) -> StorageTask:
     var task := StorageTask.new()
     task.ref = ref
     task._url = _get_file_url(_root_ref).trim_suffix("/")
-    task.action = StorageTask.TASK_LIST_ALL if list_all else StorageTask.TASK_LIST
+    task.action = StorageTask.Task.TASK_LIST_ALL if list_all else StorageTask.Task.TASK_LIST
     _process_request(task)
     return task
 
@@ -212,7 +205,7 @@ func _delete(ref : StorageReference) -> StorageTask:
     var task := StorageTask.new()
     task.ref = ref
     task._url = _get_file_url(ref)
-    task.action = StorageTask.TASK_DELETE
+    task.action = StorageTask.Task.TASK_DELETE
     _process_request(task)
     return task
 
@@ -246,23 +239,23 @@ func _finish_request(result : int) -> void:
     task.response_headers = _response_headers
     
     match task.action:
-        StorageTask.TASK_DOWNLOAD:
+        StorageTask.Task.TASK_DOWNLOAD:
             task.data = _response_data
         
-        StorageTask.TASK_DELETE:
+        StorageTask.Task.TASK_DELETE:
             _references.erase(task.ref.full_path)
             task.ref.valid = false
             if typeof(task.data) == TYPE_RAW_ARRAY:
                 task.data = null
         
-        StorageTask.TASK_DOWNLOAD_URL:
+        StorageTask.Task.TASK_DOWNLOAD_URL:
             var json : Dictionary = JSON.parse(_response_data.get_string_from_utf8()).result
             if json and json.has("downloadTokens"):
                 task.data = _base_url + _get_file_url(task.ref.full_path) + "?alt=media&token=" + json.downloadTokens
             else:
                 task.data = ""
         
-        StorageTask.TASK_LIST, StorageTask.TASK_LIST_ALL:
+        StorageTask.Task.TASK_LIST, StorageTask.Task.TASK_LIST_ALL:
             var json : Dictionary = JSON.parse(_response_data.get_string_from_utf8()).result
             var items := []
             if json and json.has("items"):
@@ -272,7 +265,7 @@ func _finish_request(result : int) -> void:
                         continue
                     if not item_name.begins_with(task.ref.full_path):
                         continue
-                    if task.action == StorageTask.TASK_LIST:
+                    if task.action == StorageTask.Task.TASK_LIST:
                         var dir_path : Array = item_name.split("/")
                         var slash_count : int = task.ref.full_path.count("/")
                         item_name = ""

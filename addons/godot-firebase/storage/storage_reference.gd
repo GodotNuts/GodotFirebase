@@ -1,13 +1,7 @@
-# ---------------------------------------------------- #
-#                 SCRIPT VERSION = 2.2                 #
-#                 ====================                 #
-# please, remember to increment the version to +0.1    #
-# if you are going to make changes that will commited  #
-# ---------------------------------------------------- #
-
 ## @meta-authors SIsilicon
 ## @meta-version 2.2
-## A reference to a file or folder in the Firebase cloud storage. This object is used to interact with the cloud storage. You may get data from the server, as well as upload your own back to it.
+## A reference to a file or folder in the Firebase cloud storage.
+## This object is used to interact with the cloud storage. You may get data from the server, as well as upload your own back to it.
 class_name StorageReference
 extends Reference
 
@@ -88,7 +82,7 @@ func child(path : String) -> StorageReference:
 func put_data(data : PoolByteArray, metadata := {}) -> StorageTask:
     if not valid:
         return null
-    if not "Content-Length" in metadata:
+    if not "Content-Length" in metadata and OS.get_name() != "HTML5":
         metadata["Content-Length"] = data.size()
     
     var headers := []

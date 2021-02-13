@@ -127,6 +127,7 @@ func generate(name: String, base: String, script_path: String) -> ClassDocItem:
 		elif not comment_block.empty():
 			var doc_item: DocItem
 			
+			# Class document
 			if line.begins_with("extends") or line.begins_with("tool") or line.begins_with("class_name"):
 				if annotations.has("@doc-ignore"):
 					return null
@@ -139,7 +140,8 @@ func generate(name: String, base: String, script_path: String) -> ClassDocItem:
 				if doc_split.size() == 2:
 					doc.description = doc_split[1]
 				doc_item = doc
-				
+			
+			# Method document
 			elif line.find("func ") != -1 and not indented:
 				var regex := RegEx.new()
 				regex.compile("func ([a-zA-Z0-9_]+)")
@@ -174,13 +176,13 @@ func generate(name: String, base: String, script_path: String) -> ClassDocItem:
 					method_doc.is_virtual = annotations.has("@virtual")
 					method_doc.description = comment_block
 					doc_item = method_doc
-				
+			
+			# Property document
 			elif line.find("var ") != -1 and not indented:
 				var regex := RegEx.new()
 				regex.compile("var ([a-zA-Z0-9_]+)")
 				var prop := regex.search(line).get_string(1)
 				var prop_doc := doc.get_property_doc(prop)
-				
 				if not prop_doc and prop:
 					prop_doc = _create_property_doc(prop, script)
 					doc.properties.append(prop_doc)
@@ -198,7 +200,8 @@ func generate(name: String, base: String, script_path: String) -> ClassDocItem:
 						prop_doc.getter = annotations["@getter"]
 					prop_doc.description = comment_block
 					doc_item = prop_doc
-				
+			
+			# Signal document
 			elif line.find("signal") != -1 and not indented:
 				var regex := RegEx.new()
 				regex.compile("signal ([a-zA-Z0-9_]+)")
@@ -215,7 +218,8 @@ func generate(name: String, base: String, script_path: String) -> ClassDocItem:
 							signal_doc.args[i].enumeration = params[i].strip_edges()
 					signal_doc.description = comment_block
 					doc_item = signal_doc
-				
+			
+			# Constant document
 			elif line.find("const") != -1 and not indented:
 				var regex := RegEx.new()
 				regex.compile("const ([a-zA-Z0-9_]+)")
@@ -225,6 +229,7 @@ func generate(name: String, base: String, script_path: String) -> ClassDocItem:
 					const_doc.description = comment_block
 					doc_item = const_doc
 			
+			# Enumerator document
 			elif enum_block: # Handle enumerators
 				for enum_doc in doc.constants:
 					if line.find(enum_doc.name) != -1:
@@ -232,6 +237,7 @@ func generate(name: String, base: String, script_path: String) -> ClassDocItem:
 						doc_item = enum_doc
 						break
 			
+			# Meta annotations
 			if doc_item:
 				for annote in annotations:
 					if annote.find("@meta-") == 0:
@@ -252,6 +258,9 @@ func _create_method_doc(name: String, script: Script = null, method := {}) -> Me
 				method = m
 				break
 	
+	if not method.has("name"):
+		return null
+
 	var method_doc := MethodDocItem.new({
 		"name": method.name,
 		"return_type": _type_string(
@@ -278,8 +287,11 @@ func _create_property_doc(name: String, script: Script = null, property := {}) -
 				property = p
 				break
 	
+	if not property.has("name"):
+		return null
+	
 	var property_doc := PropertyDocItem.new({
-		"name": property.name,
+		"name": name,
 		"type": _type_string(
 			property.type,
 			property["class_name"]

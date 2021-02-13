@@ -4,37 +4,18 @@ tool
 extends DocItem
 class_name ClassDocItem
 
-## @default ""
-## The base class this class extends from.
-var base := ""
+var base := "" ## The base class this class extends from.
+var path := "" ## The file location of this class' script.
 
-## @default ""
-## A brief description of the class.
-var brief := ""
+var brief := "" ## A brief description of the class.
+var description := "" ## A full description of the class.
 
-## @default ""
-## A full description of the class.
-var description := ""
+var methods := [] ## A list of method documents.
+var properties := [] ## A list of property documents.
+var signals := [] ## A list of signal documents.
+var constants := [] ## A list of constant documents, including enumerators.
 
-## @default []
-## A list of method documents.
-var methods := []
-
-## @default []
-## A list of property documents.
-var properties := []
-
-## @default []
-## A list of signal documents.
-var signals := []
-
-## @default []
-## A list of constant documents, including enumerators.
-var constants := []
-
-## @default []
-## A list of tutorials that helps to understand this class.
-var tutorials := []
+var tutorials := [] ## A list of tutorials that helps to understand this class.
 
 ## @default ""
 ## A link to where the user can contribute to the class' documentation.
@@ -43,10 +24,8 @@ var contriute_url := ""
 ## @default false
 ## Whether the class is a singleton.
 var is_singleton := false
+var icon := "" ## A path to the class icon if any.
 
-## @default ""
-## A path to the class icon if any.
-var icon := ""
 
 func _init(args := {}) -> void:
 	for arg in args:
@@ -87,3 +66,7 @@ func get_constant_doc(name: String) -> ConstantDocItem:
 		if doc.name == name:
 			return doc
 	return null
+
+
+func _to_string() -> String:
+	return "[Class doc: " + name + "]"

@@ -4,12 +4,22 @@ tool
 extends DocItem
 class_name ArgumentDocItem
 
-var default := "" ## The default value of the argument.
-var enumeration := "" ## The enumeration of [member default].
+## @default ""
+## The default value of the argument.
+var default := ""
 
-var type := "" ## The class/built-in type of [member default].
+## @default ""
+## The enumeration of [member default].
+var enumeration := ""
 
+## @default ""
+## The class/built-in type of [member default].
+var type := ""
 
 func _init(args := {}) -> void:
 	for arg in args:
 		set(arg, args[arg])
+
+
+func _to_string() -> String:
+	return "[Argument doc: " + name + "]"
