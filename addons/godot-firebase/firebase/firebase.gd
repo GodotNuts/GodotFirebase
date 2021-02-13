@@ -12,6 +12,7 @@ onready var Auth : FirebaseAuth = $Auth
 onready var Firestore : FirebaseFirestore = $Firestore
 onready var Database : FirebaseDatabase = $Database
 onready var Storage : FirebaseStorage = $Storage
+onready var DynamicLinks : FirebaseDynamicLinks = $DynamicLinks
 
 # Configuration used by all files in this project
 # These values can be found in your Firebase Project
