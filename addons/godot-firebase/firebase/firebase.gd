@@ -63,6 +63,7 @@ func _ready() -> void:
     Firestore._set_config(_config)
     Database._set_config(_config)
     Storage._set_config(_config)
+    DynamicLinks._set_config(_config)
     Auth.connect("login_succeeded", Database, "_on_FirebaseAuth_login_succeeded")
     Auth.connect("signup_succeeded", Database, "_on_FirebaseAuth_login_succeeded")
     Auth.connect("token_refresh_succeeded", Database, "_on_FirebaseAuth_token_refresh_succeeded")
