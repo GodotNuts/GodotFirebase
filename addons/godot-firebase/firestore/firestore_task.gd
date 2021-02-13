@@ -65,7 +65,9 @@ var _response_code : int = 0
 
 var _method : int = -1
 var _url : String = ""
-var _headers : PoolStringArray = PoolStringArray()
+var _headers : PoolStringArray = []
+
+
 
 ## A variable, temporary holding the result of the request
 ## @type Variant
@@ -90,7 +92,9 @@ func _set_action(value : int) -> void:
 
 func _push_request(url : String, headers : String, fields : String = ""):
     _url = url
-    _headers = [headers] as PoolStringArray
+    var temp_header : Array = []
+    temp_header.append(headers)
+    _headers = PoolStringArray(temp_header)
     if fields == "":
         request(_url, _headers, true, _method)
     else:

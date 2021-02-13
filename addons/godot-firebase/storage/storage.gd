@@ -97,7 +97,7 @@ func _internal_process(_delta : float) -> void:
         HTTPClient.STATUS_SSL_HANDSHAKE_ERROR:
             call_deferred("_finish_request", HTTPRequest.RESULT_SSL_HANDSHAKE_ERROR)
 
-func _set_config(config_json : Dictionary) -> void:
+func set_config(config_json : Dictionary) -> void:
     config = config_json
     if bucket != config.storageBucket:
         bucket = config.storageBucket
@@ -308,6 +308,3 @@ func _on_FirebaseAuth_login_succeeded(auth_token : Dictionary) -> void:
 
 func _on_FirebaseAuth_token_refresh_succeeded(auth_result : Dictionary) -> void:
     auth = auth_result
-
-func _on_FirebaseAuth_logout() -> void:
-    auth = {}

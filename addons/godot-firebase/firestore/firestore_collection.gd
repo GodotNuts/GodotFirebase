@@ -1,31 +1,18 @@
-## @meta-authors Nicolò 'fenix' Santilio,
-## @meta-version 2.3
-##
-## [b]NOTE:[/b] regarding [code]fields[/code]
-## Firestore uses a specific structure for documents, both to add and retrieve them, which is in the form of:
-## [code]{ "fields" : { "key" : { "stringValue" : "value" } } }[/code]
-## Our module will automatically convert a GDScript Dictionary of fields in the required form.
-## 
-## @tutorial https://github.com/GodotNuts/GodotFirebase/wiki/Firestore#FirestoreCollection
+# ---------------------------------------------------- #
+#                 SCRIPT VERSION = 2.1                 #
+#                 ====================                 #
+# please, remember to increment the version to +0.1    #
+# if you are going to make changes that will commited  #
+# ---------------------------------------------------- #
 
 class_name FirestoreCollection
 extends Node
 
-## Emitted when a [code]add(document)[/code] request on a [class FirebaseCollection] is successfully completed. [code]error()[/code] signal will be emitted otherwise.
-## @arg-types FirestoreDocument
 signal add_document(doc)
-## Emitted when a [code]get(document)[/code] request on a [class FirebaseCollection] is successfully completed. [code]error()[/code] signal will be emitted otherwise.
-## @arg-types FirestoreDocument
 signal get_document(doc)
-## Emitted when a [code]update(document)[/code] request on a [class FirebaseCollection] is successfully completed. [code]error()[/code] signal will be emitted otherwise.
-## @arg-types FirestoreDocument
 signal update_document(doc)
-## Emitted when a [code]delete(document)[/code] request on a [class FirebaseCollection] is successfully completed. [code]error()[/code] signal will be emitted otherwise.
-## @arg-types FirestoreDocument
 signal delete_document()
-## Emitted when a request is [b]not[/b] successfully completed.
-## @arg-types Dictionary
-signal error(error)
+signal error(code,status,message)
 
 const _authorization_header : String = "Authorization: Bearer "
 
@@ -45,17 +32,7 @@ func _ready() -> void:
 
 # ----------------------- REQUESTS
 
-## Used to GET a document from the collection, specifying the document's [code]id[/code]
-## 
-## ex. 
-## [code] var collection : FirestoreCollection = Firebase.Firestore.collection(COLLECTION_ID).get(DOCUMENT_ID)[/code]
-## [code] var document : FirestoreDocument = yield(collection, "get_document")[/code]
-## 
-## Further examples and explaination at [url=https://github.com/GodotNuts/GodotFirebase/wiki/Firestore#get-a-document]Wiki/FirestoreCollection/Get[/url]
-## 
-## @args document_id
-## @arg-types String
-## @return FirestoreTask
+# used to GET a document from the collection, specify @documentId
 func get(documentId : String) -> FirestoreTask:
     if auth:
         var firestore_task : FirestoreTask = FirestoreTask.new()
@@ -67,24 +44,11 @@ func get(documentId : String) -> FirestoreTask:
         firestore_task._push_request(url, _authorization_header + auth.idtoken)
         return firestore_task
     else:
-        printerr("Unauthorized")
+        print("Unauthorized")
         return null
 
-## Used to ADD a document to the collection, specifying the document's [code]id[/code] and its [code]fields[/code]. If the document already exists, it will be overwritten.
-## If [code]document_id[/code] field is left to "", Firestore will automatically give to the document a random generated string as an id. This id can then be retrieved in the result of the request itself. 
-## 
-## ex.
-## [code]var fields : Dictionary = { user = "A User", points = 500 }[/code]
-## [code]var add_task : FirestoreTask = Firebase.Firestore.collection("myCollection").add("", fields)[/code]
-## [code]var document : FirestoreDocument = yield(add_task, "add_document")[/code]
-## [code]var document_id : String = document.doc_name # A random generated id given by Firestore, since we didn't specify the document's id in the request.[/code]
-## 
-## Further examples and explaination at [url=https://github.com/GodotNuts/GodotFirebase/wiki/Firestore#add-a-document]Wiki/FirestoreCollection/Add[/url]
-## @args document_id, fields
-## @arg-types String, Dictionary
-## @arg-defaults "", {}
-## @return FirestoreTask
-func add(documentId : String = "", fields : Dictionary = {}) -> FirestoreTask:
+# used to SAVE/ADD a new document to the collection, specify @documentID and @fields
+func add(documentId : String, fields : Dictionary = {}) -> FirestoreTask:
     if auth:
         var firestore_task : FirestoreTask = FirestoreTask.new()
         add_child(firestore_task)
@@ -95,23 +59,10 @@ func add(documentId : String = "", fields : Dictionary = {}) -> FirestoreTask:
         firestore_task.connect("error", self, "_on_error")
         return firestore_task
     else:
-        printerr("Unauthorized")
+        print("Unauthorized")
         return null
 
-## Used to UPDATE a document to the collection, specifying the document's [code]id[/code] and the [code]fields[/code] we want to update.
-## If [code]document_id[/code] field is left to "", Firestore will automatically generate a new document with the given fields and give to the document a random generated string as an id. This id can then be retrieved in the result of the request itself. 
-## A completely new field can be specified as an argument, and it will be appended to the fields already existing inside the document.
-## 
-## ex.
-## [code]var fields : Dictionary = { user = "A User", points = 100 }[/code]
-## [code]var update_task : FirestoreTask = Firebase.Firestore.collection("myCollection").update("user-12345", fields)[/code]
-## [code]var document : FirestoreDocument = yield(update_task, "update_document") # will update user's points from 500 to 100[/code]
-## 
-## @args document_id, fields
-## @arg-types String, Dictionary
-## @arg-defaults "", {}
-## @return FirestoreTask
-# If a field you want to update is of type [code]Array[/code] or [code]Dictionary[/code], all new values will be appended instead of being overwritten
+# used to UPDATE a document, specify @documentID and @fields
 func update(documentId : String, fields : Dictionary = {}) -> FirestoreTask:
     if auth:
         var firestore_task : FirestoreTask = FirestoreTask.new()
@@ -126,19 +77,10 @@ func update(documentId : String, fields : Dictionary = {}) -> FirestoreTask:
         firestore_task._push_request(url, _authorization_header + auth.idtoken, JSON.print(FirestoreDocument.dict2fields(fields)))
         return firestore_task
     else:
-        printerr("Unauthorized")
+        print("Unauthorized")
         return null
 
-
-## Used to DELETE a document from the collection, specifying the document's [code]id[/code].
-## 
-## ex.
-## [code]var delete_task : FirestoreTask = Firebase.Firestore.collection("myCollection").delete("user-12345")[/code]
-## [code]yield(delete_task, "delete_document")[/code]
-## 
-## @args document_id
-## @arg-types String
-## @return FirestoreTask
+# used to DELETE a document, specify @documentId
 func delete(documentId : String) -> FirestoreTask:
     if auth:
         var firestore_task : FirestoreTask = FirestoreTask.new()
@@ -150,7 +92,7 @@ func delete(documentId : String) -> FirestoreTask:
         firestore_task._push_request(url, _authorization_header + auth.idtoken)
         return firestore_task
     else:
-        printerr("Unauthorized")
+        print("Unauthorized")
         return null
 
 # ----------------- Functions
@@ -173,7 +115,4 @@ func _on_delete_document():
 
 func _on_error(code : int, status : int, message : String):
     emit_signal("error", code, status, message)
-    printerr(message)
-
-
-
+    print(message)

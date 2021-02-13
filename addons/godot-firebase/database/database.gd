@@ -19,7 +19,7 @@ var config : Dictionary = {}
 
 var auth : Dictionary = {}
 
-func _set_config(config_json : Dictionary) -> void:
+func set_config(config_json : Dictionary) -> void:
     config = config_json
 
 func _on_FirebaseAuth_login_succeeded(auth_result : Dictionary) -> void:

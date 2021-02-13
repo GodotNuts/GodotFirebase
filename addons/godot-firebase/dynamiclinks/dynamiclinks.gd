@@ -21,6 +21,10 @@ var _config : Dictionary = {}
 var _auth : Dictionary
 var _request_list_node : HTTPRequest
 
+var _headers : PoolStringArray = [   
+    "Access-Control-Allow-Origin: *"
+   ]
+
 enum REQUESTS {
     NONE = -1,
     GENERATE
@@ -61,7 +65,7 @@ func generate_dynamic_link(long_link : String, APN : String, IBI : String, is_un
         _link_request_body.suffix.option = "UNGUESSABLE"
     else:
         _link_request_body.suffix.option = "SHORT"
-    _request_list_node.request(_dynamic_link_request_url, PoolStringArray(), true, HTTPClient.METHOD_POST, JSON.print(_link_request_body))
+    _request_list_node.request(_dynamic_link_request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_link_request_body))
 
 func _on_request_completed(result : int, response_code : int, headers : PoolStringArray, body : PoolByteArray) -> void:
     var result_body : Dictionary = JSON.parse(body.get_string_from_utf8()).result
