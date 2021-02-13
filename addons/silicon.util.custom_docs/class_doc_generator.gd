@@ -150,7 +150,8 @@ func generate(name: String, base: String, script_path: String) -> ClassDocItem:
 				
 				if not method_doc and method:
 					method_doc = _create_method_doc(method, script)
-					doc.methods.append(method_doc)
+					if method_doc:
+						doc.methods.append(method_doc)
 				
 				if method_doc:
 					if annotations.has("@args"):
@@ -185,7 +186,8 @@ func generate(name: String, base: String, script_path: String) -> ClassDocItem:
 				var prop_doc := doc.get_property_doc(prop)
 				if not prop_doc and prop:
 					prop_doc = _create_property_doc(prop, script)
-					doc.properties.append(prop_doc)
+					if prop_doc:
+						doc.properties.append(prop_doc)
 				
 				if prop_doc:
 					if annotations.has("@type"):
