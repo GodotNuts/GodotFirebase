@@ -39,7 +39,7 @@ onready var DynamicLinks : FirebaseDynamicLinks = $DynamicLinks
 var _config : Dictionary = {
     "apiKey": "",
     "authDomain": "",
-    "databaseURL": "",
+    "databaseURL":"",
     "projectId": "",
     "storageBucket": "",
     "messagingSenderId": "",
@@ -55,7 +55,7 @@ func _load_config() -> void:
             if ProjectSettings.get_setting(_ENVIRONMENT_VARIABLES+key)!="":
                 _config[key] = ProjectSettings.get_setting(_ENVIRONMENT_VARIABLES+key)
     else:
-        printerr("No configuration settings found, add them in override.cfg file.")
+        print("No configuration settings found, add them in override.cfg file.")
 
 func _ready() -> void:
     _load_config()
@@ -78,4 +78,4 @@ func _ready() -> void:
     Auth.connect("login_succeeded", DynamicLinks, "_on_FirebaseAuth_login_succeeded")
     Auth.connect("signup_succeeded", DynamicLinks, "_on_FirebaseAuth_login_succeeded")
     Auth.connect("token_refresh_succeeded", DynamicLinks, "_on_FirebaseAuth_token_refresh_succeeded")
-  	Auth.connect("logged_out", DynamicLinks, "_on_FirebaseAuth_logout")
+    Auth.connect("logged_out", DynamicLinks, "_on_FirebaseAuth_logout")

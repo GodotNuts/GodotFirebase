@@ -39,6 +39,10 @@ const _escaped_quote : String = "\""
 const _equal_tag : String = "="
 const _key_filter_tag : String = "$key"
 
+var _headers : PoolStringArray = [   
+    "Access-Control-Allow-Origin: *"
+   ]
+
 func set_db_path(path : String, filter_query_dict : Dictionary) -> void:
     _db_path = path
     _filter_query = filter_query_dict
@@ -92,14 +96,14 @@ func update(path : String, data : Dictionary) -> void:
     if _pusher.get_http_client_status() != HTTPClient.STATUS_REQUESTING:
         var resolved_path = (_get_list_url() + _db_path + "/" + path + _get_remaining_path())
         
-        _pusher.request(resolved_path, PoolStringArray(), true, HTTPClient.METHOD_PATCH, to_update)
+        _pusher.request(resolved_path, _headers, true, HTTPClient.METHOD_PATCH, to_update)
     else:
         _push_queue.append(data)
 
 func push(data : Dictionary) -> void:
     var to_push = JSON.print(data)
     if _pusher.get_http_client_status() == HTTPClient.STATUS_DISCONNECTED:
-        _pusher.request(_get_list_url() + _db_path + _get_remaining_path(), PoolStringArray(), true, HTTPClient.METHOD_POST, to_push)
+        _pusher.request(_get_list_url() + _db_path + _get_remaining_path(), _headers, true, HTTPClient.METHOD_POST, to_push)
     else:
         _push_queue.append(data)
 
