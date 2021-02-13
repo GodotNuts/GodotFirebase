@@ -60,6 +60,11 @@ _global_script_classes=[ {
 "path": "res://addons/godot-firebase/database/database_store.gd"
 }, {
 "base": "Node",
+"class": "FirebaseDynamicLinks",
+"language": "GDScript",
+"path": "res://addons/godot-firebase/dynamiclinks/dynamiclinks.gd"
+}, {
+"base": "Node",
 "class": "FirebaseFirestore",
 "language": "GDScript",
 "path": "res://addons/godot-firebase/firestore/firestore.gd"
@@ -135,6 +140,7 @@ _global_script_class_icons={
 "FirebaseDatabase": "",
 "FirebaseDatabaseReference": "",
 "FirebaseDatabaseStore": "",
+"FirebaseDynamicLinks": "",
 "FirebaseFirestore": "",
 "FirebaseResource": "",
 "FirebaseStorage": "",
@@ -183,6 +189,7 @@ environment_variables/googleClientId=""
 environment_variables/googleClientSecret=""
 environment_variables/clientId=""
 environment_variables/clientSecret=""
+environment_variables/domainUriPrefix=""
 
 [rendering]
 

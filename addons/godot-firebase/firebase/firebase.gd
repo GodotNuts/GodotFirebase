@@ -29,6 +29,10 @@ onready var Database : FirebaseDatabase = $Database
 ## The Firebase Storage API.
 onready var Storage : FirebaseStorage = $Storage
 
+## @type FirebaseDynamicLinks
+## The Firebase Dynamic Links API.
+onready var DynamicLinks : FirebaseDynamicLinks = $DynamicLinks
+
 # Configuration used by all files in this project
 # These values can be found in your Firebase Project
 # See the README on Github for how to access
@@ -42,6 +46,7 @@ var _config : Dictionary = {
     "appId": "",
     "clientId": "",
     "clientSecret": "",
+    "domainUriPrefix": "",
 }
 
 func _load_config() -> void:
@@ -61,9 +66,16 @@ func _ready() -> void:
     Auth.connect("login_succeeded", Database, "_on_FirebaseAuth_login_succeeded")
     Auth.connect("signup_succeeded", Database, "_on_FirebaseAuth_login_succeeded")
     Auth.connect("token_refresh_succeeded", Database, "_on_FirebaseAuth_token_refresh_succeeded")
+    Auth.connect("logged_out", Database, "_on_FirebaseAuth_logout")
     Auth.connect("login_succeeded", Firestore, "_on_FirebaseAuth_login_succeeded")
     Auth.connect("signup_succeeded", Firestore, "_on_FirebaseAuth_login_succeeded")
     Auth.connect("token_refresh_succeeded", Firestore, "_on_FirebaseAuth_token_refresh_succeeded")
+    Auth.connect("logged_out", Firestore, "_on_FirebaseAuth_logout")
     Auth.connect("login_succeeded", Storage, "_on_FirebaseAuth_login_succeeded")
     Auth.connect("signup_succeeded", Storage, "_on_FirebaseAuth_login_succeeded")
     Auth.connect("token_refresh_succeeded", Storage, "_on_FirebaseAuth_token_refresh_succeeded")
+    Auth.connect("logged_out", Storage, "_on_FirebaseAuth_logout")
+    Auth.connect("login_succeeded", DynamicLinks, "_on_FirebaseAuth_login_succeeded")
+    Auth.connect("signup_succeeded", DynamicLinks, "_on_FirebaseAuth_login_succeeded")
+    Auth.connect("token_refresh_succeeded", DynamicLinks, "_on_FirebaseAuth_token_refresh_succeeded")
+  	Auth.connect("logged_out", DynamicLinks, "_on_FirebaseAuth_logout")
