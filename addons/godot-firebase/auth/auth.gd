@@ -14,7 +14,7 @@ signal login_failed(code, message)
 signal userdata_received(userdata)
 signal token_exchanged(successful)
 signal token_refresh_succeeded(auth_result)
-signal logged_out
+signal logged_out()
 
 const RESPONSE_SIGNUP : String   = "identitytoolkit#SignupNewUserResponse"
 const RESPONSE_SIGNIN : String   = "identitytoolkit#VerifyPasswordResponse"
