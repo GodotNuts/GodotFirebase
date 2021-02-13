@@ -308,6 +308,3 @@ func _on_FirebaseAuth_login_succeeded(auth_token : Dictionary) -> void:
 
 func _on_FirebaseAuth_token_refresh_succeeded(auth_result : Dictionary) -> void:
     auth = auth_result
-
-func _on_FirebaseAuth_logout() -> void:
-    auth = {}

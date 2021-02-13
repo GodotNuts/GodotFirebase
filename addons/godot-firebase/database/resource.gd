@@ -9,9 +9,9 @@ class_name FirebaseResource
 extends Resource
 
 var key : String
-var data : Dictionary
+var data
 
-func _init(key : String, data : Dictionary) -> void:
+func _init(key : String, data) -> void:
     self.key = key.lstrip("/")
     self.data = data
 

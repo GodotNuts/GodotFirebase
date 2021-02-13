@@ -12,6 +12,8 @@ class Cursor:
         values = v
         before = b
 
+signal query_result(query_result)
+
 const TEMPLATE_QUERY : Dictionary = {
     select = {},
     from = [],
@@ -72,7 +74,7 @@ func select(fields) -> FirestoreQuery:
                 field = ({ fieldPath = field })
             query["select"] = { fields = fields }
         _:
-            printerr("Type of 'fields' is not accepted.")        
+            print("Type of 'fields' is not accepted.")        
     return self
 
 
@@ -116,7 +118,7 @@ func where(field : String, operator : int, value = null, chain : int = -1):
             query["where"] = create_unary_filter(field, operator)
     else:
         if value == null:
-            printerr("A value must be defined to match the field: {field}".format({field = field}))
+            print("A value must be defined to match the field: {field}".format({field = field}))
         else:
             if (chain in [OPERATOR.AND, OPERATOR.OR]) or (query.has("where") and query.has("compositeFilter")):
                 var filters : Array = []
@@ -171,7 +173,7 @@ func end_at(value, before : bool) -> FirestoreQuery:
 
 func offset(offset : int) -> FirestoreQuery:
     if offset < 0:
-        printerr("If specified, offset must be >= 0")
+        print("If specified, offset must be >= 0")
     else:
         query["offset"] = offset
     return self
@@ -179,7 +181,7 @@ func offset(offset : int) -> FirestoreQuery:
 
 func limit(limit : int) -> FirestoreQuery:
     if limit < 0:
-        printerr("If specified, offset must be >= 0")
+        print("If specified, offset must be >= 0")
     else:
         query["limit"] = limit
     return self

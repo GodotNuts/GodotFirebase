@@ -1,11 +1,10 @@
 # ---------------------------------------------------- #
-#                 SCRIPT VERSION = 2.4                 #
+#                 SCRIPT VERSION = 2.1                 #
 #                 ====================                 #
 # please, remember to increment the version to +0.1    #
-# if you are going to make changes that will committed #
+# if you are going to make changes that will commited  #
 # ---------------------------------------------------- #
 
-tool
 extends Node
 
 const ENVIRONMENT_VARIABLES : String = "firebase/environment_variables/"
@@ -21,14 +20,13 @@ onready var DynamicLinks : FirebaseDynamicLinks = $DynamicLinks
 var config : Dictionary = {
     "apiKey": "",
     "authDomain": "",
-    "databaseURL": "",
+    "databaseURL":"",
     "projectId": "",
     "storageBucket": "",
     "messagingSenderId": "",
     "appId": "",
     "clientId": "",
     "clientSecret": "",
-    "domainUriPrefix": "",
     }
 
 func load_config() -> void:
@@ -37,7 +35,7 @@ func load_config() -> void:
             if ProjectSettings.get_setting(ENVIRONMENT_VARIABLES+key)!="":
                 config[key] = ProjectSettings.get_setting(ENVIRONMENT_VARIABLES+key)
     else:
-        printerr("No configuration settings found, add them in override.cfg file.")
+        print("No configuration settings found, add them in override.cfg file.")
 
 func _ready() -> void:
     load_config()
@@ -61,4 +59,4 @@ func _ready() -> void:
     Auth.connect("login_succeeded", DynamicLinks, "_on_FirebaseAuth_login_succeeded")
     Auth.connect("signup_succeeded", DynamicLinks, "_on_FirebaseAuth_login_succeeded")
     Auth.connect("token_refresh_succeeded", DynamicLinks, "_on_FirebaseAuth_token_refresh_succeeded")
-  	Auth.connect("logged_out", DynamicLinks, "_on_FirebaseAuth_logout")
+    Auth.connect("logged_out", DynamicLinks, "_on_FirebaseAuth_logout")
