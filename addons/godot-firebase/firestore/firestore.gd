@@ -62,7 +62,7 @@ var _requests_queue : Array = []
 
 var _current_query : FirestoreQuery
 
-func _set_config(config_json : Dictionary) -> void:
+func set_config(config_json : Dictionary) -> void:
     config = config_json
     _extended_url = _extended_url.replace("[PROJECT_ID]", config.projectId)
     _request_list_node = HTTPRequest.new()
