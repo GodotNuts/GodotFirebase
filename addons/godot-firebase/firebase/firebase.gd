@@ -1,23 +1,42 @@
-# ---------------------------------------------------- #
-#                 SCRIPT VERSION = 2.1                 #
-#                 ====================                 #
-# please, remember to increment the version to +0.1    #
-# if you are going to make changes that will commited  #
-# ---------------------------------------------------- #
-
+## @meta-authors SIsilicon
+## @meta-version 2.4
+## The Firebase Godot API.
+## This singleton gives you access to your Firebase project and its capabilities. Using this requires you to fill out some Firebase configuration settings. It currently comes with four modules.
+## 	- [code]Auth[/code]: Manages user authentication (logging and out, etc...)
+## 	- [code]Database[/code]: A NonSQL realtime database for managing data in JSON structures.
+## 	- [code]Firestore[/code]: Similar to Database, but stores data in collections and documents, among other things.
+## 	- [code]Storage[/code]: Gives access to Cloud Storage; perfect for storing files like images and other assets.
+## 
+## @tutorial https://github.com/GodotNuts/GodotFirebase/wiki
+tool
 extends Node
 
-const ENVIRONMENT_VARIABLES : String = "firebase/environment_variables/"
+const _ENVIRONMENT_VARIABLES : String = "firebase/environment_variables/"
+
+## @type FirebaseAuth
+## The Firebase Authentication API.
 onready var Auth : FirebaseAuth = $Auth
+
+## @type FirebaseFirestore
+## The Firebase Firestore API.
 onready var Firestore : FirebaseFirestore = $Firestore
+
+## @type FirebaseDatabase
+## The Firebase Realtime Database API.
 onready var Database : FirebaseDatabase = $Database
+
+## @type FirebaseStorage
+## The Firebase Storage API.
 onready var Storage : FirebaseStorage = $Storage
+
+## @type FirebaseDynamicLinks
+## The Firebase Dynamic Links API.
 onready var DynamicLinks : FirebaseDynamicLinks = $DynamicLinks
 
 # Configuration used by all files in this project
 # These values can be found in your Firebase Project
 # See the README on Github for how to access
-var config : Dictionary = {
+var _config : Dictionary = {
     "apiKey": "",
     "authDomain": "",
     "databaseURL":"",
@@ -27,23 +46,24 @@ var config : Dictionary = {
     "appId": "",
     "clientId": "",
     "clientSecret": "",
-    }
+    "domainUriPrefix": "",
+}
 
-func load_config() -> void:
-    if ProjectSettings.has_setting(ENVIRONMENT_VARIABLES+"apiKey"):
-        for key in config.keys():
-            if ProjectSettings.get_setting(ENVIRONMENT_VARIABLES+key)!="":
-                config[key] = ProjectSettings.get_setting(ENVIRONMENT_VARIABLES+key)
+func _load_config() -> void:
+    if ProjectSettings.has_setting(_ENVIRONMENT_VARIABLES+"apiKey"):
+        for key in _config.keys():
+            if ProjectSettings.get_setting(_ENVIRONMENT_VARIABLES+key)!="":
+                _config[key] = ProjectSettings.get_setting(_ENVIRONMENT_VARIABLES+key)
     else:
         print("No configuration settings found, add them in override.cfg file.")
 
 func _ready() -> void:
-    load_config()
-    Auth.set_config(config)
-    Firestore.set_config(config)
-    Database.set_config(config)
-    Storage.set_config(config)
-    DynamicLinks.set_config(config)
+    _load_config()
+    Auth._set_config(_config)
+    Firestore._set_config(_config)
+    Database._set_config(_config)
+    Storage._set_config(_config)
+    DynamicLinks._set_config(_config)
     Auth.connect("login_succeeded", Database, "_on_FirebaseAuth_login_succeeded")
     Auth.connect("signup_succeeded", Database, "_on_FirebaseAuth_login_succeeded")
     Auth.connect("token_refresh_succeeded", Database, "_on_FirebaseAuth_token_refresh_succeeded")

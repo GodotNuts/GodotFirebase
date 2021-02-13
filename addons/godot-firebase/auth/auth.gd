@@ -128,7 +128,7 @@ var _google_token_body : Dictionary = {
 
 # Sets the configuration needed for the plugin to talk to Firebase
 # These settings come from the Firebase.gd script automatically
-func set_config(config_json : Dictionary) -> void:
+func _set_config(config_json : Dictionary) -> void:
     _config = config_json
     _signup_request_url %= _config.apiKey
     _signin_request_url %= _config.apiKey
