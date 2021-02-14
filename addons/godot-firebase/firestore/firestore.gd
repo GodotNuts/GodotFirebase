@@ -12,6 +12,7 @@
 ## (source: [url=https://firebase.google.com/docs/firestore]Firestore[/url])
 ##
 ## @tutorial https://github.com/GodotNuts/GodotFirebase/wiki/Firestore
+tool
 class_name FirebaseFirestore
 extends Node
 
@@ -59,6 +60,7 @@ var auth : Dictionary
 var _request_list_node : HTTPRequest
 var _requests_queue : Array = []
 var _current_query : FirestoreQuery
+
 
 func _set_config(config_json : Dictionary) -> void:
     config = config_json

@@ -54,29 +54,19 @@ func _load_config() -> void:
         for key in _config.keys():
             if ProjectSettings.get_setting(_ENVIRONMENT_VARIABLES+key)!="":
                 _config[key] = ProjectSettings.get_setting(_ENVIRONMENT_VARIABLES+key)
+            else:
+                if _config[key] == "":
+                    printerr("Configuration key '{key}' not found!".format({key = key}))
     else:
-        print("No configuration settings found, add them in override.cfg file.")
+        printerr("No configuration settings found, add them in override.cfg file.")
 
 func _ready() -> void:
     _load_config()
-    Auth._set_config(_config)
-    Firestore._set_config(_config)
-    Database._set_config(_config)
-    Storage._set_config(_config)
-    DynamicLinks._set_config(_config)
-    Auth.connect("login_succeeded", Database, "_on_FirebaseAuth_login_succeeded")
-    Auth.connect("signup_succeeded", Database, "_on_FirebaseAuth_login_succeeded")
-    Auth.connect("token_refresh_succeeded", Database, "_on_FirebaseAuth_token_refresh_succeeded")
-    Auth.connect("logged_out", Database, "_on_FirebaseAuth_logout")
-    Auth.connect("login_succeeded", Firestore, "_on_FirebaseAuth_login_succeeded")
-    Auth.connect("signup_succeeded", Firestore, "_on_FirebaseAuth_login_succeeded")
-    Auth.connect("token_refresh_succeeded", Firestore, "_on_FirebaseAuth_token_refresh_succeeded")
-    Auth.connect("logged_out", Firestore, "_on_FirebaseAuth_logout")
-    Auth.connect("login_succeeded", Storage, "_on_FirebaseAuth_login_succeeded")
-    Auth.connect("signup_succeeded", Storage, "_on_FirebaseAuth_login_succeeded")
-    Auth.connect("token_refresh_succeeded", Storage, "_on_FirebaseAuth_token_refresh_succeeded")
-    Auth.connect("logged_out", Storage, "_on_FirebaseAuth_logout")
-    Auth.connect("login_succeeded", DynamicLinks, "_on_FirebaseAuth_login_succeeded")
-    Auth.connect("signup_succeeded", DynamicLinks, "_on_FirebaseAuth_login_succeeded")
-    Auth.connect("token_refresh_succeeded", DynamicLinks, "_on_FirebaseAuth_token_refresh_succeeded")
-    Auth.connect("logged_out", DynamicLinks, "_on_FirebaseAuth_logout")
+    for module in get_children():
+        module._set_config(_config)
+        if module is FirebaseAuth:
+            continue
+        Auth.connect("login_succeeded", module, "_on_FirebaseAuth_login_succeeded")
+        Auth.connect("signup_succeeded", module, "_on_FirebaseAuth_login_succeeded")
+        Auth.connect("token_refresh_succeeded", module, "_on_FirebaseAuth_token_refresh_succeeded")
+        Auth.connect("logged_out", module, "_on_FirebaseAuth_logout")

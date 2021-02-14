@@ -1,6 +1,7 @@
 ## @meta-authors SIsilicon
 ## @meta-version 2.2
 ## An object that keeps track of an operation performed by [StorageReference].
+tool
 class_name StorageTask
 extends Reference
 

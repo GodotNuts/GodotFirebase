@@ -2,6 +2,7 @@
 ## @meta-version 2.2
 ## The Storage API for Firebase.
 ## This object handles all firebase storage tasks, variables and references. To use this API, you must first create a [StorageReference] with [method ref]. With the reference, you can then query and manipulate the file or folder in the cloud storage.
+tool
 class_name FirebaseStorage
 extends Node
 
