@@ -10,9 +10,9 @@ The following individuals and many more have contributed significantly to this p
 
 - [Kyle Szklenski](https://github.com/WolfgangSenff) (creator) ([buy me a coffee](https://ko-fi.com/kyleszklenski))
 - [Nicolò Santilio](https://github.com/fenix-hub) (creator)
-- [Chuck Lindblom](https://github.com/BearDooks)
+- [Chuck Lindblom](https://github.com/BearDooks) (creator)
+- [SISilicon](https://github.com/SISilicon) (creator)
 - [Luke Hollenback](https://github.com/lukehollenback) ([buy me a coffee](https://ko-fi.com/lukehollenback))
-- [SISilicon](https://github.com/SISilicon)
 
 ## :arrow_down:  Cloning
 SSH:
@@ -40,3 +40,4 @@ Contributions are always welcome. Please feel free to fork this repo and follow 
 ## :memo:  License
 
 This plugin falls under the [MIT License](https://github.com/GodotNuts/GodotFirebase/blob/main/LICENSE)
+
