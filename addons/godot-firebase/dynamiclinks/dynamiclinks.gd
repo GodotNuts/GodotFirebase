@@ -30,7 +30,7 @@ enum REQUESTS {
     GENERATE
    }
 
-func set_config(config_json : Dictionary) -> void:
+func _set_config(config_json : Dictionary) -> void:
     _config = config_json
     _dynamic_link_request_url %= _config.apiKey
     _request_list_node = HTTPRequest.new()
