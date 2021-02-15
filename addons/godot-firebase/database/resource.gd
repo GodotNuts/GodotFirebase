@@ -1,6 +1,7 @@
-## @meta-authors SIsilicon
+## @meta-authors SIsilicon, fenix-hub
 ## @meta-version 2.2
 ## A generic resource used by Firebase Database.
+tool
 class_name FirebaseResource
 extends Resource
 

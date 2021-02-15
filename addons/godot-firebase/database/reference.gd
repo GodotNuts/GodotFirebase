@@ -2,6 +2,7 @@
 ## @meta-version 2.3
 ## A reference to a location in the Realtime Database.
 ## Documentation TODO.
+tool
 class_name FirebaseDatabaseReference
 extends Node
 

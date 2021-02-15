@@ -3,6 +3,7 @@
 ## @meta-version 1.1
 ## The dynamic links API for Firebase
 ## Documentation TODO.
+tool
 class_name FirebaseDynamicLinks
 extends Node
 

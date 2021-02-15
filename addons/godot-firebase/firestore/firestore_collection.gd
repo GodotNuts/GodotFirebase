@@ -2,6 +2,7 @@
 ## @meta-version 2.2
 ## A reference to a Firestore Collection.
 ## Documentation TODO.
+tool
 class_name FirestoreCollection
 extends Node
 

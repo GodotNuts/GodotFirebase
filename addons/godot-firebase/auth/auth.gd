@@ -2,6 +2,7 @@
 ## @meta-version 2.3
 ## The authentication API for Firebase.
 ## Documentation TODO.
+tool
 class_name FirebaseAuth
 extends HTTPRequest
 

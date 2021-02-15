@@ -2,6 +2,7 @@
 ## @meta-version 2.2
 ## Data structure that holds the currently-known data at a given path (a.k.a. reference) in a Firebase Realtime Database.
 ## Can process both puts and patches into the data based on realtime events received from the service.
+tool
 class_name FirebaseDatabaseStore
 extends Node
 

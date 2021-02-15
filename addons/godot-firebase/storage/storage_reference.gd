@@ -2,6 +2,7 @@
 ## @meta-version 2.2
 ## A reference to a file or folder in the Firebase cloud storage.
 ## This object is used to interact with the cloud storage. You may get data from the server, as well as upload your own back to it.
+tool
 class_name StorageReference
 extends Reference
 

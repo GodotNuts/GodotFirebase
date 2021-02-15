@@ -17,6 +17,7 @@
 ## 
 ## @tutorial https://github.com/GodotNuts/GodotFirebase/wiki/Firestore#FirestoreTask
 
+tool
 class_name FirestoreTask
 extends HTTPRequest
 

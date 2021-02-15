@@ -2,6 +2,7 @@
 ## @meta-version 1.1
 ## The Realtime Database API for Firebase.
 ## Documentation TODO.
+tool
 extends Reference
 class_name FirestoreQuery
 

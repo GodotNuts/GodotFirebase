@@ -2,6 +2,7 @@
 ## @meta-version 2.2
 ## A reference to a Firestore Document.
 ## Documentation TODO.
+tool
 class_name FirestoreDocument
 extends Node
 

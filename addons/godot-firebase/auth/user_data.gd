@@ -2,6 +2,7 @@
 ## @meta-version 2.2
 ## Authentication user data.
 ## Documentation TODO.
+tool
 class_name FirebaseUserData
 extends Reference
 
