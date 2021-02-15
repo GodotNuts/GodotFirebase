@@ -40,3 +40,4 @@ Contributions are always welcome. Please feel free to fork this repo and follow 
 ## :memo:  License
 
 This plugin falls under the [MIT License](https://github.com/GodotNuts/GodotFirebase/blob/main/LICENSE)
+
