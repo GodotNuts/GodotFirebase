@@ -12,6 +12,7 @@
 # events received from the service.
 #
 
+tool
 class_name FirebaseDatabaseStore
 extends Node
 

@@ -5,6 +5,7 @@
 # if you are going to make changes that will committed #
 # ---------------------------------------------------- #
 
+tool
 class_name FirebaseAuth
 extends HTTPRequest
 

@@ -1,3 +1,4 @@
+tool
 extends Reference
 class_name FirestoreQuery
 

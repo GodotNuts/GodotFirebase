@@ -5,6 +5,7 @@
 # if you are going to make changes that will commited  #
 # ---------------------------------------------------- #
 
+tool
 class_name FirebaseUserData
 extends Reference
 
