@@ -47,8 +47,8 @@ var type_color: Color
 func _generate(doc: ClassDocItem) -> String:
 	var is_current: bool = label.is_visible_in_tree()
 	var link_color_text := title_color.to_html()
+	section_lines.clear()
 	if is_current:
-		section_lines.clear()
 		signal_line.clear()
 		method_line.clear()
 		property_line.clear()

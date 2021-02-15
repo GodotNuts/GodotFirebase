@@ -1,10 +1,8 @@
-# ---------------------------------------------------- #
-#                 SCRIPT VERSION = 1.0                 #
-#                 ====================                 #
-# please, remember to increment the version to +0.1    #
-# if you are going to make changes that will committed #
-# ---------------------------------------------------- #
-
+## @meta-authors TODO
+## @meta-authors TODO
+## @meta-version 1.1
+## The dynamic links API for Firebase
+## Documentation TODO.
 tool
 class_name FirebaseDynamicLinks
 extends Node
@@ -54,8 +52,9 @@ var _link_request_body : Dictionary = {
     }
     }
 
-# This function is used to generate a dynamic link using the Firebase REST API
-# It will return a JSON with the shortened link
+## @args log_link, APN, IBI, is_unguessable
+## This function is used to generate a dynamic link using the Firebase REST API
+## It will return a JSON with the shortened link
 func generate_dynamic_link(long_link : String, APN : String, IBI : String, is_unguessable : bool) -> void:
     request = REQUESTS.GENERATE
     _link_request_body.dynamicLinkInfo.domainUriPrefix = _config.domainUriPrefix

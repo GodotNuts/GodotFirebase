@@ -118,7 +118,7 @@ func get_data() -> StorageTask:
     if not valid:
         return null
     storage._download(self, false, false)
-    return storage._pending_tasks.pop_back()
+    return storage._pending_tasks[-1]
 
 ## @return StorageTask
 ## Like [method get_data], but the data in the returned [StorageTask] comes in the form of a [String].

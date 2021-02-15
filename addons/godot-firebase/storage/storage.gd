@@ -2,6 +2,8 @@
 ## @meta-version 2.2
 ## The Storage API for Firebase.
 ## This object handles all firebase storage tasks, variables and references. To use this API, you must first create a [StorageReference] with [method ref]. With the reference, you can then query and manipulate the file or folder in the cloud storage.
+## 
+## [i]Note: In HTML builds, you must configure [url=https://firebase.google.com/docs/storage/web/download-files#cors_configuration]CORS[/url] in your storage bucket.[i] 
 tool
 class_name FirebaseStorage
 extends Node
@@ -65,7 +67,7 @@ func _internal_process(_delta : float) -> void:
         HTTPClient.STATUS_CONNECTED:
             var err := _http_client.request_raw(task._method, task._url, task._headers, task.data)
             if err:
-                call_deferred("_finish_request", HTTPRequest.RESULT_CONNECTION_ERROR)
+                _finish_request(HTTPRequest.RESULT_CONNECTION_ERROR)
         
         HTTPClient.STATUS_BODY:
             if _http_client.has_response() or _reading_body:
@@ -92,19 +94,19 @@ func _internal_process(_delta : float) -> void:
                 
                 if _http_client.get_status() != HTTPClient.STATUS_BODY:
                     task.progress = 1.0
-                    call_deferred("_finish_request", HTTPRequest.RESULT_SUCCESS)
+                    _finish_request(HTTPRequest.RESULT_SUCCESS)
             else:
                 task.progress = 1.0
-                call_deferred("_finish_request", HTTPRequest.RESULT_SUCCESS)
+                _finish_request(HTTPRequest.RESULT_SUCCESS)
         
         HTTPClient.STATUS_CANT_CONNECT:
-            call_deferred("_finish_request", HTTPRequest.RESULT_CANT_CONNECT)
+            _finish_request(HTTPRequest.RESULT_CANT_CONNECT)
         HTTPClient.STATUS_CANT_RESOLVE:
-            call_deferred("_finish_request", HTTPRequest.RESULT_CANT_RESOLVE)
+            _finish_request(HTTPRequest.RESULT_CANT_RESOLVE)
         HTTPClient.STATUS_CONNECTION_ERROR:
-            call_deferred("_finish_request", HTTPRequest.RESULT_CONNECTION_ERROR)
+            _finish_request(HTTPRequest.RESULT_CONNECTION_ERROR)
         HTTPClient.STATUS_SSL_HANDSHAKE_ERROR:
-            call_deferred("_finish_request", HTTPRequest.RESULT_SSL_HANDSHAKE_ERROR)
+            _finish_request(HTTPRequest.RESULT_SSL_HANDSHAKE_ERROR)
 
 ## @args path
 ## @arg-defaults ""
@@ -167,24 +169,23 @@ func _download(ref : StorageReference, meta_only : bool, url_only : bool) -> Sto
         return info_task
     
     var task := StorageTask.new()
-    _pending_tasks.append(task)
-    yield(info_task, "task_finished")
-    
     task.ref = ref
     task._url = _get_file_url(ref) + "?alt=media&token="
     task.action = StorageTask.Task.TASK_DOWNLOAD
+    _pending_tasks.append(task)
     
+    yield(info_task, "task_finished")
     if info_task.data and not info_task.data.has("error"):
         task._url += info_task.data.downloadTokens
-        _process_request(task)
     else:
         task.data = info_task.data
         task.response_headers = info_task.response_headers
         task.response_code = info_task.response_code
-        task.finished = true
         task.result = info_task.result
-        emit_signal("task_failed", task.result, task.response_code, task.data)
+        task.finished = true
         task.emit_signal("task_finished")
+        emit_signal("task_failed", task.result, task.response_code, task.data)
+        _pending_tasks.erase(task)
     
     return task
 
@@ -211,14 +212,14 @@ func _delete(ref : StorageReference) -> StorageTask:
     return task
 
 func _process_request(task : StorageTask) -> void:
-    var headers = Array(task._headers)
-    headers.append("Authorization: Bearer " + _auth.idtoken)
-    task._headers = PoolStringArray(headers)
-    
     if requesting:
         _pending_tasks.append(task)
         return
     requesting = true
+    
+    var headers = Array(task._headers)
+    headers.append("Authorization: Bearer " + _auth.idtoken)
+    task._headers = PoolStringArray(headers)
     
     _current_task = task
     _response_code = 0
@@ -283,17 +284,26 @@ func _finish_request(result : int) -> void:
         _:
             task.data = JSON.parse(_response_data.get_string_from_utf8()).result
     
+    var next_task : StorageTask
+    if not _pending_tasks.empty():
+        next_task = _pending_tasks.pop_front()
+    
     task.finished = true
     task.emit_signal("task_finished")
-    
     if typeof(task.data) == TYPE_DICTIONARY and task.data.has("error"):
         emit_signal("task_failed", task.result, task.response_code, task.data)
     else:
         emit_signal("task_successful", task.result, task.response_code, task.data)
     
-    if not _pending_tasks.empty():
-        var next_task : StorageTask = _pending_tasks.pop_front()
-        _process_request(next_task)
+    while true:
+        if next_task and not next_task.finished:
+            _process_request(next_task)
+            break
+        elif not _pending_tasks.empty():
+            next_task = _pending_tasks.pop_front()
+        else:
+            break
+
 
 func _get_file_url(ref : StorageReference) -> String:
     var url := _extended_url.replace("[APP_ID]", ref.bucket)

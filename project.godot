@@ -24,11 +24,6 @@ _global_script_classes=[ {
 "language": "GDScript",
 "path": "res://addons/silicon.util.custom_docs/doc_item/constant_doc_item.gd"
 }, {
-"base": "Control",
-"class": "CustomControlThing",
-"language": "GDScript",
-"path": "res://addons/silicon.util.custom_docs/test_doc_script.gd"
-}, {
 "base": "Reference",
 "class": "DocExporter",
 "language": "GDScript",
@@ -138,7 +133,6 @@ _global_script_class_icons={
 "ArgumentDocItem": "",
 "ClassDocItem": "",
 "ConstantDocItem": "",
-"CustomControlThing": "",
 "DocExporter": "",
 "DocItem": "",
 "FirebaseAuth": "",
