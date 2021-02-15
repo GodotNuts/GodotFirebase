@@ -8,6 +8,7 @@
 ## 	- [code]Storage[/code]: Gives access to Cloud Storage; perfect for storing files like images and other assets.
 ## 
 ## @tutorial https://github.com/GodotNuts/GodotFirebase/wiki
+tool
 extends Node
 
 const _ENVIRONMENT_VARIABLES : String = "firebase/environment_variables/"
