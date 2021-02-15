@@ -1,10 +1,7 @@
-# ---------------------------------------------------- #
-#                 SCRIPT VERSION = 2.1                 #
-#                 ====================                 #
-# please, remember to increment the version to +0.1    #
-# if you are going to make changes that will commited  #
-# ---------------------------------------------------- #
-
+## @meta-authors TODO
+## @meta-version 2.2
+## A reference to a Firestore Document.
+## Documentation TODO.
 class_name FirestoreDocument
 extends Node
 

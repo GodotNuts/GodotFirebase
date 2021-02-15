@@ -1,10 +1,7 @@
-# ---------------------------------------------------- #
-#                 SCRIPT VERSION = 2.2                 #
-#                 ====================                 #
-# please, remember to increment the version to +0.1    #
-# if you are going to make changes that will commited  #
-# ---------------------------------------------------- #
-
+## @meta-authors TODO
+## @meta-version 2.3
+## A reference to a location in the Realtime Database.
+## Documentation TODO.
 class_name FirebaseDatabaseReference
 extends Node
 
@@ -24,6 +21,9 @@ var _db_path : String
 var _cached_filter : String
 var _push_queue : Array = []
 var _can_connect_to_host : bool = false
+
+onready var _database_obj = get_node("..") # FirebaseDatabase (Can't static type due to cyclic dependencies)
+onready var _auth_obj = get_node("../../Auth") # FirebaseAuth (Can't static type due to cyclic dependencies)
 
 const _put_tag : String = "put"
 const _patch_tag : String = "patch"
@@ -119,9 +119,9 @@ func get_data() -> Dictionary:
 
 func _get_remaining_path(is_push : bool = true) -> String:
     if !_filter_query or is_push:
-        return _json_list_tag + _query_tag + _auth_tag + Firebase.Auth.auth.idtoken
+        return _json_list_tag + _query_tag + _auth_tag + _auth_obj.auth.idtoken
     else:
-        return _json_list_tag + _query_tag + _get_filter() + _filter_tag + _auth_tag + Firebase.Auth.auth.idtoken
+        return _json_list_tag + _query_tag + _get_filter() + _filter_tag + _auth_tag + _auth_obj.auth.idtoken
 
 func _get_list_url() -> String:
     return _config.databaseURL + _separator # + ListName + _json_list_tag + _auth_tag + _auth.idtoken
@@ -132,11 +132,11 @@ func _get_filter():
     # At the moment, this means you can't dynamically change your filter; I think it's okay to specify that in the rules.
     if !_cached_filter:
         _cached_filter = ""
-        if _filter_query.has(Firebase.Database.ORDER_BY):
-            _cached_filter += Firebase.Database.ORDER_BY + _equal_tag + _escaped_quote + _filter_query[Firebase.Database.ORDER_BY] + _escaped_quote
-            _filter_query.erase(Firebase.Database.ORDER_BY)
+        if _filter_query.has(_database_obj.ORDER_BY):
+            _cached_filter += _database_obj.ORDER_BY + _equal_tag + _escaped_quote + _filter_query[_database_obj.ORDER_BY] + _escaped_quote
+            _filter_query.erase(_database_obj.ORDER_BY)
         else:
-            _cached_filter += Firebase.Database.ORDER_BY + _equal_tag + _escaped_quote + _key_filter_tag + _escaped_quote # Presumptuous, but to get it to work at all...
+            _cached_filter += _database_obj.ORDER_BY + _equal_tag + _escaped_quote + _key_filter_tag + _escaped_quote # Presumptuous, but to get it to work at all...
 
         for key in _filter_query.keys():
             _cached_filter += _filter_tag + key + _equal_tag + _filter_query[key]

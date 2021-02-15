@@ -71,7 +71,6 @@ func _enter_tree() -> void:
 	doc_exporter.editor_settings = get_editor_interface().get_editor_settings()
 	doc_exporter.class_docs = class_docs
 	doc_exporter.update_theme_vars()
-	
 	doc_generator.plugin = self
 	
 	doc_timer = Timer.new()
@@ -87,8 +86,8 @@ func _enter_tree() -> void:
 	if not file.open(settings_path, File.READ):
 		var opened_tabs := []
 		for i in script_list.get_item_count():
-			opened_tabs.append(script_list.get_item_text(i))
-
+			opened_tabs.append(script_tabs.get_child(script_list.get_item_metadata(i)).name)
+		
 		var selected := script_list.get_selected_items()
 		var list: Array = JSON.parse(file.get_as_text()).result
 		for item in list:
@@ -212,21 +211,14 @@ func update_doc(label: RichTextLabel) -> void:
 	
 	var section_lines := doc_exporter.section_lines
 	section_list.clear()
-	var lines := []
-	var offset := 0
 	for i in len(section_lines):
-		if section_lines[i][0] in lines:
-			offset += 1
-			continue
-		else:
-			lines.append(section_lines[i][0])
-			section_list.add_item(section_lines[i][0])
-		section_list.set_item_metadata(i - offset, section_lines[i][1])
+		section_list.add_item(section_lines[i][0])
+		section_list.set_item_metadata(i, section_lines[i][1])
 
 
 func process_custom_item(name: String, type := ITEM_CLASS) -> TreeItem:
 	# Create tree item if it's not their.
-	if doc_items.get(name + str(type)):
+	if weakref(doc_items.get(name + str(type))).get_ref():
 		doc_items[name + str(type)].clear_custom_color(0)
 		doc_items[name + str(type)].clear_custom_color(1)
 		return doc_items[name + str(type)]
@@ -401,7 +393,7 @@ func purge_duplicate_tabs() -> void:
 
 func set_current_label(label: RichTextLabel) -> void:
 	if current_label != label:
-		if current_label:
+		if is_instance_valid(current_label):
 			current_label.disconnect("meta_clicked", self, "_on_EditorHelpLabel_meta_clicked")
 		
 		if label:
@@ -442,8 +434,12 @@ func find_node_by_class(node: Node, _class: String) -> Node:
 
 
 func _on_DocTimer_timeout() -> void:
-	doc_generator.plugin = self
 	doc_exporter.plugin = self
+	doc_exporter.theme = theme
+	doc_exporter.editor_settings = get_editor_interface().get_editor_settings()
+	doc_exporter.class_docs = class_docs
+	doc_exporter.update_theme_vars()
+	doc_generator.plugin = self
 	
 	var classes: Array = ProjectSettings.get("_global_script_classes")
 	var class_icons: Dictionary = ProjectSettings.get("_global_script_class_icons")

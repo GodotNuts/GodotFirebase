@@ -1,10 +1,7 @@
-# ---------------------------------------------------- #
-#                 SCRIPT VERSION = 2.2                 #
-#                 ====================                 #
-# please, remember to increment the version to +0.1    #
-# if you are going to make changes that will committed #
-# ---------------------------------------------------- #
-
+## @meta-authors TODO
+## @meta-version 2.3
+## The authentication API for Firebase.
+## Documentation TODO.
 class_name FirebaseAuth
 extends HTTPRequest
 
@@ -290,14 +287,14 @@ func save_auth(auth : Dictionary) -> void:
 # Function used to load the auth data file that has been stored locally
 # Note this does not work in HTML5 or UWP
 func load_auth() -> void:
-    if (OS.get_name() != 'HTML5' and OS.get_name() != 'UWP'):
+    if OS.get_name() != 'HTML5' and OS.get_name() != 'UWP':
         var encrypted_file = File.new()
         var err = encrypted_file.open_encrypted_with_pass("user://user.auth", File.READ, OS.get_unique_id())
         if err != OK:
             printerr("Error Opening File. Error Code: ", err)
         else:
             var encrypted_file_data = parse_json(encrypted_file.get_line())
-            Firebase.Auth.manual_token_refresh(encrypted_file_data)
+            manual_token_refresh(encrypted_file_data)
     else:
         printerr("OS Not supported for loading auth data")
 

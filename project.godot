@@ -24,11 +24,6 @@ _global_script_classes=[ {
 "language": "GDScript",
 "path": "res://addons/silicon.util.custom_docs/doc_item/constant_doc_item.gd"
 }, {
-"base": "Control",
-"class": "CustomControlThing",
-"language": "GDScript",
-"path": "res://addons/silicon.util.custom_docs/test_doc_script.gd"
-}, {
 "base": "Reference",
 "class": "DocExporter",
 "language": "GDScript",
@@ -99,6 +94,11 @@ _global_script_classes=[ {
 "language": "GDScript",
 "path": "res://addons/godot-firebase/firestore/firestore_query.gd"
 }, {
+"base": "HTTPRequest",
+"class": "FirestoreTask",
+"language": "GDScript",
+"path": "res://addons/godot-firebase/firestore/firestore_task.gd"
+}, {
 "base": "DocItem",
 "class": "MethodDocItem",
 "language": "GDScript",
@@ -113,10 +113,6 @@ _global_script_classes=[ {
 "class": "SignalDocItem",
 "language": "GDScript",
 "path": "res://addons/silicon.util.custom_docs/doc_item/signal_doc_item.gd"
-"base": "HTTPRequest",
-"class": "FirestoreTask",
-"language": "GDScript",
-"path": "res://addons/godot-firebase/firestore/firestore_task.gd"
 }, {
 "base": "Reference",
 "class": "StorageReference",
@@ -137,7 +133,6 @@ _global_script_class_icons={
 "ArgumentDocItem": "",
 "ClassDocItem": "",
 "ConstantDocItem": "",
-"CustomControlThing": "",
 "DocExporter": "",
 "DocItem": "",
 "FirebaseAuth": "",
@@ -152,10 +147,10 @@ _global_script_class_icons={
 "FirestoreCollection": "",
 "FirestoreDocument": "",
 "FirestoreQuery": "",
+"FirestoreTask": "",
 "MethodDocItem": "",
 "PropertyDocItem": "",
 "SignalDocItem": "",
-"FirestoreTask": "",
 "StorageReference": "",
 "StorageTask": "",
 "TestUtils": ""

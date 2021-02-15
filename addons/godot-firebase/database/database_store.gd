@@ -1,48 +1,32 @@
-# ---------------------------------------------------- #
-#                 SCRIPT VERSION = 2.1                 #
-#                 ====================                 #
-# please, remember to increment the version to +0.1    #
-# if you are going to make changes that will commited  #
-# ---------------------------------------------------- #
-
-
-#
-# Data structure that holds the currently-known data at a given path (a.k.a. reference) in a
-# Firebase Realtime Database. Can process both puts and patches into the data based on realtime
-# events received from the service.
-#
-
+## @meta-authors TODO
+## @meta-version 2.2
+## Data structure that holds the currently-known data at a given path (a.k.a. reference) in a Firebase Realtime Database.
+## Can process both puts and patches into the data based on realtime events received from the service.
 class_name FirebaseDatabaseStore
 extends Node
 
 const _DELIMITER : String = "/"
 const _ROOT : String = "_root"
 
+## @default false
+## Whether the store is in debug mode.
 var debug : bool = false
 var _data : Dictionary = { }
 
 
-#
-# Puts a new payload into this data store at the given path. Any existing values in this data store
-# at the specified path will be completely erased.
-#
+## @args path, payload
+## Puts a new payload into this data store at the given path. Any existing values in this data store
+## at the specified path will be completely erased.
 func put(path : String, payload) -> void:
     _update_data(path, payload, false)
 
-#
-# Patches an update payload into this data store at the specified path.
-#
-# NOTE: When patching in updates to arrays, payload should contain the entire new array! Updating
-#  single elements/indexes of an array is not supported. Sometimes when manually mutating array
-#  data directly from the Firebase Realtime Database console, single-element patches will be sent
-#  out – which can cause issues here.
-#
+## @args path, payload
+## Patches an update payload into this data store at the specified path.
+## NOTE: When patching in updates to arrays, payload should contain the entire new array! Updating single elements/indexes of an array is not supported. Sometimes when manually mutating array data directly from the Firebase Realtime Database console, single-element patches will be sent out which can cause issues here.
 func patch(path : String, payload) -> void:
     _update_data(path, payload, true)
 
-#
-# Returns a deep copy of this data store's payload.
-#
+## Returns a deep copy of this data store's payload.
 func get_data() -> Dictionary:
     return _data[_ROOT].duplicate(true)
 
