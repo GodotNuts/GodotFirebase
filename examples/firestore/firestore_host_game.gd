@@ -37,13 +37,15 @@ func _create_game(auth_result : Dictionary):
         "code": room_code,
         "players": []
     }
+
     collection.add(room_code, room_information)
     var document : FirestoreDocument = yield(collection, "add_document")	
+    print("Created room of code: ", room_code)
     
     timer.start()
 
 func _on_auth_error(code, msg):
-    print("Authentication errror encountered. Code: ", code, " MSG: ", msg)
+    print("Authentication error encountered. Code: ", code, " MSG: ", msg)
 
 func _on_network_error(code, status, msg):
     print("Network error encountered. Code: ", code, " Status: ", status, " MSG: ", msg)
