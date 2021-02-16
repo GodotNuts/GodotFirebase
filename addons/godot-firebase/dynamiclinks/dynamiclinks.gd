@@ -9,7 +9,7 @@ extends Node
 
 signal dynamic_link_generated(link_result)
 
-const _authorization_header : String = "Authorization: Bearer "
+const _AUTHORIZATION_HEADER : String = "Authorization: Bearer "
 
 var request : int = -1
 
@@ -24,7 +24,7 @@ var _headers : PoolStringArray = [
     "Access-Control-Allow-Origin: *"
    ]
 
-enum REQUESTS {
+enum Requests {
     NONE = -1,
     GENERATE
    }
@@ -56,7 +56,7 @@ var _link_request_body : Dictionary = {
 ## This function is used to generate a dynamic link using the Firebase REST API
 ## It will return a JSON with the shortened link
 func generate_dynamic_link(long_link : String, APN : String, IBI : String, is_unguessable : bool) -> void:
-    request = REQUESTS.GENERATE
+    request = Requests.GENERATE
     _link_request_body.dynamicLinkInfo.domainUriPrefix = _config.domainUriPrefix
     _link_request_body.dynamicLinkInfo.link = long_link
     _link_request_body.dynamicLinkInfo.androidInfo.androidPackageName = APN
@@ -70,7 +70,7 @@ func generate_dynamic_link(long_link : String, APN : String, IBI : String, is_un
 func _on_request_completed(result : int, response_code : int, headers : PoolStringArray, body : PoolByteArray) -> void:
     var result_body : Dictionary = JSON.parse(body.get_string_from_utf8()).result
     emit_signal("dynamic_link_generated", result_body.shortLink)
-    request = REQUESTS.NONE
+    request = Requests.NONE
 
 func _on_FirebaseAuth_login_succeeded(auth_result : Dictionary) -> void:
     _auth = auth_result

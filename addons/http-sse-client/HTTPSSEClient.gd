@@ -51,22 +51,22 @@ func attempt_to_request(httpclient_status):
 func _process(delta):
 	if !told_to_connect:
 		return
-				
+	
 	if !is_connected:
 		if !connection_in_progress:
 			attempt_to_connect()
 			connection_in_progress = true
 		return
-				
+	
 	httpclient.poll()
 	var httpclient_status = httpclient.get_status()
 	if !is_requested:
 		if !request_in_progress:
 			attempt_to_request(httpclient_status)
 		return
-				
+	
 	var httpclient_has_response = httpclient.has_response()
-				
+	
 	if httpclient_has_response or httpclient_status == HTTPClient.STATUS_BODY:
 		var headers = httpclient.get_response_headers_as_dictionary()
 
@@ -76,7 +76,7 @@ func _process(delta):
 			return
 		else:
 			response_body = response_body + chunk
-						
+		
 		var body = response_body.get_string_from_utf8()
 		if body:
 			var event_data = get_event_data(body)

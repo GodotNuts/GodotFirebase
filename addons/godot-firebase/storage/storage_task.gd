@@ -17,8 +17,8 @@ enum Task {
     TASK_MAX ## The number of [enum Task] constants.
 }
 
-## Emitted when the task is finished.
-signal task_finished
+## Emitted when the task is finished. Returns data depending on the success and action of the task.
+signal task_finished(data)
 
 ## @type StorageReference
 ## The [StorageReference] that created this [StorageTask].
@@ -30,7 +30,7 @@ var ref # Storage Reference (Can't static type due to cyclic reference)
 ## The kind of operation this [StorageTask] is keeping track of.
 var action : int = -1 setget set_action
 
-## @default PoolStringArray()
+## @default PoolByteArray()
 ## Data that the tracked task will/has returned.
 var data = PoolByteArray() # data can be of any type.
 

@@ -121,6 +121,8 @@ func _process(_delta := 0.0) -> void:
 		if not tree:
 			return
 	
+	doc_generator._update()
+	
 	# Update search help tree items
 	if tree.get_root():
 		search_flags = search_controls.get_child(3).get_item_id(search_controls.get_child(3).selected)

@@ -47,13 +47,15 @@ var _config : Dictionary = {
     "clientId": "",
     "clientSecret": "",
     "domainUriPrefix": "",
+    "cacheLocation": "user://.firebase_cache"
 }
 
 func _load_config() -> void:
     if ProjectSettings.has_setting(_ENVIRONMENT_VARIABLES+"apiKey"):
         for key in _config.keys():
-            if ProjectSettings.get_setting(_ENVIRONMENT_VARIABLES+key)!="":
-                _config[key] = ProjectSettings.get_setting(_ENVIRONMENT_VARIABLES+key)
+            var env_var : String = _ENVIRONMENT_VARIABLES + key
+            if ProjectSettings.has_setting(env_var) and ProjectSettings.get_setting(env_var) != "":
+                _config[key] = ProjectSettings.get_setting(env_var)
             else:
                 if _config[key] == "":
                     printerr("Configuration key '{key}' not found!".format({key = key}))
