@@ -37,7 +37,7 @@ func get(documentId : String) -> FirestoreTask:
         add_child(firestore_task)
         firestore_task._set_action(FirestoreTask.TASK_GET)
         var url = _get_request_url() + _separator + documentId.replace(" ", "%20")
-        firestore_task.connect("add_document", self, "_on_add_document")
+        firestore_task.connect("get_document", self, "_on_get_document")
         firestore_task.connect("error", self, "_on_error")
         firestore_task._push_request(url, _authorization_header + auth.idtoken)
         return firestore_task
@@ -53,7 +53,7 @@ func add(documentId : String, fields : Dictionary = {}) -> FirestoreTask:
         firestore_task._set_action(FirestoreTask.TASK_POST)
         var url = _get_request_url() + _query_tag + _documentId_tag + documentId
         firestore_task._push_request(url, _authorization_header + auth.idtoken, JSON.print(FirestoreDocument.dict2fields(fields)))
-        firestore_task.connect("get_document", self, "_on_get_document")
+        firestore_task.connect("add_document", self, "_on_add_document")
         firestore_task.connect("error", self, "_on_error")
         return firestore_task
     else:
