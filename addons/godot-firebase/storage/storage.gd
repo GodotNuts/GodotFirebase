@@ -253,7 +253,7 @@ func _finish_request(result : int) -> void:
         StorageTask.Task.TASK_DOWNLOAD_URL:
             var json : Dictionary = JSON.parse(_response_data.get_string_from_utf8()).result
             if json and json.has("downloadTokens"):
-                task.data = _base_url + _get_file_url(task.ref.full_path) + "?alt=media&token=" + json.downloadTokens
+                task.data = _base_url + _get_file_url(task.ref) + "?alt=media&token=" + json.downloadTokens
             else:
                 task.data = ""
         
