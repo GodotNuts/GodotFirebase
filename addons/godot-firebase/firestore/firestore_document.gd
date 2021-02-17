@@ -21,7 +21,7 @@ func _init(doc : Dictionary = {}, _doc_name : String = "", _doc_fields : Diction
     self.doc_name = doc.name
     if self.doc_name.count("/") > 2:
         self.doc_name = (self.doc_name.split("/") as Array).back()
-    self.doc_fields = fields2dict(document)
+    self.doc_fields = fields2dict(self.document)
     self.create_time = doc.createTime
 
 # Pass a dictionary { 'key' : 'value' } to format it in a APIs usable .fields 
@@ -69,7 +69,22 @@ static func fields2array(array : Dictionary) -> Array:
     var fields : Array = []
     if array.has("values"):
         for field in array.values:
-            fields.append(field.values()[0])
+            var item
+            if field.has("mapValue"):
+                item = fields2dict(field.mapValue)
+            elif field.has("arrayValue"):
+                item = fields2array(field.arrayValue)
+            elif field.has("integerValue"):
+                item = field.values()[0] as int
+            elif field.has("doubleValue"):
+                item = field.values()[0] as float
+            elif field.has("booleanValue"):
+                item = field.values()[0] as bool
+            elif field.has("nullValue"):
+                item = null
+            else:
+                item = field.values()[0]
+            fields.append(item)
     return fields
 
 # Pass the .fields inside a Firestore Document to print out the Dictionary { 'key' : 'value' }
