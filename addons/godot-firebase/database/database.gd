@@ -26,6 +26,9 @@ func _on_FirebaseAuth_login_succeeded(auth_result : Dictionary) -> void:
 func _on_FirebaseAuth_token_refresh_succeeded(auth_result : Dictionary) -> void:
     auth = auth_result
 
+func _on_FirebaseAuth_logout() -> void:
+    auth = {}
+
 func get_database_reference(path : String, filter : Dictionary = {}) -> FirebaseDatabaseReference:
     var firebase_reference : FirebaseDatabaseReference = FirebaseDatabaseReference.new()
     var pusher : HTTPRequest = HTTPRequest.new()
