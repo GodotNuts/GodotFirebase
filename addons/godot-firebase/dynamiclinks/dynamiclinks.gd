@@ -79,4 +79,4 @@ func _on_FirebaseAuth_token_refresh_succeeded(auth_result : Dictionary) -> void:
     _auth = auth_result
 
 func _on_FirebaseAuth_logout() -> void:
-    auth = {}
+    _auth = {}
