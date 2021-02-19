@@ -329,7 +329,7 @@ func change_user_email(email : String) -> void:
 func change_user_password(password : String) -> void:
     if _is_ready():
         is_busy = true
-        _change_password_body.email = password
+        _change_password_body.password = password
         _change_password_body.idToken = auth.idtoken
         request(_update_account_request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_change_password_body))
 

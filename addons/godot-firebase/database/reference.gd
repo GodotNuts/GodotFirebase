@@ -125,17 +125,18 @@ func _get_list_url() -> String:
     return _config.databaseURL + _separator # + ListName + _json_list_tag + _auth_tag + _auth.idtoken
 
 func _get_filter():
+    var _parent = get_parent()
+
     if !_filter_query:
         return ""
     # At the moment, this means you can't dynamically change your filter; I think it's okay to specify that in the rules.
     if !_cached_filter:
         _cached_filter = ""
-        if _filter_query.has(get_parent().ORDER_BY):
-            _cached_filter += get_parent().ORDER_BY + _equal_tag + _escaped_quote + _filter_query[get_parent().ORDER_BY] + _escaped_quote
-            _filter_query.erase(get_parent().ORDER_BY)
+        if _filter_query.has(_parent.ORDER_BY):
+            _cached_filter += _parent.ORDER_BY + _equal_tag + _escaped_quote + _filter_query[_parent.ORDER_BY] + _escaped_quote
+            _filter_query.erase(_parent.ORDER_BY)
         else:
-            _cached_filter += get_parent().ORDER_BY + _equal_tag + _escaped_quote + _key_filter_tag + _escaped_quote # Presumptuous, but to get it to work at all...
-
+            _cached_filter += _parent.ORDER_BY + _equal_tag + _escaped_quote + _key_filter_tag + _escaped_quote # Presumptuous, but to get it to work at all...
         for key in _filter_query.keys():
             _cached_filter += _filter_tag + key + _equal_tag + _filter_query[key]
 
