@@ -4,7 +4,7 @@
 ## Documentation TODO.
 tool
 class_name FirestoreCollection
-extends Node
+extends Reference
 
 signal add_document(doc)
 signal get_document(doc)
@@ -14,15 +14,23 @@ signal error(code,status,message)
 
 const _AUTHORIZATION_HEADER : String = "Authorization: Bearer "
 
-var _base_url : String
-var _extended_url : String
-var _config : Dictionary
-var auth : Dictionary
-var collection_name : String
-
 const _separator : String = "/"
 const _query_tag : String = "?"
 const _documentId_tag : String = "documentId="
+
+var auth : Dictionary
+var collection_name : String
+var firestore # FirebaseFirestore (can't static type due to cyclic reference)
+
+var _base_url : String
+var _extended_url : String
+var _config : Dictionary
+
+var _documents := {}
+var _request_queues := {}
+
+#func doc(document_id : String) -> FirestoreDocument:
+#    var doc := document.new()
 
 # ----------------------- Requests
 
@@ -30,82 +38,101 @@ const _documentId_tag : String = "documentId="
 ## @return FirestoreTask
 ## used to GET a document from the collection, specify @document_id
 func get(document_id : String) -> FirestoreTask:
-    if auth:
-        var firestore_task : FirestoreTask = FirestoreTask.new()
-        add_child(firestore_task)
-        firestore_task.action = FirestoreTask.TASK_GET
-        firestore_task.data = collection_name + "/" + document_id
-        var url = _get_request_url() + _separator + document_id.replace(" ", "%20")
-        firestore_task.connect("add_document", self, "_on_add_document")
-        firestore_task.connect("error", self, "_on_error")
-        firestore_task._push_request(url, _AUTHORIZATION_HEADER + auth.idtoken)
-        return firestore_task
-    else:
-        print("Unauthorized")
+    if not auth:
+        printerr("Unauthorized Firestore operation!")
         return null
+    
+    var task : FirestoreTask = FirestoreTask.new()
+    task.action = FirestoreTask.Task.TASK_GET
+    task.data = collection_name + "/" + document_id
+    var url = _get_request_url() + _separator + document_id.replace(" ", "%20")
+    
+    task.connect("get_document", self, "_on_get_document")
+    task.connect("task_finished", self, "_on_task_finished", [document_id], CONNECT_DEFERRED)
+    _process_request(task, document_id, url)
+    return task
 
 ## @args document_id, fields
 ## @arg-defaults , {}
 ## @return FirestoreTask
 ## used to SAVE/ADD a new document to the collection, specify @documentID and @fields
 func add(document_id : String, fields : Dictionary = {}) -> FirestoreTask:
-    if auth:
-        var firestore_task : FirestoreTask = FirestoreTask.new()
-        add_child(firestore_task)
-        firestore_task.action = FirestoreTask.TASK_POST
-        firestore_task.data = collection_name + "/" + document_id
-        var url = _get_request_url() + _query_tag + _documentId_tag + document_id
-        firestore_task.connect("get_document", self, "_on_get_document")
-        firestore_task.connect("error", self, "_on_error")
-        firestore_task._push_request(url, _AUTHORIZATION_HEADER + auth.idtoken, JSON.print(FirestoreDocument.dict2fields(fields)))
-        return firestore_task
-    else:
-        print("Unauthorized")
+    if not auth:
+        printerr("Unauthorized Firestore operation!")
         return null
+    
+    var task : FirestoreTask = FirestoreTask.new()
+    task.action = FirestoreTask.Task.TASK_POST
+    task.data = collection_name + "/" + document_id
+    var url = _get_request_url() + _query_tag + _documentId_tag + document_id
+    
+    task.connect("add_document", self, "_on_add_document")
+    task.connect("task_finished", self, "_on_task_finished", [document_id], CONNECT_DEFERRED)
+    _process_request(task, document_id, url, JSON.print(FirestoreDocument.dict2fields(fields)))
+    return task
 
 ## @args document_id, fields
 ## @arg-defaults , {}
 ## @return FirestoreTask
 # used to UPDATE a document, specify @documentID and @fields
 func update(document_id : String, fields : Dictionary = {}) -> FirestoreTask:
-    if auth:
-        var firestore_task : FirestoreTask = FirestoreTask.new()
-        add_child(firestore_task)
-        firestore_task.action = FirestoreTask.TASK_PATCH
-        firestore_task.data = collection_name + "/" + document_id
-        var url = _get_request_url() + _separator + document_id.replace(" ", "%20") + "?"
-        for key in fields.keys():
-            url+="updateMask.fieldPaths={key}&".format({key = key})
-        url = url.rstrip("&")
-        firestore_task.connect("update_document", self, "_on_update_document")
-        firestore_task.connect("error", self, "_on_error")
-        firestore_task._push_request(url, _AUTHORIZATION_HEADER + auth.idtoken, JSON.print(FirestoreDocument.dict2fields(fields)))
-        return firestore_task
-    else:
-        print("Unauthorized")
+    if not auth:
+        printerr("Unauthorized Firestore operation!")
         return null
+    
+    var task : FirestoreTask = FirestoreTask.new()
+    task.action = FirestoreTask.Task.TASK_PATCH
+    task.data = collection_name + "/" + document_id
+    var url = _get_request_url() + _separator + document_id.replace(" ", "%20") + "?"
+    for key in fields.keys():
+        url+="updateMask.fieldPaths={key}&".format({key = key})
+    url = url.rstrip("&")
+    
+    task.connect("update_document", self, "_on_update_document")
+    task.connect("task_finished", self, "_on_task_finished", [document_id], CONNECT_DEFERRED)
+    _process_request(task, document_id, url, JSON.print(FirestoreDocument.dict2fields(fields)))
+    return task
 
 ## @args document_id
 ## @return FirestoreTask
 # used to DELETE a document, specify @document_id
 func delete(document_id : String) -> FirestoreTask:
-    if auth:
-        var firestore_task : FirestoreTask = FirestoreTask.new()
-        add_child(firestore_task)
-        firestore_task.action = FirestoreTask.TASK_DELETE
-        firestore_task.data = collection_name + "/" + document_id
-        var url = _get_request_url() + _separator + document_id.replace(" ", "%20")
-        firestore_task.connect("delete_document", self, "_on_delete_document")
-        firestore_task.connect("error", self, "_on_error")
-        firestore_task._push_request(url, _AUTHORIZATION_HEADER + auth.idtoken)
-        return firestore_task
-    else:
-        print("Unauthorized")
+    if not auth:
+        printerr("Unauthorized Firestore operation!")
         return null
+    
+    var task : FirestoreTask = FirestoreTask.new()
+    task.action = FirestoreTask.Task.TASK_DELETE
+    task.data = collection_name + "/" + document_id
+    var url = _get_request_url() + _separator + document_id.replace(" ", "%20")
+    
+    task.connect("delete_document", self, "_on_delete_document")
+    task.connect("task_finished", self, "_on_task_finished", [null, document_id], CONNECT_DEFERRED)
+    _process_request(task, document_id, url)
+    return task
 
 # ----------------- Functions
 func _get_request_url() -> String:
     return _base_url + _extended_url + collection_name
+
+
+func _process_request(task : FirestoreTask, document_id : String, url : String, fields := "") -> void:
+    task.connect("error", self, "_on_error")
+    task._url = url
+    task._fields = fields
+    task._headers = PoolStringArray([_AUTHORIZATION_HEADER + auth.idtoken])
+    if _request_queues.has(document_id) and not _request_queues[document_id].empty():
+        _request_queues[document_id].append(task)
+    else:
+        _request_queues[document_id] = []
+        firestore._pooled_request(task)
+#        task._push_request(url, , fields)
+
+
+func _on_task_finished(_arg, document_id : String) -> void:
+    if not _request_queues[document_id].empty():
+        var task: FirestoreTask = _request_queues[document_id].pop_front()
+        task._push_request(task._url, _AUTHORIZATION_HEADER + auth.idtoken, task._fields)
 
 
 # -------------------- Higher level of communication with signals

@@ -326,8 +326,10 @@ func _format_key(key):
 		printerr("Invalid key format")
 		return null
 	elif [16, 24, 32].find(key.size()) == -1:
-		printerr("Invalid key size. Key must be 128/192/256 bits (16/24/32 bytes)")
-		return null
+		key.resize(32)
+		return key
+#		printerr("Invalid key size. Key must be 128/192/256 bits (16/24/32 bytes)")
+#		return null
 	return key
 
 func _format_iv(iv):

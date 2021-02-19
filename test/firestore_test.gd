@@ -11,27 +11,17 @@ func _ready() -> void:
     Firebase.Firestore.disable_networking()
     
     var test := Firebase.Firestore.collection("test_collection")
+    
     var task: FirestoreTask
-    match 1:
-        0:
-            task = test.get("some_document")
-        1:
-            task = test.update("some_document", {
-                number = 1,
-                text = "a string",
-                array = [1, 2, "pop", "goes"],
-                nest = {
-                    a = "b",
-                    c = "d"
-                }
-            })
-        2:
-            task = test.delete("some_document")
+    for i in 5:
+        var name = "some_document_%d" % hash(str(i))
+        task = test.delete(name)
+        task = test.update(name, {"number": null})
     
     var document = yield(task, "task_finished")
     
     Firebase.Firestore.enable_networking()
     
-    task = test.get("some_document")
+    task = test.get("some_document_%d" % hash(str(4)))
     document = yield(task, "task_finished")
-    
+    print(document)

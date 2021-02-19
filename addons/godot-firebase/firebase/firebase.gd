@@ -50,6 +50,17 @@ var _config : Dictionary = {
     "cacheLocation": "user://.firebase_cache"
 }
 
+func _ready() -> void:
+    _load_config()
+    for module in get_children():
+        module._set_config(_config)
+        if module is FirebaseAuth:
+            continue
+        Auth.connect("login_succeeded", module, "_on_FirebaseAuth_login_succeeded")
+        Auth.connect("signup_succeeded", module, "_on_FirebaseAuth_login_succeeded")
+        Auth.connect("token_refresh_succeeded", module, "_on_FirebaseAuth_token_refresh_succeeded")
+        Auth.connect("logged_out", module, "_on_FirebaseAuth_logout")
+
 func _load_config() -> void:
     if ProjectSettings.has_setting(_ENVIRONMENT_VARIABLES+"apiKey"):
         for key in _config.keys():
@@ -61,14 +72,3 @@ func _load_config() -> void:
                     printerr("Configuration key '{key}' not found!".format({key = key}))
     else:
         printerr("No configuration settings found, add them in override.cfg file.")
-
-func _ready() -> void:
-    _load_config()
-    for module in get_children():
-        module._set_config(_config)
-        if module is FirebaseAuth:
-            continue
-        Auth.connect("login_succeeded", module, "_on_FirebaseAuth_login_succeeded")
-        Auth.connect("signup_succeeded", module, "_on_FirebaseAuth_login_succeeded")
-        Auth.connect("token_refresh_succeeded", module, "_on_FirebaseAuth_token_refresh_succeeded")
-        Auth.connect("logged_out", module, "_on_FirebaseAuth_logout")

@@ -4,7 +4,7 @@
 ## Documentation TODO.
 tool
 class_name FirestoreDocument
-extends Node
+extends Reference
 
 # A FirestoreDocument objects that holds all important values for a Firestore Document,
 # @doc_name = name of the Firestore Document, which is the request PATH

@@ -33,10 +33,11 @@ enum Requests {
 }
 
 const CACHE_SIZE_UNLIMITED = -1
+const _CACHE_EXTENSION: String = ".fscache"
 
 const _AUTHORIZATION_HEADER : String = "Authorization: Bearer "
-const _ENCRYPTION_KEY: String = "3979244226452948404D635166546A57"
-const _CACHE_PREFIX: String = ".fscache-"
+
+const _MAX_POOLED_REQUEST_AGE = 10
 
 ## The code indicating the request Firestore is processing.
 ## See @[enum FirebaseFirestore.Requests] to get a full list of codes identifiers.
@@ -58,7 +59,7 @@ var auth : Dictionary
 
 var _config : Dictionary = {}
 var _cache_loc: String
-
+var _encrypt_key := "5vg76n90345f7w390346" if OS.get_name() in ["HTML5", "UWP"] else OS.get_unique_id()
 
 var _base_url : String = "https://firestore.googleapis.com/v1/"
 var _extended_url : String = "projects/[PROJECT_ID]/databases/(default)/documents/"
@@ -68,16 +69,24 @@ var _aes := preload("res://addons/godot-firebase/utils/aes.gd").new()
 var _request_list_node : HTTPRequest
 var _requests_queue : Array = []
 var _current_query : FirestoreQuery
+
+var _http_request_pool := []
+
 var _offline: bool = false setget _set_offline
 
-func _set_config(config_json : Dictionary) -> void:
-    _config = config_json
-    _cache_loc = _config["cacheLocation"]
-    _extended_url = _extended_url.replace("[PROJECT_ID]", _config.projectId)
-    _request_list_node = HTTPRequest.new()
-    _request_list_node.connect("request_completed", self, "_on_request_completed")
-    add_child(_request_list_node)
-    
+func _ready() -> void:
+    $ConnectCheck.request(_base_url)
+
+
+func _process(delta : float) -> void:
+    for i in range(_http_request_pool.size() - 1, -1, -1):
+        var request = _http_request_pool[i]
+        if not request.get_meta("requesting"):
+            var lifetime: float = request.get_meta("lifetime") + delta
+            if lifetime > _MAX_POOLED_REQUEST_AGE:
+                request.queue_free()
+                _http_request_pool.remove(i)
+            request.set_meta("lifetime", lifetime)
 
 
 ## Returns a reference collection by its [i]path[/i].
@@ -87,26 +96,18 @@ func _set_config(config_json : Dictionary) -> void:
 ## @args path
 ## @return FirestoreCollection
 func collection(path : String) -> FirestoreCollection:
-    if !collections.has(path):
+    if not collections.has(path):
         var coll : FirestoreCollection = FirestoreCollection.new()
         coll._extended_url = _extended_url
         coll._base_url = _base_url
         coll._config = _config
         coll.auth = auth
         coll.collection_name = path
+        coll.firestore = self
         collections[path] = coll
-        add_child(coll)
         return coll
     else:
         return collections[path]
-
-
-func collection_query(id : String) -> void:
-    pass
-
-
-func doc() -> void:
-    pass
 
 
 ## Issue a query on your Firestore database.
@@ -129,13 +130,16 @@ func doc() -> void:
 func query(query : FirestoreQuery) -> FirestoreTask:
     if not auth:
         var firestore_task : FirestoreTask = FirestoreTask.new()
-        add_child(firestore_task)
         firestore_task.connect("listed_documents", self, "_on_listed_documents")
         firestore_task.connect("error", self, "_on_error")
-        firestore_task.set_action(FirestoreTask.TASK_QUERY)
+        firestore_task.set_action(FirestoreTask.Task.TASK_QUERY)
         var body : Dictionary = { structuredQuery = query.query }
         var url : String = _base_url + _extended_url + _query_suffix
-        firestore_task._push_request(url, _AUTHORIZATION_HEADER + auth.idtoken, JSON.print(body))
+        
+        firestore_task.data = JSON.print(body)
+        firestore_task._url = url
+        firestore_task._headers = PoolStringArray([_AUTHORIZATION_HEADER + auth.idtoken])
+        _pooled_request(firestore_task)
         return firestore_task
     else:
         printerr("Unauthorized")
@@ -162,10 +166,9 @@ func query(query : FirestoreQuery) -> FirestoreTask:
 func list(path : String, page_size : int = 0, page_token : String = "", order_by : String = "") -> FirestoreTask:
     if auth: 
         var firestore_task : FirestoreTask = FirestoreTask.new()
-        add_child(firestore_task)
         firestore_task.connect("result_query", self, "_on_result_query")
         firestore_task.connect("error", self, "_on_error")
-        firestore_task.set_action(FirestoreTask.TASK_LIST)
+        firestore_task.set_action(FirestoreTask.Task.TASK_LIST)
         var url : String
         if not path in [""," "]:
             url = _base_url + _extended_url + path + "/"
@@ -177,7 +180,10 @@ func list(path : String, page_size : int = 0, page_token : String = "", order_by
             url+="&pageToken="+page_token
         if order_by != "":
             url+="&orderBy="+order_by
-        firestore_task._push_request(url, _AUTHORIZATION_HEADER + auth.idtoken)
+        
+        firestore_task._url = url
+        firestore_task._headers = PoolStringArray([_AUTHORIZATION_HEADER + auth.idtoken])
+        _pooled_request(firestore_task)
         return firestore_task
     else:
         printerr("Unauthorized")
@@ -209,7 +215,6 @@ func disable_networking() -> void:
     for key in collections:
         collections[key]._base_url = _base_url
 
-# -------------
 
 func _set_offline(value: bool) -> void:
     if value == _offline:
@@ -219,16 +224,13 @@ func _set_offline(value: bool) -> void:
     if not persistence_enabled:
         return
     
-    var unique_id := OS.get_unique_id()
-    if unique_id.empty():
-        unique_id = "BRY4J903BRWT89YW3N09PO3"
-    var event_record_path: String = _config["cacheLocation"].plus_file(_CACHE_PREFIX + unique_id)
+    var event_record_path: String = _config["cacheLocation"].plus_file(_encrypt_with_base_64("42384204609402") + _CACHE_EXTENSION + "evnt")
     
     if not value:
         var offline_time := 2147483647 # Maximum signed 32-bit integer
         var file := File.new()
-        if file.open(event_record_path, File.READ) == OK:
-            offline_time = int(_aes.decrypt(file.get_buffer(file.get_len()), _ENCRYPTION_KEY).get_string_from_utf8())
+        if file.open_encrypted_with_pass(event_record_path, File.READ, _encrypt_key) == OK:
+            offline_time = int(file.get_buffer(file.get_len()).get_string_from_utf8()) - 2
         file.close()
         
         var cache_dir := Directory.new()
@@ -237,35 +239,85 @@ func _set_offline(value: bool) -> void:
             cache_dir.list_dir_begin(true)
             var file_name = cache_dir.get_next()
             while file_name != "":
-                if not cache_dir.current_is_dir() and file_name.begins_with(_CACHE_PREFIX) and file.get_modified_time(_cache_loc.plus_file(file_name)) >= offline_time:
-                    cache_files.append(_cache_loc.plus_file(file_name))
+                if not cache_dir.current_is_dir() and file_name.ends_with(_CACHE_EXTENSION):
+                    if file.get_modified_time(_cache_loc.plus_file(file_name)) >= offline_time:
+                        cache_files.append(_cache_loc.plus_file(file_name))
+#                    else:
+#                        print("%s is old! It's time is %d, but the time offline was %d." % [file_name, file.get_modified_time(_cache_loc.plus_file(file_name)), offline_time])
                 file_name = cache_dir.get_next()
             cache_dir.list_dir_end()
         
         cache_dir.remove(event_record_path)
-        cache_files.erase(event_record_path)
         
         for cache in cache_files:
-            var name: String = cache.right(cache.find_last(_CACHE_PREFIX) + len(_CACHE_PREFIX))
-            name = _aes.decrypt(Marshalls.base64_to_raw(name), _ENCRYPTION_KEY).get_string_from_utf8()
             var deleted := false
-            if file.open(cache, File.READ) == OK:
-                var collection := collection(name.left(name.find_last("/")))
-                var content := _aes.decrypt(file.get_buffer(file.get_len()), _ENCRYPTION_KEY).get_string_from_utf8()
+            if file.open_encrypted_with_pass(cache, File.READ, _encrypt_key) == OK:
+                var name := file.get_line()
+                var content := file.get_line()
+                var collection_id := name.left(name.find_last("/"))
+                var document_id := name.right(name.find_last("/") + 1)
+                
+                var collection := collection(collection_id)
                 if content == "--deleted--":
-                    collection.delete(name.right(name.find_last("/") + 1))
+#                    prints(document_id, "--deleted--")
+                    collection.delete(document_id)
                     deleted = true
                 else:
-                    collection.update(name.right(name.find_last("/") + 1))
+#                    prints(document_id, JSON.parse(content).result)
+                    collection.update(document_id, FirestoreDocument.fields2dict(JSON.parse(content).result))
+            else:
+                printerr("Failed to retrieve cache %s! Error code: %d" % [cache, file.get_error()])
             file.close()
             if deleted:
                 cache_dir.remove(cache)
     
     else:
         var file := File.new()
-        if file.open(event_record_path, File.WRITE) == OK:
-            file.store_buffer(_aes.encrypt(str(OS.get_unix_time()), _ENCRYPTION_KEY))
+        if file.open_encrypted_with_pass(event_record_path, File.WRITE, _encrypt_key) == OK:
+            file.store_buffer(str(OS.get_unix_time()).to_utf8())
         file.close()
+
+
+func _set_config(config_json : Dictionary) -> void:
+    _config = config_json
+    _cache_loc = _config["cacheLocation"]
+    _extended_url = _extended_url.replace("[PROJECT_ID]", _config.projectId)
+    _request_list_node = HTTPRequest.new()
+    _request_list_node.connect("request_completed", self, "_on_request_completed")
+    add_child(_request_list_node)
+
+
+func _encrypt_with_base_64(data: String) -> String:
+    var base_64 = _aes.encrypt(data, _encrypt_key)
+    base_64 = Marshalls.raw_to_base64(base_64)
+    return base_64.replace("+", "-").replace("/", "_")
+
+
+func _pooled_request(task : FirestoreTask) -> void:
+    if _offline:
+        task._on_request_completed(HTTPRequest.RESULT_CANT_CONNECT, 404, PoolStringArray(), PoolByteArray())
+        return
+    
+    var http_request : HTTPRequest
+    for request in _http_request_pool:
+        if not request.get_meta("requesting"):
+            http_request = request
+            break
+    
+    if not http_request:
+        http_request = HTTPRequest.new()
+        http_request.timeout = 5
+        _http_request_pool.append(http_request)
+        add_child(http_request)
+        http_request.connect("request_completed", self, "_on_pooled_request_completed", [http_request])
+    
+    http_request.set_meta("requesting", true)
+    http_request.set_meta("lifetime", 0.0)
+    http_request.set_meta("task", task)
+    http_request.request(task._url, task._headers, true, task._method, task._fields)
+
+
+# -------------
 
 
 func _on_listed_documents(listed_documents : Array):
@@ -277,7 +329,7 @@ func _on_result_query(result : Dictionary):
 
 
 func _on_error(error : Dictionary):
-    printerr(JSON.print(error))
+    printerr("Firestore error: " + JSON.print(error))
 
 
 func _on_FirebaseAuth_login_succeeded(auth_result : Dictionary) -> void:
@@ -285,7 +337,18 @@ func _on_FirebaseAuth_login_succeeded(auth_result : Dictionary) -> void:
     for key in collections:
         collections[key].auth = auth
 
+
 func _on_FirebaseAuth_token_refresh_succeeded(auth_result : Dictionary) -> void:
     auth = auth_result
     for key in collections:
         collections[key].auth = auth
+
+
+func _on_pooled_request_completed(result : int, response_code : int, headers : PoolStringArray, body : PoolByteArray, request : HTTPRequest) -> void:
+    request.get_meta("task")._on_request_completed(result, response_code, headers, body)
+    request.set_meta("requesting", false)
+
+
+func _on_ConnectCheck_request_completed(result : int, _response_code, _headers, _body) -> void:
+    _set_offline(result != HTTPRequest.RESULT_SUCCESS)
+    $ConnectCheck.request(_base_url)
