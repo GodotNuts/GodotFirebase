@@ -70,20 +70,21 @@ static func fields2array(array : Dictionary) -> Array:
     if array.has("values"):
         for field in array.values:
             var item
-            if field.has("mapValue"):
-                item = fields2dict(field.mapValue)
-            elif field.has("arrayValue"):
-                item = fields2array(field.arrayValue)
-            elif field.has("integerValue"):
-                item = field.values()[0] as int
-            elif field.has("doubleValue"):
-                item = field.values()[0] as float
-            elif field.has("booleanValue"):
-                item = field.values()[0] as bool
-            elif field.has("nullValue"):
-                item = null
-            else:
-                item = field.values()[0]
+            match field.keys()[0]:
+                "mapValue":
+                    item = fields2dict(field.mapValue)
+                "arrayValue":
+                    item = fields2array(field.arrayValue)
+                "integerValue":
+                    item = field.values()[0] as int
+                "doubleValue":
+                    item = field.values()[0] as float
+                "booleanValue":
+                    item = field.values()[0] as bool
+                "nullValue":
+                    item = null
+                _:
+                    item = field.values()[0]
             fields.append(item)
     return fields
 
