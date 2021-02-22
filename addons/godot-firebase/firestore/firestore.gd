@@ -145,7 +145,7 @@ func collection(path : String) -> FirestoreCollection:
 ## @arg-types FirestoreQuery
 ## @return FirestoreTask
 func query(query : FirestoreQuery) -> FirestoreTask:
-    if not auth:
+    if auth:
         var firestore_task : FirestoreTask = FirestoreTask.new()
         firestore_task.connect("listed_documents", self, "_on_listed_documents")
         firestore_task.connect("error", self, "_on_error")
