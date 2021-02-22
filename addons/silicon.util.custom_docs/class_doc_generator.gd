@@ -22,8 +22,14 @@ func _update() -> void:
 	while not _docs_queue.empty() and OS.get_ticks_msec() - time < 5:
 		var name: String = _docs_queue.pop_front()
 		var doc: ClassDocItem = _pending_docs[name]
-		_generate(doc)
-		_pending_docs.erase(doc.name)
+		var should_first_gen := _generate(doc)
+		
+		if should_first_gen.empty():
+			_pending_docs.erase(name)
+		else:
+			_docs_queue.push_back(name)
+			_docs_queue.erase(should_first_gen)
+			_docs_queue.push_front(should_first_gen)
 
 
 func generate(name: String, base: String, script_path: String) -> ClassDocItem:
@@ -41,7 +47,7 @@ func generate(name: String, base: String, script_path: String) -> ClassDocItem:
 	return doc
 
 
-func _generate(doc: ClassDocItem) -> void:
+func _generate(doc: ClassDocItem) -> String:
 	var script: GDScript = load(doc.path)
 	var code_lines := script.source_code.split("\n")
 	
@@ -50,6 +56,9 @@ func _generate(doc: ClassDocItem) -> void:
 	var parent_methods := []
 	var parent_constants := []
 	while inherits != "" and inherits in plugin.class_docs:
+		if inherits in _pending_docs:
+			return inherits
+		
 		for prop in plugin.class_docs[inherits].properties:
 			parent_props.append(prop.name)
 		for method in plugin.class_docs[inherits].methods:
@@ -154,7 +163,7 @@ func _generate(doc: ClassDocItem) -> void:
 			# Class document
 			if line.begins_with("extends") or line.begins_with("tool") or line.begins_with("class_name"):
 				if annotations.has("@doc-ignore"):
-					return
+					return ""
 				if annotations.has("@contribute"):
 					doc.contriute_url = annotations["@contribute"]
 				if annotations.has("@tutorial"):
@@ -272,7 +281,7 @@ func _generate(doc: ClassDocItem) -> void:
 			
 			comment_block = ""
 			annotations.clear()
-
+	return ""
 
 func _create_method_doc(name: String, script: Script = null, method := {}) -> MethodDocItem:
 	if method.empty():

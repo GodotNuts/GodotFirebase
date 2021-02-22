@@ -32,21 +32,27 @@ enum Requests {
     QUERY       ## Firestore is processing a [code]query()[/code] request on a collection.
 }
 
+# TODO: Implement cache size limit
 const CACHE_SIZE_UNLIMITED = -1
-const _CACHE_EXTENSION: String = ".fscache"
+
+const _CACHE_EXTENSION : String = ".fscache"
+const _CACHE_RECORD_FILE : String = "RmlyZXN0b3JlIGNhY2hlLXJlY29yZHMu.fscache"
 
 const _AUTHORIZATION_HEADER : String = "Authorization: Bearer "
 
-const _MAX_POOLED_REQUEST_AGE = 10
+const _MAX_POOLED_REQUEST_AGE = 30
 
 ## The code indicating the request Firestore is processing.
 ## See @[enum FirebaseFirestore.Requests] to get a full list of codes identifiers.
 ## @enum Requests
 var request : int = -1
 
-## 
+## Whether cache files can be used and generated.
+## @default true
 var persistence_enabled : bool = true
 
+## Whether an internet connection can be used.
+## @default true
 var networking: bool = true setget set_networking
 
 ## A Dictionary containing all collections currently referenced.
@@ -64,7 +70,8 @@ var _encrypt_key := "5vg76n90345f7w390346" if OS.get_name() in ["HTML5", "UWP"] 
 var _base_url : String = "https://firestore.googleapis.com/v1/"
 var _extended_url : String = "projects/[PROJECT_ID]/databases/(default)/documents/"
 var _query_suffix : String = ":runQuery"
-var _aes := preload("res://addons/godot-firebase/utils/aes.gd").new()
+
+var _connect_check_node : HTTPRequest
 
 var _request_list_node : HTTPRequest
 var _requests_queue : Array = []
@@ -75,8 +82,16 @@ var _http_request_pool := []
 var _offline: bool = false setget _set_offline
 
 func _ready() -> void:
-    $ConnectCheck.request(_base_url)
-
+    _connect_check_node = HTTPRequest.new()
+    _connect_check_node.timeout = 5
+    _connect_check_node.connect("request_completed", self, "_on_connect_check_request_completed")
+    add_child(_connect_check_node)
+    _connect_check_node.request(_base_url)
+    
+    _request_list_node = HTTPRequest.new()
+    _request_list_node.connect("request_completed", self, "_on_request_completed")
+    _connect_check_node.timeout = 5
+    add_child(_request_list_node)
 
 func _process(delta : float) -> void:
     for i in range(_http_request_pool.size() - 1, -1, -1):
@@ -124,6 +139,8 @@ func collection(path : String) -> FirestoreCollection:
 ## ex.
 ## [code]var result : Array = yield(query_task, "task_finished")[/code]
 ## 
+## [b]Warning:[/b] It currently does not work offline!
+##
 ## @args query
 ## @arg-types FirestoreQuery
 ## @return FirestoreTask
@@ -132,7 +149,7 @@ func query(query : FirestoreQuery) -> FirestoreTask:
         var firestore_task : FirestoreTask = FirestoreTask.new()
         firestore_task.connect("listed_documents", self, "_on_listed_documents")
         firestore_task.connect("error", self, "_on_error")
-        firestore_task.set_action(FirestoreTask.Task.TASK_QUERY)
+        firestore_task.action = FirestoreTask.Task.TASK_QUERY
         var body : Dictionary = { structuredQuery = query.query }
         var url : String = _base_url + _extended_url + _query_suffix
         
@@ -146,11 +163,8 @@ func query(query : FirestoreQuery) -> FirestoreTask:
         return null
 
 
-## Request a list of contents (documents and/or collections) inside a collection, specified by its [i]id[/i].
-##
-## This method will return a [code]FirestoreTask[/code] object, representing a reference to the request issued. 
-## If saved into a variable, the [code]FirestoreTask[/code] object can be used to yield on the [code]result_query(result)[/code] signal, or the more generic [code]task_finished(result)[/code] signal.
-## 
+## Request a list of contents (documents and/or collections) inside a collection, specified by its [i]id[/i]. This method will return a [code]FirestoreTask[/code] object, representing a reference to the request issued. If saved into a variable, the [code]FirestoreTask[/code] object can be used to yield on the [code]result_query(result)[/code] signal, or the more generic [code]task_finished(result)[/code] signal.
+## [b]Note:[/b] [code]order_by[/code] does not work in offline mode.
 ## ex. 
 ## [code]var query_task : FirestoreTask = Firebase.Firestore.query(FirestoreQuery.new())[/code]
 ## [code]yield(query_task, "task_finished")[/code]
@@ -168,7 +182,7 @@ func list(path : String, page_size : int = 0, page_token : String = "", order_by
         var firestore_task : FirestoreTask = FirestoreTask.new()
         firestore_task.connect("result_query", self, "_on_result_query")
         firestore_task.connect("error", self, "_on_error")
-        firestore_task.set_action(FirestoreTask.Task.TASK_LIST)
+        firestore_task.action = FirestoreTask.Task.TASK_LIST
         var url : String
         if not path in [""," "]:
             url = _base_url + _extended_url + path + "/"
@@ -181,6 +195,7 @@ func list(path : String, page_size : int = 0, page_token : String = "", order_by
         if order_by != "":
             url+="&orderBy="+order_by
         
+        firestore_task.data = [path, page_size, page_token, order_by]
         firestore_task._url = url
         firestore_task._headers = PoolStringArray([_AUTHORIZATION_HEADER + auth.idtoken])
         _pooled_request(firestore_task)
@@ -224,8 +239,7 @@ func _set_offline(value: bool) -> void:
     if not persistence_enabled:
         return
     
-    var event_record_path: String = _config["cacheLocation"].plus_file(_encrypt_with_base_64("42384204609402") + _CACHE_EXTENSION + "evnt")
-    
+    var event_record_path: String = _config["cacheLocation"].plus_file(_CACHE_RECORD_FILE)
     if not value:
         var offline_time := 2147483647 # Maximum signed 32-bit integer
         var file := File.new()
@@ -247,6 +261,7 @@ func _set_offline(value: bool) -> void:
                 file_name = cache_dir.get_next()
             cache_dir.list_dir_end()
         
+        cache_files.erase(event_record_path)
         cache_dir.remove(event_record_path)
         
         for cache in cache_files:
@@ -259,11 +274,9 @@ func _set_offline(value: bool) -> void:
                 
                 var collection := collection(collection_id)
                 if content == "--deleted--":
-#                    prints(document_id, "--deleted--")
                     collection.delete(document_id)
                     deleted = true
                 else:
-#                    prints(document_id, JSON.parse(content).result)
                     collection.update(document_id, FirestoreDocument.fields2dict(JSON.parse(content).result))
             else:
                 printerr("Failed to retrieve cache %s! Error code: %d" % [cache, file.get_error()])
@@ -282,15 +295,12 @@ func _set_config(config_json : Dictionary) -> void:
     _config = config_json
     _cache_loc = _config["cacheLocation"]
     _extended_url = _extended_url.replace("[PROJECT_ID]", _config.projectId)
-    _request_list_node = HTTPRequest.new()
-    _request_list_node.connect("request_completed", self, "_on_request_completed")
-    add_child(_request_list_node)
-
-
-func _encrypt_with_base_64(data: String) -> String:
-    var base_64 = _aes.encrypt(data, _encrypt_key)
-    base_64 = Marshalls.raw_to_base64(base_64)
-    return base_64.replace("+", "-").replace("/", "_")
+    
+    var file := File.new()
+    if file.file_exists(_cache_loc.plus_file(_CACHE_RECORD_FILE)):
+        _offline = true
+    else:
+        _offline = false
 
 
 func _pooled_request(task : FirestoreTask) -> void:
@@ -349,6 +359,6 @@ func _on_pooled_request_completed(result : int, response_code : int, headers : P
     request.set_meta("requesting", false)
 
 
-func _on_ConnectCheck_request_completed(result : int, _response_code, _headers, _body) -> void:
+func _on_connect_check_request_completed(result : int, _response_code, _headers, _body) -> void:
     _set_offline(result != HTTPRequest.RESULT_SUCCESS)
-    $ConnectCheck.request(_base_url)
+    _connect_check_node.request(_base_url)

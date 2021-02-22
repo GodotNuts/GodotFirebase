@@ -103,152 +103,53 @@ func _on_request_completed(result : int, response_code : int, headers : PoolStri
     Firebase.Firestore._set_offline(offline)
     
     var cache_path : String = Firebase._config["cacheLocation"]
-    if not cache_path.empty():
-        var url_segment: String = data
+    if not cache_path.empty() and not error and Firebase.Firestore.persistence_enabled:
         var encrypt_key: String = Firebase.Firestore._encrypt_key
-        var full_path = _get_doc_file(cache_path, url_segment, encrypt_key)
-        data = null
-        
-        var dir := Directory.new()
-        dir.make_dir_recursive(cache_path)
-        var file := File.new()
-        match action:
-            Task.TASK_POST:
-                if offline or not error:
-                    var save: Dictionary
-                    if offline:
-                        save = {
-                            "name": "projects/%s/databases/(default)/documents/%s" % [Firebase._config["storageBucket"], url_segment],
-                            "fields": JSON.parse(_fields).result["fields"],
-                            "createTime": "from_cache_file",
-                            "updateTime": "from_cache_file"
-                        }
-                    else:
-                        save = bod.duplicate()
-                    
-                    if file.open_encrypted_with_pass(full_path, File.WRITE, encrypt_key) == OK:
-                        file.store_line(url_segment)
-                        file.store_line(JSON.print(save))
-                        bod = save
-                        response_code = HTTPClient.RESPONSE_OK
-#                        print("file %s modified!" % full_path)
-                    else:
-                        printerr("Error saving cache file! Error code: %d" % file.get_error())
-                    file.close()
-            
-            Task.TASK_PATCH:
-                if offline or not error:
-                    var save := {
-                        "fields": {}
-                    }
-                    if offline:
-                        var mod: Dictionary
-                        mod = {
-                            "name": "projects/%s/databases/(default)/documents/%s" % [Firebase._config["storageBucket"], url_segment],
-                            "fields": JSON.parse(_fields).result["fields"],
-                            "createTime": "from_cache_file",
-                            "updateTime": "from_cache_file"
-                        }
-                        
-                        if file.file_exists(full_path):
-                            if file.open_encrypted_with_pass(full_path, File.READ, encrypt_key) == OK:
-                                if file.get_len():
-                                    assert(url_segment == file.get_line())
-                                    var content := file.get_line()
-                                    if content != "--deleted--":
-                                        save = JSON.parse(content).result
-                            else:
-                                printerr("Error updating cache file! Error code: %d" % file.get_error())
-                            file.close()
-                        
-                        save.fields = FirestoreDocument.dict2fields(_merge_dict(
-                            FirestoreDocument.fields2dict({"fields": save.fields}),
-                            FirestoreDocument.fields2dict({"fields": mod.fields}),
-                            not offline
-                        )).fields
-                        save.name = mod.name
-                        save.createTime = mod.createTime
-                        save.updateTime = mod.updateTime
-                    else:
-                        save = bod.duplicate()
-                    
-                    
-                    if file.open_encrypted_with_pass(full_path, File.WRITE, encrypt_key) == OK:
-                        file.store_line(url_segment)
-                        file.store_line(JSON.print(save))
-                        bod = save
-                        response_code = HTTPClient.RESPONSE_OK
-#                        print("file %s modified!" % full_path)
-                    else:
-                        printerr("Error updating cache file! Error code: %d" % file.get_error())
-                    file.close()
-            
-            Task.TASK_GET:
-                if offline and file.file_exists(full_path):
-                    if file.open_encrypted_with_pass(full_path, File.READ, encrypt_key) == OK:
-                        assert(url_segment == file.get_line())
-                        var content := file.get_line()
-                        if content != "--deleted--":
-                            bod = JSON.parse(content).result
-                            response_code = HTTPClient.RESPONSE_OK
-                    else:
-                        printerr("Error reading cache file! Error code: %d" % file.get_error())
-                    file.close()
-            
-            Task.TASK_DELETE:
-                if offline:
-                    if file.open_encrypted_with_pass(full_path, File.WRITE, encrypt_key) == OK:
-                        file.store_line(url_segment)
-                        file.store_line("--deleted--")
-                        bod = null
-#                        print("file %s modified!" % full_path)
-                    else:
-                        printerr("Error \"deleting\" cache file! Error code: %d" % file.get_error())
-                    file.close()
-                    response_code = HTTPClient.RESPONSE_OK
-                else:
-                    dir.remove(full_path)
+        var full_path : String
+        var url_segment : String
+        if action == Task.TASK_LIST:
+            url_segment = data[0]
+            full_path = cache_path
+        else:
+            url_segment = data
+            full_path = _get_doc_file(cache_path, url_segment, encrypt_key)
+        bod = _handle_cache(offline, data, encrypt_key, full_path, bod)
+        if not bod.empty() and offline:
+            response_code = HTTPClient.RESPONSE_OK
     
     if response_code == HTTPClient.RESPONSE_OK:
         match action:
             Task.TASK_POST:
-                var document : FirestoreDocument = FirestoreDocument.new(bod)
-                data = bod
-                emit_signal("add_document", document )
-                emit_signal("task_finished", document)
+                data = FirestoreDocument.new(bod)
+                emit_signal("add_document", data)
             Task.TASK_GET:
-                var document : FirestoreDocument = FirestoreDocument.new(bod)
-                data = bod
-                emit_signal("get_document", document )
-                emit_signal("task_finished", document)
+                data = FirestoreDocument.new(bod)
+                emit_signal("get_document", data)
             Task.TASK_PATCH:
-                var document : FirestoreDocument = FirestoreDocument.new(bod)
-                data = bod
-                emit_signal("update_document", document )
-                emit_signal("task_finished", document)
+                data = FirestoreDocument.new(bod)
+                emit_signal("update_document", data)
             Task.TASK_DELETE:
                 data = null
                 emit_signal("delete_document")
-                emit_signal("task_finished")
             Task.TASK_QUERY:
-                data = null
+                data = bod
                 emit_signal("result_query", bod)
-                emit_signal("task_finished", bod)
             Task.TASK_LIST:
-                data = null
-                emit_signal("listed_documents", bod.documents)
-                emit_signal("task_finished", bod.documents)
+                data = []
+                for doc in bod.documents:
+                    data.append(FirestoreDocument.new(doc))
+                data.append(bod.nextPageToken)
+                emit_signal("listed_documents", data)
     else:
         match action:
             Task.TASK_LIST, Task.TASK_QUERY:
                 data = bod[0].error
                 emit_signal("error", bod[0].error)
-                emit_signal("task_finished", bod[0].error)
             _:
                 data = bod.error
                 emit_signal("error", bod.error)
-                emit_signal("task_finished", bod.error)
-#    queue_free()
+    
+    emit_signal("task_finished", data)
 
 
 func set_action(value : int) -> void:
@@ -262,6 +163,139 @@ func set_action(value : int) -> void:
             _method = HTTPClient.METHOD_PATCH
         Task.TASK_DELETE:
             _method = HTTPClient.METHOD_DELETE
+
+
+func _handle_cache(offline : bool, data, encrypt_key : String, cache_path : String, body) -> Dictionary:
+    var body_return := {}
+    
+    var dir := Directory.new()
+    dir.make_dir_recursive(cache_path)
+    var file := File.new()
+    match action:
+        Task.TASK_POST:
+            if offline:
+                var save: Dictionary
+                if offline:
+                    save = {
+                        "name": "projects/%s/databases/(default)/documents/%s" % [Firebase._config["storageBucket"], data],
+                        "fields": JSON.parse(_fields).result["fields"],
+                        "createTime": "from_cache_file",
+                        "updateTime": "from_cache_file"
+                    }
+                else:
+                    save = body.duplicate()
+                
+                if file.open_encrypted_with_pass(cache_path, File.READ, encrypt_key) == OK:
+                    file.store_line(data)
+                    file.store_line(JSON.print(save))
+                    body_return = save
+                else:
+                    printerr("Error saving cache file! Error code: %d" % file.get_error())
+                file.close()
+        
+        Task.TASK_PATCH:
+            if offline:
+                var save := {
+                    "fields": {}
+                }
+                if offline:
+                    var mod: Dictionary
+                    mod = {
+                        "name": "projects/%s/databases/(default)/documents/%s" % [Firebase._config["storageBucket"], data],
+                        "fields": JSON.parse(_fields).result["fields"],
+                        "createTime": "from_cache_file",
+                        "updateTime": "from_cache_file"
+                    }
+                    
+                    if file.file_exists(cache_path):
+                        if file.open_encrypted_with_pass(cache_path, File.READ, encrypt_key) == OK:
+                            if file.get_len():
+                                assert(data == file.get_line())
+                                var content := file.get_line()
+                                if content != "--deleted--":
+                                    save = JSON.parse(content).result
+                        else:
+                            printerr("Error updating cache file! Error code: %d" % file.get_error())
+                        file.close()
+                    
+                    save.fields = FirestoreDocument.dict2fields(_merge_dict(
+                        FirestoreDocument.fields2dict({"fields": save.fields}),
+                        FirestoreDocument.fields2dict({"fields": mod.fields}),
+                        not offline
+                    )).fields
+                    save.name = mod.name
+                    save.createTime = mod.createTime
+                    save.updateTime = mod.updateTime
+                else:
+                    save = body.duplicate()
+                
+                
+                if file.open_encrypted_with_pass(cache_path, File.WRITE, encrypt_key) == OK:
+                    file.store_line(data)
+                    file.store_line(JSON.print(save))
+                    body_return = save
+                else:
+                    printerr("Error updating cache file! Error code: %d" % file.get_error())
+                file.close()
+        
+        Task.TASK_GET:
+            if offline and file.file_exists(cache_path):
+                if file.open_encrypted_with_pass(cache_path, File.READ, encrypt_key) == OK:
+                    assert(data == file.get_line())
+                    var content := file.get_line()
+                    if content != "--deleted--":
+                        body_return = JSON.parse(content).result
+                else:
+                    printerr("Error reading cache file! Error code: %d" % file.get_error())
+                file.close()
+        
+        Task.TASK_DELETE:
+            if offline:
+                if file.open_encrypted_with_pass(cache_path, File.WRITE, encrypt_key) == OK:
+                    file.store_line(data)
+                    file.store_line("--deleted--")
+                    body_return = {"deleted": true}
+                else:
+                    printerr("Error \"deleting\" cache file! Error code: %d" % file.get_error())
+                file.close()
+            else:
+                dir.remove(cache_path)
+        
+        Task.TASK_LIST:
+            if offline:
+                var cache_dir := Directory.new()
+                var cache_files := []
+                if cache_dir.open(cache_path) == OK:
+                    cache_dir.list_dir_begin(true)
+                    var file_name = cache_dir.get_next()
+                    while file_name != "":
+                        if not cache_dir.current_is_dir() and file_name.ends_with(Firebase.Firestore._CACHE_EXTENSION):
+                            cache_files.append(cache_path.plus_file(file_name))
+                        file_name = cache_dir.get_next()
+                    cache_dir.list_dir_end()
+                cache_files.erase(cache_path.plus_file(Firebase.Firestore._CACHE_RECORD_FILE))
+                cache_dir.remove(cache_path.plus_file(Firebase.Firestore._CACHE_RECORD_FILE))
+                print(cache_files)
+                
+                body_return.documents = []
+                for cache in cache_files:
+                    if file.open_encrypted_with_pass(cache, File.READ, encrypt_key) == OK:
+                        if file.get_line().begins_with(data[0]):
+                            body_return.documents.append(JSON.parse(file.get_line()).result)
+                    else:
+                        printerr("Error opening cache file for listing! Error code: %d" % file.get_error())
+                    file.close()
+                body_return.documents.resize(min(data[1], body_return.documents.size()))
+                body_return.nextPageToken = ""
+        
+        Task.TASK_QUERY:
+            if offline:
+                printerr("Offline queries are currently unsupported!")
+    
+    if not offline:
+        return body
+    else:
+        return body_return
 
 
 func _merge_dict(dic_a : Dictionary, dic_b : Dictionary, nullify := false) -> Dictionary:
@@ -304,7 +338,7 @@ static func _get_doc_file(cache_path : String, document_id : String, encrypt_key
     var file := File.new()
     var path := ""
     var i = 0
-    while i < 1000:
+    while i < 256:
         path = cache_path.plus_file("%s-%d.fscache" % [str(document_id.hash()).pad_zeros(10), i])
         if file.file_exists(path):
             var is_file := false

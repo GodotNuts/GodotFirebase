@@ -14,10 +14,6 @@ script = ExtResource( 3 )
 [node name="Firestore" type="Node" parent="."]
 script = ExtResource( 2 )
 
-[node name="ConnectCheck" type="HTTPRequest" parent="Firestore"]
-use_threads = true
-timeout = 5
-
 [node name="Database" type="Node" parent="."]
 script = ExtResource( 1 )
 
@@ -29,5 +25,3 @@ script = ExtResource( 6 )
 
 [node name="Auth" type="HTTPRequest" parent="."]
 script = ExtResource( 4 )
-
-[connection signal="request_completed" from="Firestore/ConnectCheck" to="Firestore" method="_on_ConnectCheck_request_completed"]

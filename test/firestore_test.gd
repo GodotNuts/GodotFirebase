@@ -8,15 +8,19 @@ func _ready() -> void:
     yield(Firebase.Auth, "login_succeeded")
     print("Logged in!")
     
+    var task: FirestoreTask
+    
     Firebase.Firestore.disable_networking()
+    
+    task = Firebase.Firestore.list("test_collection", 5, "", "number")
+    print(yield(task, "listed_documents"))
     
     var test := Firebase.Firestore.collection("test_collection")
     
-    var task: FirestoreTask
     for i in 5:
         var name = "some_document_%d" % hash(str(i))
         task = test.delete(name)
-        task = test.update(name, {"number": null})
+        task = test.update(name, {"number": i + 10})
     
     var document = yield(task, "task_finished")
     
