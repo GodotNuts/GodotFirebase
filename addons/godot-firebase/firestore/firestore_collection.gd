@@ -29,9 +29,6 @@ var _config : Dictionary
 var _documents := {}
 var _request_queues := {}
 
-#func doc(document_id : String) -> FirestoreDocument:
-#    var doc := document.new()
-
 # ----------------------- Requests
 
 ## @args document_id

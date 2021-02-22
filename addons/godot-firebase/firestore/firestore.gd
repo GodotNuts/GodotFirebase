@@ -362,3 +362,7 @@ func _on_pooled_request_completed(result : int, response_code : int, headers : P
 func _on_connect_check_request_completed(result : int, _response_code, _headers, _body) -> void:
     _set_offline(result != HTTPRequest.RESULT_SUCCESS)
     _connect_check_node.request(_base_url)
+
+
+func _on_FirebaseAuth_logout() -> void:
+    auth = {}
