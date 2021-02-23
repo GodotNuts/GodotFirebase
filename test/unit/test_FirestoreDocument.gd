@@ -48,7 +48,7 @@ class TestDeserialization:
         
         assert_eq_deep(firestore_document.doc_fields, expected_doc_fields)
         
-        firestore_document.queue_free()
+
 
     func test_deserialize_array_of_strings():
         
@@ -78,5 +78,4 @@ class TestDeserialization:
         var firestore_document : FirestoreDocument = FirestoreDocument.new(doc_infos)
         
         assert_eq_deep(firestore_document.doc_fields, expected_doc_fields)
-        
-        firestore_document.queue_free()
+

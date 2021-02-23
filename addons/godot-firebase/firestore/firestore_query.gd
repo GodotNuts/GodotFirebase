@@ -1,6 +1,6 @@
 ## @meta-authors TODO
 ## @meta-version 1.1
-## The Realtime Database API for Firebase.
+## A firestore query.
 ## Documentation TODO.
 tool
 extends Reference
