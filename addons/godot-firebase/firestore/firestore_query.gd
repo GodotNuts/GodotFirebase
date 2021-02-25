@@ -1,5 +1,5 @@
-## @meta-authors TODO
-## @meta-version 1.1
+## @meta-authors Nicoló 'fenix' Santilio
+## @meta-version 1.3
 ## A firestore query.
 ## Documentation TODO.
 tool
@@ -230,3 +230,9 @@ func create_composite_filter(operator : int, filters : Array) -> Dictionary:
 
 func clean() -> void:
     query = { }
+
+func _to_string() -> String:
+    var pretty : String = "QUERY:\n"
+    for key in query.keys():
+       pretty += "- {key} = {value}\n".format({key = key, value = query.get(key)})
+    return pretty
