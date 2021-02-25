@@ -121,6 +121,8 @@ func _process(_delta := 0.0) -> void:
 		if not tree:
 			return
 	
+	doc_generator._update()
+	
 	# Update search help tree items
 	if tree.get_root():
 		search_flags = search_controls.get_child(3).get_item_id(search_controls.get_child(3).selected)
@@ -153,20 +155,20 @@ func _process(_delta := 0.0) -> void:
 	for i in script_list.get_item_count():
 		var icon := script_list.get_item_icon(i)
 		var text := script_list.get_item_text(i)
-		if icon != theme.get_icon("Help", "EditorIcons"):
-			continue
 		
 		var editor_help = script_tabs.get_child(script_list.get_item_metadata(i))
-		if editor_help.is_visible_in_tree():
-			doc_open = true
+		if icon == theme.get_icon("Help", "EditorIcons"):
+			if script_list.get_selected_items()[0] == i:
+				doc_open = true
+			if editor_help.name != text:
+				text = editor_help.name
+				script_list.set_item_tooltip(i, text + " Class Reference")
 		
-		if editor_help.name != text:
-			text = editor_help.name
-			script_list.set_item_tooltip(i, text + " Class Reference")
-		
-		if editor_help.is_visible_in_tree() and text in class_docs:
+		if script_list.get_selected_items()[0] == i and text in class_docs:
 			custom_doc_open = true
 			set_current_label(editor_help.get_child(0))
+#		else:
+#			set_current_label(null)
 		
 		script_list.call_deferred("set_item_text", i, text)
 	
@@ -396,7 +398,7 @@ func set_current_label(label: RichTextLabel) -> void:
 		if is_instance_valid(current_label):
 			current_label.disconnect("meta_clicked", self, "_on_EditorHelpLabel_meta_clicked")
 		
-		if label:
+		if is_instance_valid(label):
 			update_doc(label)
 			current_label = label
 			current_label.connect("meta_clicked", self, "_on_EditorHelpLabel_meta_clicked", [current_label], CONNECT_DEFERRED)
@@ -505,6 +507,9 @@ func _on_DocTimer_timeout() -> void:
 	
 	var docs := {}
 	for _class in classes:
+		if _class["language"] != "GDScript":
+			continue
+		
 		# TODO: Add file path to class document item
 		var doc := doc_generator.generate(_class["class"], _class["base"], _class["path"])
 		if not doc:

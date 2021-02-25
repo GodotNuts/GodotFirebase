@@ -1,6 +1,9 @@
 tool
 extends Reference
 
+var _pending_docs := {}
+var _docs_queue := []
+
 const _GD_TYPES = [
 	"", "bool", "int", "float",
 	"String", "Vector2", "Rect2", "Vector3",
@@ -13,19 +16,49 @@ const _GD_TYPES = [
 
 var plugin: EditorPlugin
 
+
+func _update() -> void:
+	var time := OS.get_ticks_msec()
+	while not _docs_queue.empty() and OS.get_ticks_msec() - time < 5:
+		var name: String = _docs_queue.pop_front()
+		var doc: ClassDocItem = _pending_docs[name]
+		var should_first_gen := _generate(doc)
+		
+		if should_first_gen.empty():
+			_pending_docs.erase(name)
+		else:
+			_docs_queue.push_back(name)
+			_docs_queue.erase(should_first_gen)
+			_docs_queue.push_front(should_first_gen)
+
+
 func generate(name: String, base: String, script_path: String) -> ClassDocItem:
-	var script: GDScript = load(script_path)
-	var code_lines := script.source_code.split("\n")
+	if name in _pending_docs:
+		return _pending_docs[name]
+	
 	var doc := ClassDocItem.new({
 		name = name,
-		base = base
+		base = base,
+		path = script_path
 	})
 	
-	var inherits := base
+	_pending_docs[name] = doc
+	_docs_queue.append(name)
+	return doc
+
+
+func _generate(doc: ClassDocItem) -> String:
+	var script: GDScript = load(doc.path)
+	var code_lines := script.source_code.split("\n")
+	
+	var inherits := doc.base
 	var parent_props := []
 	var parent_methods := []
 	var parent_constants := []
 	while inherits != "" and inherits in plugin.class_docs:
+		if inherits in _pending_docs:
+			return inherits
+		
 		for prop in plugin.class_docs[inherits].properties:
 			parent_props.append(prop.name)
 		for method in plugin.class_docs[inherits].methods:
@@ -130,7 +163,7 @@ func generate(name: String, base: String, script_path: String) -> ClassDocItem:
 			# Class document
 			if line.begins_with("extends") or line.begins_with("tool") or line.begins_with("class_name"):
 				if annotations.has("@doc-ignore"):
-					return null
+					return ""
 				if annotations.has("@contribute"):
 					doc.contriute_url = annotations["@contribute"]
 				if annotations.has("@tutorial"):
@@ -248,9 +281,7 @@ func generate(name: String, base: String, script_path: String) -> ClassDocItem:
 			
 			comment_block = ""
 			annotations.clear()
-	
-	return doc
-
+	return ""
 
 func _create_method_doc(name: String, script: Script = null, method := {}) -> MethodDocItem:
 	if method.empty():

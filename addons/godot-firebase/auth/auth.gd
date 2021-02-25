@@ -42,7 +42,7 @@ var _headers : PoolStringArray = [
 
 var requesting : int = -1
 
-enum REQUESTS {
+enum Requests {
     NONE = -1,
     EXCHANGE_TOKEN,
     LOGIN_WITH_OAUTH,
@@ -196,7 +196,7 @@ func exchange_google_token(google_token : String) -> void:
         _google_token_body.code = google_token
         _google_token_body.client_id = _config.clientId
         _google_token_body.client_secret = _config.clientSecret
-        requesting = REQUESTS.EXCHANGE_TOKEN
+        requesting = Requests.EXCHANGE_TOKEN
         request(_google_token_request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_google_token_body))
 
 # Login with Google oAuth2.
@@ -209,7 +209,7 @@ func login_with_oauth(google_token: String, provider_id : String = "google.com",
         is_busy = true
         _oauth_login_request_body.postBody = _post_body.replace("[GOOGLE_ID_TOKEN]", auth.idtoken).replace("[PROVIDER_ID]", provider_id)
         _oauth_login_request_body.requestUri = _request_uri.replace("[REQUEST_URI]", request_uri)
-        requesting = REQUESTS.LOGIN_WITH_OAUTH
+        requesting = Requests.LOGIN_WITH_OAUTH
         request(_signin_with_oauth_request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_oauth_login_request_body))
 
 # Function used to logout of the system, this will also remove the local encrypted auth file if there is one
@@ -246,7 +246,7 @@ func _on_FirebaseAuth_request_completed(result : int, response_code : int, heade
         if not res.has("kind"):
             auth = get_clean_keys(res)
             match requesting:
-                REQUESTS.EXCHANGE_TOKEN:
+                Requests.EXCHANGE_TOKEN:
                     emit_signal("token_exchanged", true)
             begin_refresh_countdown()
         else:
@@ -264,12 +264,12 @@ func _on_FirebaseAuth_request_completed(result : int, response_code : int, heade
                     emit_signal("userdata_received", userdata)
     else:
                 # error message would be INVALID_EMAIL, EMAIL_NOT_FOUND, INVALID_PASSWORD, USER_DISABLED or WEAK_PASSWORD
-        if requesting == REQUESTS.EXCHANGE_TOKEN:
+        if requesting == Requests.EXCHANGE_TOKEN:
             emit_signal("token_exchanged", false)
             emit_signal("login_failed", res.error, res.error_description)
         else:
             emit_signal("login_failed", res.error.code, res.error.message)
-    requesting = REQUESTS.NONE
+    requesting = Requests.NONE
 
 # Function used to save the auth data provided by Firebase into an encrypted file
 # Note this does not work in HTML5 or UWP
