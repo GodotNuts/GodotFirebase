@@ -1,5 +1,5 @@
 ## @meta-authors Nicolò 'fenix' Santilio,
-## @meta-version 2.3
+## @meta-version 2.4
 ##
 ## Referenced by [code]Firebase.Firestore[/code]. Represents the Firestore module.
 ## Cloud Firestore is a flexible, scalable database for mobile, web, and server development from Firebase and Google Cloud. 
@@ -147,13 +147,14 @@ func collection(path : String) -> FirestoreCollection:
 func query(query : FirestoreQuery) -> FirestoreTask:
     if auth:
         var firestore_task : FirestoreTask = FirestoreTask.new()
-        firestore_task.connect("listed_documents", self, "_on_listed_documents")
+        firestore_task.connect("result_query", self, "_on_result_query")
         firestore_task.connect("error", self, "_on_error")
         firestore_task.action = FirestoreTask.Task.TASK_QUERY
         var body : Dictionary = { structuredQuery = query.query }
         var url : String = _base_url + _extended_url + _query_suffix
         
-        firestore_task.data = JSON.print(body)
+        firestore_task.data = query
+        firestore_task._fields = JSON.print(body)
         firestore_task._url = url
         firestore_task._headers = PoolStringArray([_AUTHORIZATION_HEADER + auth.idtoken])
         _pooled_request(firestore_task)
@@ -180,7 +181,7 @@ func query(query : FirestoreQuery) -> FirestoreTask:
 func list(path : String, page_size : int = 0, page_token : String = "", order_by : String = "") -> FirestoreTask:
     if auth: 
         var firestore_task : FirestoreTask = FirestoreTask.new()
-        firestore_task.connect("result_query", self, "_on_result_query")
+        firestore_task.connect("listed_documents", self, "_on_listed_documents")
         firestore_task.connect("error", self, "_on_error")
         firestore_task.action = FirestoreTask.Task.TASK_LIST
         var url : String
@@ -355,6 +356,7 @@ func _on_FirebaseAuth_token_refresh_succeeded(auth_result : Dictionary) -> void:
 
 
 func _on_pooled_request_completed(result : int, response_code : int, headers : PoolStringArray, body : PoolByteArray, request : HTTPRequest) -> void:
+    print(JSON.parse(body.get_string_from_utf8()).result)
     request.get_meta("task")._on_request_completed(result, response_code, headers, body)
     request.set_meta("requesting", false)
 
