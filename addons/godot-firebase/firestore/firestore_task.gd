@@ -1,5 +1,5 @@
 ## @meta-authors Nicolò 'fenix' Santilio,
-## @meta-version 1.1
+## @meta-version 1.2
 ##
 ## A [code]FirestoreTask[/code] is an indipendent node inheriting [code]HTTPRequest[/code] that processes a [code]Firestore[/code] request.
 ## Once the Task is completed (both if successfully or not) it will emit the relative signal (or a general purpose signal [code]task_finished()[/code]) and will destroy automatically.
@@ -86,7 +86,7 @@ var _headers : PoolStringArray = []
 #    _headers = PoolStringArray(temp_header)
 #
 #    if Firebase.Firestore._offline:
-#        call_deferred("_on_request_completed", RESULT_CANT_CONNECT, 404, PoolStringArray(), PoolByteArray())
+#        call_deferred("_on_request_completed", -1, 404, PoolStringArray(), PoolByteArray())
 #    else:
 #        request(_url, _headers, true, _method, _fields)
 
@@ -107,12 +107,16 @@ func _on_request_completed(result : int, response_code : int, headers : PoolStri
         var encrypt_key: String = Firebase.Firestore._encrypt_key
         var full_path : String
         var url_segment : String
-        if action == Task.TASK_LIST:
-            url_segment = data[0]
-            full_path = cache_path
-        else:
-            url_segment = data
-            full_path = _get_doc_file(cache_path, url_segment, encrypt_key)
+        match action:
+            Task.TASK_LIST:
+                url_segment = data[0]
+                full_path = cache_path
+            Task.TASK_QUERY:
+                url_segment = JSON.print(data.query)
+                full_path = cache_path
+            _:
+                url_segment = data
+                full_path = _get_doc_file(cache_path, url_segment, encrypt_key)
         bod = _handle_cache(offline, data, encrypt_key, full_path, bod)
         if not bod.empty() and offline:
             response_code = HTTPClient.RESPONSE_OK
@@ -138,7 +142,8 @@ func _on_request_completed(result : int, response_code : int, headers : PoolStri
                 data = []
                 for doc in bod.documents:
                     data.append(FirestoreDocument.new(doc))
-                data.append(bod.nextPageToken)
+                if bod.has("nextPageToken"):
+                    data.append(bod.nextPageToken)
                 emit_signal("listed_documents", data)
     else:
         match action:

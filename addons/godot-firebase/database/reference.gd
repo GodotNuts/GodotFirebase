@@ -137,7 +137,6 @@ func _get_filter():
             _filter_query.erase(_parent.ORDER_BY)
         else:
             _cached_filter += _parent.ORDER_BY + _equal_tag + _escaped_quote + _key_filter_tag + _escaped_quote # Presumptuous, but to get it to work at all...
-
         for key in _filter_query.keys():
             _cached_filter += _filter_tag + key + _equal_tag + _filter_query[key]
 
