@@ -148,7 +148,7 @@ func update_metadata(metadata : Dictionary) -> StorageTask:
     if not valid:
         return null
     var data := JSON.print(metadata).to_utf8()
-    var headers := PoolStringArray(["Content-Type: application/json", "Access-Control-Allow-Origin: *"])
+    var headers := PoolStringArray(["Accept: application/json"])
     return storage._upload(data, headers, self, true)
 
 ## @return StorageTask

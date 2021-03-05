@@ -20,9 +20,7 @@ var _config : Dictionary = {}
 var _auth : Dictionary
 var _request_list_node : HTTPRequest
 
-var _headers : PoolStringArray = [   
-    "Access-Control-Allow-Origin: *"
-   ]
+var _headers : PoolStringArray = []
 
 enum Requests {
     NONE = -1,
