@@ -37,9 +37,7 @@ const _escaped_quote : String = "\""
 const _equal_tag : String = "="
 const _key_filter_tag : String = "$key"
 
-var _headers : PoolStringArray = [   
-    "Access-Control-Allow-Origin: *"
-   ]
+var _headers : PoolStringArray = []
 
 func set_db_path(path : String, filter_query_dict : Dictionary) -> void:
     _db_path = path

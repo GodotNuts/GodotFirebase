@@ -71,7 +71,7 @@ var _base_url : String = "https://firestore.googleapis.com/v1/"
 var _extended_url : String = "projects/[PROJECT_ID]/databases/(default)/documents/"
 var _query_suffix : String = ":runQuery"
 
-var _connect_check_node : HTTPRequest
+#var _connect_check_node : HTTPRequest
 
 var _request_list_node : HTTPRequest
 var _requests_queue : Array = []
@@ -82,15 +82,15 @@ var _http_request_pool := []
 var _offline: bool = false setget _set_offline
 
 func _ready() -> void:
-    _connect_check_node = HTTPRequest.new()
-    _connect_check_node.timeout = 5
-    _connect_check_node.connect("request_completed", self, "_on_connect_check_request_completed")
-    add_child(_connect_check_node)
-    _connect_check_node.request(_base_url)
+    #_connect_check_node = HTTPRequest.new()
+    #_connect_check_node.timeout = 5
+    #_connect_check_node.connect("request_completed", self, "_on_connect_check_request_completed")
+    #add_child(_connect_check_node)
+    #_connect_check_node.request(_base_url)
     
     _request_list_node = HTTPRequest.new()
     _request_list_node.connect("request_completed", self, "_on_request_completed")
-    _connect_check_node.timeout = 5
+    _request_list_node.timeout = 5
     add_child(_request_list_node)
 
 func _process(delta : float) -> void:
@@ -362,7 +362,7 @@ func _on_pooled_request_completed(result : int, response_code : int, headers : P
 
 func _on_connect_check_request_completed(result : int, _response_code, _headers, _body) -> void:
     _set_offline(result != HTTPRequest.RESULT_SUCCESS)
-    _connect_check_node.request(_base_url)
+    #_connect_check_node.request(_base_url)
 
 
 func _on_FirebaseAuth_logout() -> void:
