@@ -6,13 +6,6 @@ tool
 class_name FirebaseDatabase
 extends Node
 
-const ORDER_BY : String = "orderBy"
-const LIMIT_TO_FIRST : String = "limitToFirst"
-const LIMIT_TO_LAST : String = "limitToLast"
-const START_AT : String = "startAt"
-const END_AT : String = "endAt"
-const EQUAL_TO : String = "equalTo"
-
 var _config : Dictionary = {}
 
 var _auth : Dictionary = {}
