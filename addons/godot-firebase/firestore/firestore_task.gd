@@ -149,10 +149,10 @@ func _on_request_completed(result : int, response_code : int, headers : PoolStri
         match action:
             Task.TASK_LIST, Task.TASK_QUERY:
                 data = bod[0].error
-                emit_signal("error", bod[0].error)
+                emit_signal("error", data.code, 0, data.message)
             _:
                 data = bod.error
-                emit_signal("error", bod.error)
+                emit_signal("error", data.code, 0, data.message)
     
     emit_signal("task_finished", data)
 
