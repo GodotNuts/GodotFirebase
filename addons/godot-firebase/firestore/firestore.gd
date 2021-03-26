@@ -23,8 +23,7 @@ signal listed_documents(documents)
 ## @arg-types Array
 signal result_query(result)
 ## Emitted when a [code]list()[/code] or [code]query()[/code] request is [b]not[/b] successfully completed.
-## @arg-types Dictionary
-signal error(error)
+signal error(code,status,message)
 
 enum Requests {
     NONE = -1,  ## Firestore is not processing any request.
@@ -339,8 +338,9 @@ func _on_result_query(result : Dictionary):
     emit_signal("result_query", result)
 
 
-func _on_error(error : Dictionary):
-    printerr("Firestore error: " + JSON.print(error))
+func _on_error(code : int, status : int, message : String):
+    emit_signal("error", code, status, message)
+    printerr(message)
 
 
 func _on_FirebaseAuth_login_succeeded(auth_result : Dictionary) -> void:
