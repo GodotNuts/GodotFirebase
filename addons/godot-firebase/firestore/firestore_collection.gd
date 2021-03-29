@@ -104,7 +104,7 @@ func delete(document_id : String) -> FirestoreTask:
     var url = _get_request_url() + _separator + document_id.replace(" ", "%20")
     
     task.connect("delete_document", self, "_on_delete_document")
-    task.connect("task_finished", self, "_on_task_finished", [null, document_id], CONNECT_DEFERRED)
+    task.connect("task_finished", self, "_on_task_finished", [document_id], CONNECT_DEFERRED)
     _process_request(task, document_id, url)
     return task
 
