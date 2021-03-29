@@ -114,7 +114,7 @@ func _get_request_url() -> String:
 
 
 func _process_request(task : FirestoreTask, document_id : String, url : String, fields := "") -> void:
-    task.connect("error", self, "_on_error")
+    task.connect("task_error", self, "_on_error")
     task._url = url
     task._fields = fields
     task._headers = PoolStringArray([_AUTHORIZATION_HEADER + auth.idtoken])
