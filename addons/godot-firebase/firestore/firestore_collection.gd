@@ -104,7 +104,7 @@ func delete(document_id : String) -> FirestoreTask:
     var url = _get_request_url() + _separator + document_id.replace(" ", "%20")
     
     task.connect("delete_document", self, "_on_delete_document")
-    task.connect("task_finished", self, "_on_task_finished", [null, document_id], CONNECT_DEFERRED)
+    task.connect("task_finished", self, "_on_task_finished", [document_id], CONNECT_DEFERRED)
     _process_request(task, document_id, url)
     return task
 
@@ -114,7 +114,7 @@ func _get_request_url() -> String:
 
 
 func _process_request(task : FirestoreTask, document_id : String, url : String, fields := "") -> void:
-    task.connect("error", self, "_on_error")
+    task.connect("task_error", self, "_on_error")
     task._url = url
     task._fields = fields
     task._headers = PoolStringArray([_AUTHORIZATION_HEADER + auth.idtoken])
@@ -145,6 +145,6 @@ func _on_update_document(document : FirestoreDocument):
 func _on_delete_document():
     emit_signal("delete_document")
 
-func _on_error(code : int, status : int, message : String):
+func _on_error(code, status, message):
     emit_signal("error", code, status, message)
     printerr(message)
