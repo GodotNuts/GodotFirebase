@@ -72,3 +72,4 @@ func _load_config() -> void:
                     printerr("Configuration key '{key}' not found!".format({key = key}))
     else:
         printerr("No configuration settings found, add them in override.cfg file.")
+    print("")

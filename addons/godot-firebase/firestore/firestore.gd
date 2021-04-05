@@ -1,5 +1,5 @@
 ## @meta-authors Nicolò 'fenix' Santilio,
-## @meta-version 2.4
+## @meta-version 2.5
 ##
 ## Referenced by [code]Firebase.Firestore[/code]. Represents the Firestore module.
 ## Cloud Firestore is a flexible, scalable database for mobile, web, and server development from Firebase and Google Cloud. 
@@ -144,25 +144,19 @@ func collection(path : String) -> FirestoreCollection:
 ## @arg-types FirestoreQuery
 ## @return FirestoreTask
 func query(query : FirestoreQuery) -> FirestoreTask:
-    if auth:
-        var firestore_task : FirestoreTask = FirestoreTask.new()
-        firestore_task.connect("result_query", self, "_on_result_query")
-        firestore_task.connect("task_error", self, "_on_task_error")
-        firestore_task.connect("task_list_error", self, "_on_task_list_error")
-        firestore_task.connect("task_query_error", self, "_on_task_query_error")
-        firestore_task.action = FirestoreTask.Task.TASK_QUERY
-        var body : Dictionary = { structuredQuery = query.query }
-        var url : String = _base_url + _extended_url + _query_suffix
-        
-        firestore_task.data = query
-        firestore_task._fields = JSON.print(body)
-        firestore_task._url = url
-        firestore_task._headers = PoolStringArray([_AUTHORIZATION_HEADER + auth.idtoken])
-        _pooled_request(firestore_task)
-        return firestore_task
-    else:
-        printerr("Unauthorized")
-        return null
+    var firestore_task : FirestoreTask = FirestoreTask.new()
+    firestore_task.connect("result_query", self, "_on_result_query")
+    firestore_task.connect("task_error", self, "_on_task_error")
+    firestore_task.connect("task_query_error", self, "_on_task_query_error")
+    firestore_task.action = FirestoreTask.Task.TASK_QUERY
+    var body : Dictionary = { structuredQuery = query.query }
+    var url : String = _base_url + _extended_url + _query_suffix
+    
+    firestore_task.data = query
+    firestore_task._fields = JSON.print(body)
+    firestore_task._url = url
+    _pooled_request(firestore_task)
+    return firestore_task
 
 
 ## Request a list of contents (documents and/or collections) inside a collection, specified by its [i]id[/i]. This method will return a [code]FirestoreTask[/code] object, representing a reference to the request issued. If saved into a variable, the [code]FirestoreTask[/code] object can be used to yield on the [code]result_query(result)[/code] signal, or the more generic [code]task_finished(result)[/code] signal.
@@ -180,31 +174,27 @@ func query(query : FirestoreQuery) -> FirestoreTask:
 ## @arg-defaults , 0, "", ""
 ## @return FirestoreTask
 func list(path : String, page_size : int = 0, page_token : String = "", order_by : String = "") -> FirestoreTask:
-    if auth: 
-        var firestore_task : FirestoreTask = FirestoreTask.new()
-        firestore_task.connect("listed_documents", self, "_on_listed_documents")
-        firestore_task.connect("error", self, "_on_error")
-        firestore_task.action = FirestoreTask.Task.TASK_LIST
-        var url : String
-        if not path in [""," "]:
-            url = _base_url + _extended_url + path + "/"
-        else:
-            url = _base_url + _extended_url
-        if page_size != 0:
-            url+="?pageSize="+str(page_size)
-        if page_token != "":
-            url+="&pageToken="+page_token
-        if order_by != "":
-            url+="&orderBy="+order_by
-        
-        firestore_task.data = [path, page_size, page_token, order_by]
-        firestore_task._url = url
-        firestore_task._headers = PoolStringArray([_AUTHORIZATION_HEADER + auth.idtoken])
-        _pooled_request(firestore_task)
-        return firestore_task
+    var firestore_task : FirestoreTask = FirestoreTask.new()
+    firestore_task.connect("listed_documents", self, "_on_listed_documents")
+    firestore_task.connect("task_error", self, "_on_task_error")
+    firestore_task.connect("task_list_error", self, "_on_task_list_error")
+    firestore_task.action = FirestoreTask.Task.TASK_LIST
+    var url : String
+    if not path in [""," "]:
+        url = _base_url + _extended_url + path + "/"
     else:
-        printerr("Unauthorized")
-        return null
+        url = _base_url + _extended_url
+    if page_size != 0:
+        url+="?pageSize="+str(page_size)
+    if page_token != "":
+        url+="&pageToken="+page_token
+    if order_by != "":
+        url+="&orderBy="+order_by
+    
+    firestore_task.data = [path, page_size, page_token, order_by]
+    firestore_task._url = url
+    _pooled_request(firestore_task)
+    return firestore_task
 
 
 func set_networking(value: bool) -> void:
@@ -310,6 +300,16 @@ func _pooled_request(task : FirestoreTask) -> void:
         task._on_request_completed(HTTPRequest.RESULT_CANT_CONNECT, 404, PoolStringArray(), PoolByteArray())
         return
     
+    if not auth:
+        printerr("Unauthenticated request issued...")
+        Firebase.Auth.login_anonymous()
+        var result : Array = yield(Firebase.Auth, "auth_request")
+        if result[0] != 1:
+            _check_auth_error(result[0], result[1])
+        printerr("Client connected as Anonymous")
+    
+    task._headers = PoolStringArray([_AUTHORIZATION_HEADER + auth.idtoken])
+    
     var http_request : HTTPRequest
     for request in _http_request_pool:
         if not request.get_meta("requesting"):
@@ -381,3 +381,9 @@ func _on_connect_check_request_completed(result : int, _response_code, _headers,
 
 func _on_FirebaseAuth_logout() -> void:
     auth = {}
+
+func _check_auth_error(code : int, message : String) -> void:
+    var err : String
+    match code:
+        400: err = "Please, enable Anonymous Sign-in method or Authenticate the Client before issuing a request (best option)"
+    printerr(err)

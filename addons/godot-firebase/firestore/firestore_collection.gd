@@ -1,5 +1,5 @@
 ## @meta-authors TODO
-## @meta-version 2.2
+## @meta-version 2.3
 ## A reference to a Firestore Collection.
 ## Documentation TODO.
 tool
@@ -35,10 +35,6 @@ var _request_queues := {}
 ## @return FirestoreTask
 ## used to GET a document from the collection, specify @document_id
 func get(document_id : String) -> FirestoreTask:
-    if not auth:
-        printerr("Unauthorized Firestore operation!")
-        return null
-    
     var task : FirestoreTask = FirestoreTask.new()
     task.action = FirestoreTask.Task.TASK_GET
     task.data = collection_name + "/" + document_id
@@ -54,10 +50,6 @@ func get(document_id : String) -> FirestoreTask:
 ## @return FirestoreTask
 ## used to SAVE/ADD a new document to the collection, specify @documentID and @fields
 func add(document_id : String, fields : Dictionary = {}) -> FirestoreTask:
-    if not auth:
-        printerr("Unauthorized Firestore operation!")
-        return null
-    
     var task : FirestoreTask = FirestoreTask.new()
     task.action = FirestoreTask.Task.TASK_POST
     task.data = collection_name + "/" + document_id
@@ -73,10 +65,6 @@ func add(document_id : String, fields : Dictionary = {}) -> FirestoreTask:
 ## @return FirestoreTask
 # used to UPDATE a document, specify @documentID and @fields
 func update(document_id : String, fields : Dictionary = {}) -> FirestoreTask:
-    if not auth:
-        printerr("Unauthorized Firestore operation!")
-        return null
-    
     var task : FirestoreTask = FirestoreTask.new()
     task.action = FirestoreTask.Task.TASK_PATCH
     task.data = collection_name + "/" + document_id
@@ -94,10 +82,6 @@ func update(document_id : String, fields : Dictionary = {}) -> FirestoreTask:
 ## @return FirestoreTask
 # used to DELETE a document, specify @document_id
 func delete(document_id : String) -> FirestoreTask:
-    if not auth:
-        printerr("Unauthorized Firestore operation!")
-        return null
-    
     var task : FirestoreTask = FirestoreTask.new()
     task.action = FirestoreTask.Task.TASK_DELETE
     task.data = collection_name + "/" + document_id
@@ -115,6 +99,16 @@ func _get_request_url() -> String:
 
 func _process_request(task : FirestoreTask, document_id : String, url : String, fields := "") -> void:
     task.connect("task_error", self, "_on_error")
+    
+    if not auth:
+        printerr("Unauthenticated request issued...")
+        Firebase.Auth.login_anonymous()
+        var result : Array = yield(Firebase.Auth, "auth_request")
+        if result[0] != 1:
+            Firebase.Firestore._check_auth_error(result[0], result[1])
+            return null
+        printerr("Client authenticated as Anonymous User.")
+    
     task._url = url
     task._fields = fields
     task._headers = PoolStringArray([_AUTHORIZATION_HEADER + auth.idtoken])

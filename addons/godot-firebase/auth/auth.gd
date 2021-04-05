@@ -1,10 +1,15 @@
 ## @meta-authors TODO
-## @meta-version 2.3
+## @meta-version 2.4
 ## The authentication API for Firebase.
 ## Documentation TODO.
 tool
 class_name FirebaseAuth
 extends HTTPRequest
+
+# Emitted for each Auth request issued.
+# `result_code` -> Either `1` if auth succeeded or `error_code` if unsuccessful auth request
+# `result_content` -> Either `auth_result` if auth succeeded or `error_message` if unsuccessful auth request
+signal auth_request(result_code, result_content)
 
 signal signup_succeeded(auth_result)
 signal login_succeeded(auth_result)
@@ -261,13 +266,16 @@ func _on_FirebaseAuth_request_completed(result : int, response_code : int, heade
                 RESPONSE_USERDATA:
                     var userdata = FirebaseUserData.new(res.users[0])
                     emit_signal("userdata_received", userdata)
+            emit_signal("auth_request", 1, auth)
     else:
                 # error message would be INVALID_EMAIL, EMAIL_NOT_FOUND, INVALID_PASSWORD, USER_DISABLED or WEAK_PASSWORD
         if requesting == Requests.EXCHANGE_TOKEN:
             emit_signal("token_exchanged", false)
             emit_signal("login_failed", res.error, res.error_description)
+            emit_signal("auth_request", res.error, res.error_description)
         else:
             emit_signal("login_failed", res.error.code, res.error.message)
+            emit_signal("auth_request", res.error.code, res.error.message)
     requesting = Requests.NONE
 
 # Function used to save the auth data provided by Firebase into an encrypted file
