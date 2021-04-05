@@ -369,7 +369,6 @@ func _on_FirebaseAuth_token_refresh_succeeded(auth_result : Dictionary) -> void:
 
 
 func _on_pooled_request_completed(result : int, response_code : int, headers : PoolStringArray, body : PoolByteArray, request : HTTPRequest) -> void:
-    print(JSON.parse(body.get_string_from_utf8()).result)
     request.get_meta("task")._on_request_completed(result, response_code, headers, body)
     request.set_meta("requesting", false)
 
