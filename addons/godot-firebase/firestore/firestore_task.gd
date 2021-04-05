@@ -44,7 +44,9 @@ signal listed_documents(documents)
 signal result_query(result)
 ## Emitted when a request is [b]not[/b] successfully completed.
 ## @arg-types Dictionary
-signal error(error)
+signal task_error(error)
+signal task_query_error(error)
+signal task_list_error(error)
 
 enum Task {
     TASK_GET,       ## A GET Request Task, processing a get() request
@@ -147,12 +149,15 @@ func _on_request_completed(result : int, response_code : int, headers : PoolStri
                 emit_signal("listed_documents", data)
     else:
         match action:
-            Task.TASK_LIST, Task.TASK_QUERY:
+            Task.TASK_LIST:
                 data = bod[0].error
-                emit_signal("error", bod[0].error)
+                emit_signal("task_list_error", data.code, data.status, data.message)
+            Task.TASK_QUERY:
+                data = bod[0].error
+                emit_signal("task_query_error", data.code, data.status, data.message)
             _:
                 data = bod.error
-                emit_signal("error", bod.error)
+                emit_signal("task_error", data.code, data.status, data.message)
     
     emit_signal("task_finished", data)
 

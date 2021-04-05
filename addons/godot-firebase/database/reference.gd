@@ -12,6 +12,13 @@ signal patch_data_update(data)
 signal push_successful()
 signal push_failed()
 
+const ORDER_BY : String = "orderBy"
+const LIMIT_TO_FIRST : String = "limitToFirst"
+const LIMIT_TO_LAST : String = "limitToLast"
+const START_AT : String = "startAt"
+const END_AT : String = "endAt"
+const EQUAL_TO : String = "equalTo"
+
 var _pusher : HTTPRequest
 var _listener : Node
 var _store : FirebaseDatabaseStore
@@ -37,9 +44,7 @@ const _escaped_quote : String = "\""
 const _equal_tag : String = "="
 const _key_filter_tag : String = "$key"
 
-var _headers : PoolStringArray = [   
-    "Access-Control-Allow-Origin: *"
-   ]
+var _headers : PoolStringArray = []
 
 func set_db_path(path : String, filter_query_dict : Dictionary) -> void:
     _db_path = path
@@ -125,18 +130,16 @@ func _get_list_url() -> String:
     return _config.databaseURL + _separator # + ListName + _json_list_tag + _auth_tag + _auth.idtoken
 
 func _get_filter():
-    var _parent = get_parent()
-
     if !_filter_query:
         return ""
     # At the moment, this means you can't dynamically change your filter; I think it's okay to specify that in the rules.
     if !_cached_filter:
         _cached_filter = ""
-        if _filter_query.has(_parent.ORDER_BY):
-            _cached_filter += _parent.ORDER_BY + _equal_tag + _escaped_quote + _filter_query[_parent.ORDER_BY] + _escaped_quote
-            _filter_query.erase(_parent.ORDER_BY)
+        if _filter_query.has(ORDER_BY):
+            _cached_filter += ORDER_BY + _equal_tag + _escaped_quote + _filter_query[ORDER_BY] + _escaped_quote
+            _filter_query.erase(ORDER_BY)
         else:
-            _cached_filter += _parent.ORDER_BY + _equal_tag + _escaped_quote + _key_filter_tag + _escaped_quote # Presumptuous, but to get it to work at all...
+            _cached_filter += ORDER_BY + _equal_tag + _escaped_quote + _key_filter_tag + _escaped_quote # Presumptuous, but to get it to work at all...
         for key in _filter_query.keys():
             _cached_filter += _filter_tag + key + _equal_tag + _filter_query[key]
 

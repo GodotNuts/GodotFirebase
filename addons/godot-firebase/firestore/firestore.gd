@@ -23,8 +23,7 @@ signal listed_documents(documents)
 ## @arg-types Array
 signal result_query(result)
 ## Emitted when a [code]list()[/code] or [code]query()[/code] request is [b]not[/b] successfully completed.
-## @arg-types Dictionary
-signal error(error)
+signal error(code,status,message)
 
 enum Requests {
     NONE = -1,  ## Firestore is not processing any request.
@@ -71,7 +70,7 @@ var _base_url : String = "https://firestore.googleapis.com/v1/"
 var _extended_url : String = "projects/[PROJECT_ID]/databases/(default)/documents/"
 var _query_suffix : String = ":runQuery"
 
-var _connect_check_node : HTTPRequest
+#var _connect_check_node : HTTPRequest
 
 var _request_list_node : HTTPRequest
 var _requests_queue : Array = []
@@ -82,15 +81,15 @@ var _http_request_pool := []
 var _offline: bool = false setget _set_offline
 
 func _ready() -> void:
-    _connect_check_node = HTTPRequest.new()
-    _connect_check_node.timeout = 5
-    _connect_check_node.connect("request_completed", self, "_on_connect_check_request_completed")
-    add_child(_connect_check_node)
-    _connect_check_node.request(_base_url)
+    #_connect_check_node = HTTPRequest.new()
+    #_connect_check_node.timeout = 5
+    #_connect_check_node.connect("request_completed", self, "_on_connect_check_request_completed")
+    #add_child(_connect_check_node)
+    #_connect_check_node.request(_base_url)
     
     _request_list_node = HTTPRequest.new()
     _request_list_node.connect("request_completed", self, "_on_request_completed")
-    _connect_check_node.timeout = 5
+    _request_list_node.timeout = 5
     add_child(_request_list_node)
 
 func _process(delta : float) -> void:
@@ -148,7 +147,9 @@ func query(query : FirestoreQuery) -> FirestoreTask:
     if auth:
         var firestore_task : FirestoreTask = FirestoreTask.new()
         firestore_task.connect("result_query", self, "_on_result_query")
-        firestore_task.connect("error", self, "_on_error")
+        firestore_task.connect("task_error", self, "_on_task_error")
+        firestore_task.connect("task_list_error", self, "_on_task_list_error")
+        firestore_task.connect("task_query_error", self, "_on_task_query_error")
         firestore_task.action = FirestoreTask.Task.TASK_QUERY
         var body : Dictionary = { structuredQuery = query.query }
         var url : String = _base_url + _extended_url + _query_suffix
@@ -335,13 +336,25 @@ func _on_listed_documents(listed_documents : Array):
     emit_signal("listed_documents", listed_documents)
 
 
-func _on_result_query(result : Dictionary):
+func _on_result_query(result : Array):
     emit_signal("result_query", result)
 
 
-func _on_error(error : Dictionary):
-    printerr("Firestore error: " + JSON.print(error))
+func _on_error(code : int, status : int, message : String):
+    emit_signal("error", code, status, message)
+    printerr(message)
 
+func _on_task_error(code : int, status : String, message : String):
+    emit_signal("task_error", code, status, message)
+    printerr(message)
+
+func _on_task_list_error(code : int, status : String, message : String):
+    emit_signal("task_error", code, status, message)
+    printerr(message)
+
+func _on_task_query_error(code : int, status : String, message : String):
+    emit_signal("task_error", code, status, message)
+    printerr(message)
 
 func _on_FirebaseAuth_login_succeeded(auth_result : Dictionary) -> void:
     auth = auth_result
@@ -363,7 +376,7 @@ func _on_pooled_request_completed(result : int, response_code : int, headers : P
 
 func _on_connect_check_request_completed(result : int, _response_code, _headers, _body) -> void:
     _set_offline(result != HTTPRequest.RESULT_SUCCESS)
-    _connect_check_node.request(_base_url)
+    #_connect_check_node.request(_base_url)
 
 
 func _on_FirebaseAuth_logout() -> void:

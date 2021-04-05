@@ -36,8 +36,7 @@ var _needs_refresh : bool = false
 var is_busy : bool = false
 
 var _headers : PoolStringArray = [
-    "Content-Type: application/json",
-#    "Access-Control-Allow-Origin: *"
+    "Accept: application/json"
    ]
 
 var requesting : int = -1
