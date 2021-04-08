@@ -176,14 +176,14 @@ enabled=PoolStringArray( "godot-firebase", "silicon.util.custom_docs" )
 
 [firebase]
 
-environment_variables/apiKey="AIzaSyDU6T2yrMVEpjTPNZpqt5fHUjIyvUYtK4w"
-environment_variables/authDomain="fluted-gantry-245320.firebaseapp.com"
-environment_variables/databaseURL="https://fluted-gantry-245320.firebaseio.com"
-environment_variables/projectId="fluted-gantry-245320"
-environment_variables/storageBucket="fluted-gantry-245320.appspot.com"
-environment_variables/messagingSenderId="642802608856"
-environment_variables/appId="1:642802608856:web:1050141a83b3a2e78885ad"
-environment_variables/measurementId="G-72P3G0WHKG"
+environment_variables/apiKey=""
+environment_variables/authDomain=""
+environment_variables/databaseURL=""
+environment_variables/projectId=""
+environment_variables/storageBucket=""
+environment_variables/messagingSenderId=""
+environment_variables/appId=""
+environment_variables/measurementId=""
 environment_variables/googleId=""
 environment_variables/googleSecret=""
 environment_variables/googleClientId=""
