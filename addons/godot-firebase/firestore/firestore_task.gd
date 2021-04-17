@@ -200,7 +200,7 @@ func _handle_cache(offline : bool, data, encrypt_key : String, cache_path : Stri
                     file.store_line(JSON.print(save))
                     body_return = save
                 else:
-                    printerr("Error saving cache file! Error code: %d" % file.get_error())
+                    Firebase._printerr("Error saving cache file! Error code: %d" % file.get_error())
                 file.close()
         
         Task.TASK_PATCH:
@@ -225,7 +225,7 @@ func _handle_cache(offline : bool, data, encrypt_key : String, cache_path : Stri
                                 if content != "--deleted--":
                                     save = JSON.parse(content).result
                         else:
-                            printerr("Error updating cache file! Error code: %d" % file.get_error())
+                            Firebase._printerr("Error updating cache file! Error code: %d" % file.get_error())
                         file.close()
                     
                     save.fields = FirestoreDocument.dict2fields(_merge_dict(
@@ -245,7 +245,7 @@ func _handle_cache(offline : bool, data, encrypt_key : String, cache_path : Stri
                     file.store_line(JSON.print(save))
                     body_return = save
                 else:
-                    printerr("Error updating cache file! Error code: %d" % file.get_error())
+                    Firebase._printerr("Error updating cache file! Error code: %d" % file.get_error())
                 file.close()
         
         Task.TASK_GET:
@@ -256,7 +256,7 @@ func _handle_cache(offline : bool, data, encrypt_key : String, cache_path : Stri
                     if content != "--deleted--":
                         body_return = JSON.parse(content).result
                 else:
-                    printerr("Error reading cache file! Error code: %d" % file.get_error())
+                    Firebase._printerr("Error reading cache file! Error code: %d" % file.get_error())
                 file.close()
         
         Task.TASK_DELETE:
@@ -266,7 +266,7 @@ func _handle_cache(offline : bool, data, encrypt_key : String, cache_path : Stri
                     file.store_line("--deleted--")
                     body_return = {"deleted": true}
                 else:
-                    printerr("Error \"deleting\" cache file! Error code: %d" % file.get_error())
+                    Firebase._printerr("Error \"deleting\" cache file! Error code: %d" % file.get_error())
                 file.close()
             else:
                 dir.remove(cache_path)
@@ -293,14 +293,14 @@ func _handle_cache(offline : bool, data, encrypt_key : String, cache_path : Stri
                         if file.get_line().begins_with(data[0]):
                             body_return.documents.append(JSON.parse(file.get_line()).result)
                     else:
-                        printerr("Error opening cache file for listing! Error code: %d" % file.get_error())
+                        Firebase._printerr("Error opening cache file for listing! Error code: %d" % file.get_error())
                     file.close()
                 body_return.documents.resize(min(data[1], body_return.documents.size()))
                 body_return.nextPageToken = ""
         
         Task.TASK_QUERY:
             if offline:
-                printerr("Offline queries are currently unsupported!")
+                Firebase._printerr("Offline queries are currently unsupported!")
     
     if not offline:
         return body

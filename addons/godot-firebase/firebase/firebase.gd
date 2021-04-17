@@ -39,15 +39,16 @@ onready var DynamicLinks : FirebaseDynamicLinks = $DynamicLinks
 var _config : Dictionary = {
     "apiKey": "",
     "authDomain": "",
-    "databaseURL":"",
+    "databaseURL": "",
     "projectId": "",
     "storageBucket": "",
     "messagingSenderId": "",
     "appId": "",
+    "measurementId": "",
     "clientId": "",
     "clientSecret": "",
     "domainUriPrefix": "",
-    "cacheLocation": "user://.firebase_cache"
+    "cacheLocation": ""
 }
 
 func _ready() -> void:
@@ -69,7 +70,10 @@ func _load_config() -> void:
                 _config[key] = ProjectSettings.get_setting(env_var)
             else:
                 if _config[key] == "":
-                    printerr("Configuration key '{key}' not found!".format({key = key}))
+                    _printerr("Configuration key '{key}' not found!".format({key = key}))
     else:
-        printerr("No configuration settings found, add them in override.cfg file.")
+        _printerr("No configuration settings found, add them in override.cfg file.")
     print("")
+
+func _printerr(error : String) -> void:
+    print("[Firebase Error] >> "+error)

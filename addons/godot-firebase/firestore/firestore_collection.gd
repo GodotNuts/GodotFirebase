@@ -101,13 +101,13 @@ func _process_request(task : FirestoreTask, document_id : String, url : String, 
     task.connect("task_error", self, "_on_error")
     
     if not auth:
-        printerr("Unauthenticated request issued...")
+        Firebase._printerr("Unauthenticated request issued...")
         Firebase.Auth.login_anonymous()
         var result : Array = yield(Firebase.Auth, "auth_request")
         if result[0] != 1:
             Firebase.Firestore._check_auth_error(result[0], result[1])
             return null
-        printerr("Client authenticated as Anonymous User.")
+        Firebase._printerr("Client authenticated as Anonymous User.")
     
     task._url = url
     task._fields = fields
@@ -141,4 +141,4 @@ func _on_delete_document():
 
 func _on_error(code, status, message):
     emit_signal("error", code, status, message)
-    printerr(message)
+    Firebase._printerr(message)

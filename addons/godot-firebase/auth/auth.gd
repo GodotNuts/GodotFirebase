@@ -148,7 +148,7 @@ func _set_config(config_json : Dictionary) -> void:
 # If false it will print an error
 func _is_ready() -> bool:
     if is_busy:
-        printerr("Firebase Auth is currently busy and cannot process this request")
+        Firebase._printerr("Firebase Auth is currently busy and cannot process this request")
         return false
     else:
         return true
@@ -242,7 +242,7 @@ func _on_FirebaseAuth_request_completed(result : int, response_code : int, heade
     var bod = body.get_string_from_utf8()
     var json_result = JSON.parse(bod)
     if json_result.error != OK:
-        print_debug("Error while parsing body json")
+        Firebase._printerr("Error while parsing body json")
         return
         
     var res = json_result.result
@@ -285,12 +285,12 @@ func save_auth(auth : Dictionary) -> void:
         var encrypted_file = File.new()
         var err = encrypted_file.open_encrypted_with_pass("user://user.auth", File.WRITE, OS.get_unique_id())
         if err != OK:
-            printerr("Error Opening File. Error Code: ", err)
+            Firebase._printerr("Error Opening File. Error Code: "+ err)
         else:
             encrypted_file.store_line(to_json(auth))
             encrypted_file.close()
     else:
-        printerr("OS Not supported for saving auth data")
+        Firebase._printerr("OS Not supported for saving auth data")
 
 # Function used to load the auth data file that has been stored locally
 # Note this does not work in HTML5 or UWP
@@ -299,12 +299,12 @@ func load_auth() -> void:
         var encrypted_file = File.new()
         var err = encrypted_file.open_encrypted_with_pass("user://user.auth", File.READ, OS.get_unique_id())
         if err != OK:
-            printerr("Error Opening File. Error Code: ", err)
+            Firebase._printerr("Error Opening File. Error Code: "+ err)
         else:
             var encrypted_file_data = parse_json(encrypted_file.get_line())
             manual_token_refresh(encrypted_file_data)
     else:
-        printerr("OS Not supported for loading auth data")
+        Firebase._printerr("OS Not supported for loading auth data")
 
 # Function used to remove the local encrypted auth file
 func remove_auth() -> void:
@@ -312,7 +312,7 @@ func remove_auth() -> void:
     if (dir.file_exists("user://user.auth")):
         dir.remove("user://user.auth")
     else:
-        printerr("No encrypted auth file exists")
+        Firebase._printerr("No encrypted auth file exists")
 
 # Function to check if there is an encrypted auth data file
 # If there is, the game will load it and refresh the token
@@ -321,7 +321,7 @@ func check_auth_file() -> void:
     if (dir.file_exists("user://user.auth")):
         load_auth()
     else:
-        printerr("No encrypted auth file exists")
+        Firebase._printerr("No encrypted auth file exists")
 
 # Function used to change the email account for the currently logged in user
 func change_user_email(email : String) -> void:

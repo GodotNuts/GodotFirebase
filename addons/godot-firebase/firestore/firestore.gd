@@ -271,7 +271,7 @@ func _set_offline(value: bool) -> void:
                 else:
                     collection.update(document_id, FirestoreDocument.fields2dict(JSON.parse(content).result))
             else:
-                printerr("Failed to retrieve cache %s! Error code: %d" % [cache, file.get_error()])
+                Firebase._printerr("Failed to retrieve cache %s! Error code: %d" % [cache, file.get_error()])
             file.close()
             if deleted:
                 cache_dir.remove(cache)
@@ -301,12 +301,12 @@ func _pooled_request(task : FirestoreTask) -> void:
         return
     
     if not auth:
-        printerr("Unauthenticated request issued...")
+        Firebase._printerr("Unauthenticated request issued...")
         Firebase.Auth.login_anonymous()
         var result : Array = yield(Firebase.Auth, "auth_request")
         if result[0] != 1:
             _check_auth_error(result[0], result[1])
-        printerr("Client connected as Anonymous")
+        Firebase._printerr("Client connected as Anonymous")
     
     task._headers = PoolStringArray([_AUTHORIZATION_HEADER + auth.idtoken])
     
@@ -342,19 +342,19 @@ func _on_result_query(result : Array):
 
 func _on_error(code : int, status : int, message : String):
     emit_signal("error", code, status, message)
-    printerr(message)
+    Firebase._printerr(message)
 
 func _on_task_error(code : int, status : String, message : String):
     emit_signal("task_error", code, status, message)
-    printerr(message)
+    Firebase._printerr(message)
 
 func _on_task_list_error(code : int, status : String, message : String):
     emit_signal("task_error", code, status, message)
-    printerr(message)
+    Firebase._printerr(message)
 
 func _on_task_query_error(code : int, status : String, message : String):
     emit_signal("task_error", code, status, message)
-    printerr(message)
+    Firebase._printerr(message)
 
 func _on_FirebaseAuth_login_succeeded(auth_result : Dictionary) -> void:
     auth = auth_result
@@ -385,4 +385,4 @@ func _check_auth_error(code : int, message : String) -> void:
     var err : String
     match code:
         400: err = "Please, enable Anonymous Sign-in method or Authenticate the Client before issuing a request (best option)"
-    printerr(err)
+    Firebase._printerr(err)
