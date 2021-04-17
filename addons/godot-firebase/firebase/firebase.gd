@@ -48,7 +48,7 @@ var _config : Dictionary = {
     "clientId": "",
     "clientSecret": "",
     "domainUriPrefix": "",
-    "cacheLocation": ""
+    "cacheLocation": "user://.firebase_cache"
 }
 
 func _ready() -> void:
