@@ -21,9 +21,8 @@ extends Node
 signal listed_documents(documents)
 ## Emitted when a  [code]query()[/code] request is successfully completed. [code]error()[/code] signal will be emitted otherwise.
 ## @arg-types Array
-signal result_query(result)
 ## Emitted when a [code]list()[/code] or [code]query()[/code] request is [b]not[/b] successfully completed.
-signal error(code,status,message)
+signal task_error(code,status,message)
 
 enum Requests {
     NONE = -1,  ## Firestore is not processing any request.
@@ -338,11 +337,6 @@ func _on_listed_documents(listed_documents : Array):
 
 func _on_result_query(result : Array):
     emit_signal("result_query", result)
-
-
-func _on_error(code : int, status : int, message : String):
-    emit_signal("error", code, status, message)
-    Firebase._printerr(message)
 
 func _on_task_error(code : int, status : String, message : String):
     emit_signal("task_error", code, status, message)
