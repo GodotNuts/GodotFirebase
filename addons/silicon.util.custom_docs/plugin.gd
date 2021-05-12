@@ -1,5 +1,5 @@
-# tool
-# extends EditorPlugin
+tool
+extends EditorPlugin
 
 # enum {
 #     SEARCH_CLASS = 1,
