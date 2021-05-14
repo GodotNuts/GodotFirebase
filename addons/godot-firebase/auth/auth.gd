@@ -27,6 +27,7 @@ const RESPONSE_USERDATA : String = "identitytoolkit#GetAccountInfoResponse"
 var _signup_request_url : String = "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=%s"
 var _signin_with_oauth_request_url : String = "https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=%s"
 var _signin_request_url : String = "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=%s"
+var _signin_custom_token_url : String = "https://identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken?key=%s"
 var _userdata_request_url : String = "https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=%s"
 var _refresh_request_url : String = "https://securetoken.googleapis.com/v1/token?key=%s"
 var _oobcode_request_url : String = "https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=%s"
@@ -50,6 +51,7 @@ enum Requests {
     NONE = -1,
     EXCHANGE_TOKEN,
     LOGIN_WITH_OAUTH,
+    EXCHANGE_CUSTOM_TOKEN
 }
 
 var _login_request_body : Dictionary = {
@@ -77,6 +79,10 @@ var _refresh_request_body : Dictionary = {
     "refresh_token":"",
 }
 
+var _custom_token_body : Dictionary = {
+    "token":"",
+    "returnSecureToken":true
+    }
 
 var _password_reset_body : Dictionary = {
     "requestType":"password_reset",
@@ -134,6 +140,7 @@ func _set_config(config_json : Dictionary) -> void:
     _config = config_json
     _signup_request_url %= _config.apiKey
     _signin_request_url %= _config.apiKey
+    _signin_custom_token_url %= _config.apiKey
     _signin_with_oauth_request_url %= _config.apiKey
     _userdata_request_url %= _config.apiKey
     _refresh_request_url %= _config.apiKey
@@ -182,6 +189,13 @@ func login_with_email_and_password(email : String, password : String) -> void:
         _login_request_body.email = email
         _login_request_body.password = password
         request(_signin_request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_login_request_body))
+
+func login_with_custom_token(token : String) -> void:
+    if _is_ready():
+        is_busy = true
+        _custom_token_body.token = token
+        requesting = Requests.EXCHANGE_CUSTOM_TOKEN
+        request(_signin_custom_token_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_custom_token_body))
 
 # Open a web page in browser redirecting to Google oAuth2 page for the current project
 # Once given user's authorization, a token will be generated.
@@ -252,6 +266,8 @@ func _on_FirebaseAuth_request_completed(result : int, response_code : int, heade
             match requesting:
                 Requests.EXCHANGE_TOKEN:
                     emit_signal("token_exchanged", true)
+                Requests.EXCHANGE_CUSTOM_TOKEN:
+                    emit_signal("login_succeeded", auth)
             begin_refresh_countdown()
         else:
             match res.kind:
