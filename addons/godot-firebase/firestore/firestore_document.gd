@@ -123,9 +123,9 @@ static func fields2array(array : Dictionary) -> Array:
 
 # Converts a gdscript Dictionary (most likely obtained with OS.get_datetime()) to a Firebase Timestamp
 static func dict2timestamp(dict : Dictionary) -> String:
+    dict.erase('weekday')
+    dict.erase('dst')
     var dict_values : Array = dict.values()
-    dict_values.remove(3)
-    dict_values.remove(3)
     return "%04d-%02d-%02dT%02d:%02d:%02d.00Z" % dict_values
 
 # Converts a Firebase Timestamp back to a gdscript Dictionary
