@@ -142,10 +142,11 @@ func _on_request_completed(result : int, response_code : int, headers : PoolStri
                 emit_signal("result_query", bod)
             Task.TASK_LIST:
                 data = []
-                for doc in bod.documents:
-                    data.append(FirestoreDocument.new(doc))
-                if bod.has("nextPageToken"):
-                    data.append(bod.nextPageToken)
+                if bod.has('documents'):
+                    for doc in bod.documents:
+                        data.append(FirestoreDocument.new(doc))
+                    if bod.has("nextPageToken"):
+                        data.append(bod.nextPageToken)
                 emit_signal("listed_documents", data)
     else:
         match action:
