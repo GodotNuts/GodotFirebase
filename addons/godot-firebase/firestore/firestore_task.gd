@@ -141,7 +141,7 @@ func _on_request_completed(result : int, response_code : int, headers : PoolStri
                 data = []
                 for doc in bod:
                     data.append(FirestoreDocument.new(doc.document))
-                emit_signal("result_query", bod)
+                emit_signal("result_query", data)
             Task.TASK_LIST:
                 data = []
                 if bod.has('documents'):
