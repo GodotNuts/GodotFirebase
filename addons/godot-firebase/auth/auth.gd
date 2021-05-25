@@ -23,6 +23,7 @@ const RESPONSE_SIGNUP : String   = "identitytoolkit#SignupNewUserResponse"
 const RESPONSE_SIGNIN : String   = "identitytoolkit#VerifyPasswordResponse"
 const RESPONSE_ASSERTION : String  = "identitytoolkit#VerifyAssertionResponse"
 const RESPONSE_USERDATA : String = "identitytoolkit#GetAccountInfoResponse"
+const RESPONSE_CUSTOM_TOKEN : String = "identitytoolkit#VerifyCustomTokenResponse"
 
 var _signup_request_url : String = "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=%s"
 var _signin_with_oauth_request_url : String = "https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=%s"
@@ -50,8 +51,7 @@ var requesting : int = -1
 enum Requests {
     NONE = -1,
     EXCHANGE_TOKEN,
-    LOGIN_WITH_OAUTH,
-    EXCHANGE_CUSTOM_TOKEN
+    LOGIN_WITH_OAUTH
 }
 
 var _login_request_body : Dictionary = {
@@ -194,7 +194,6 @@ func login_with_custom_token(token : String) -> void:
     if _is_ready():
         is_busy = true
         _custom_token_body.token = token
-        requesting = Requests.EXCHANGE_CUSTOM_TOKEN
         request(_signin_custom_token_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_custom_token_body))
 
 # Open a web page in browser redirecting to Google oAuth2 page for the current project
@@ -275,7 +274,7 @@ func _on_FirebaseAuth_request_completed(result : int, response_code : int, heade
                     auth = get_clean_keys(res)
                     emit_signal("signup_succeeded", auth)
                     begin_refresh_countdown()
-                RESPONSE_SIGNIN, RESPONSE_ASSERTION:
+                RESPONSE_SIGNIN, RESPONSE_ASSERTION, RESPONSE_CUSTOM_TOKEN:
                     auth = get_clean_keys(res)
                     emit_signal("login_succeeded", auth)
                     begin_refresh_countdown()
