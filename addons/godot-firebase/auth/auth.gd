@@ -265,8 +265,6 @@ func _on_FirebaseAuth_request_completed(result : int, response_code : int, heade
             match requesting:
                 Requests.EXCHANGE_TOKEN:
                     emit_signal("token_exchanged", true)
-                Requests.EXCHANGE_CUSTOM_TOKEN:
-                    emit_signal("login_succeeded", auth)
             begin_refresh_countdown()
         else:
             match res.kind:
