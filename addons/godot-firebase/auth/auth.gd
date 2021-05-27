@@ -121,7 +121,7 @@ var _update_profile_body : Dictionary = {
 var _google_auth_body : Dictionary = {
     "scope":"email openid profile",
     "response_type":"code",
-    "redirect_uri":"urn:ietf:wg:oauth:2.0:oob",
+    "redirect_uri":"",
     "client_id":"[CLIENT_ID]"
 }
 
@@ -129,7 +129,7 @@ var _google_token_body : Dictionary = {
     "code":"",
     "client_id":"",
     "client_secret":"",
-    "redirect_uri":"urn:ietf:wg:oauth:2.0:oob",
+    "redirect_uri":"",
     "grant_type":"authorization_code"
 }
 
@@ -200,20 +200,22 @@ func login_with_custom_token(token : String) -> void:
 # Open a web page in browser redirecting to Google oAuth2 page for the current project
 # Once given user's authorization, a token will be generated.
 # NOTE** with this method, the authorization process will be copy-pasted
-func get_google_auth(client_id : String = _config.clientId) -> void:
+func get_google_auth(redirect_uri : String = "urn:ietf:wg:oauth:2.0:oob", client_id : String = _config.clientId) -> void:
     var url_endpoint : String = _google_auth_request_url
+    _google_auth_body.redirect_uri = redirect_uri
     for key in _google_auth_body.keys():
         url_endpoint+=key+"="+_google_auth_body[key]+"&"
     url_endpoint = url_endpoint.replace("[CLIENT_ID]&", client_id)
     OS.shell_open(url_endpoint)
 
 # Exchange the authorization oAuth2 code obtained from browser with a proper access id_token
-func exchange_google_token(google_token : String) -> void:
+func exchange_google_token(google_token : String, redirect_uri : String = "urn:ietf:wg:oauth:2.0:oob") -> void:
     if _is_ready():
         is_busy = true
         _google_token_body.code = google_token
         _google_token_body.client_id = _config.clientId
         _google_token_body.client_secret = _config.clientSecret
+        _google_token_body.redirect_uri = redirect_uri
         requesting = Requests.EXCHANGE_TOKEN
         request(_google_token_request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_google_token_body))
 
