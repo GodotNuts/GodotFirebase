@@ -191,7 +191,4 @@ environment_variables/googleClientSecret=""
 environment_variables/clientId=""
 environment_variables/clientSecret=""
 environment_variables/domainUriPrefix=""
-
-[rendering]
-
-environment/default_environment="res://default_env.tres"
+environment_variables/cacheLocation="user://.firebase_cache"
