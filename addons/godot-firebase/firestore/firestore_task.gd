@@ -138,8 +138,11 @@ func _on_request_completed(result : int, response_code : int, headers : PoolStri
                 data = null
                 emit_signal("delete_document")
             Task.TASK_QUERY:
-                data = bod
-                emit_signal("result_query", bod)
+                data = []
+                for doc in bod:
+                    if doc.has('document'):
+                        data.append(FirestoreDocument.new(doc.document))
+                emit_signal("result_query", data)
             Task.TASK_LIST:
                 data = []
                 if bod.has('documents'):
