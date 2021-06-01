@@ -1,5 +1,5 @@
 ## @meta-authors TODO
-## @meta-version 2.4
+## @meta-version 2.5
 ## The authentication API for Firebase.
 ## Documentation TODO.
 tool
@@ -255,7 +255,7 @@ func _tcp_stream_timer() -> void:
 # A token is automatically obtained using an authorization code using @get_google_auth()
 # @provider_id and @request_uri can be changed
 func login_with_oauth(_google_token: String, request_uri : String = "http://localhost", provider_id : String = "google.com") -> void:
-    var google_token : String = _url_decode(_google_token)
+    var google_token : String = _google_token.percent_decode()
     _exchange_google_token(google_token, request_uri)
     var is_successful : bool = yield(self, "token_exchanged")
     if is_successful and _is_ready():
@@ -478,11 +478,3 @@ func get_clean_keys(auth_result : Dictionary) -> Dictionary:
     for key in auth_result.keys():
         cleaned[key.replace("_", "").to_lower()] = auth_result[key]
     return cleaned
-
-func _url_decode(url : String) -> String:
-    var decoded_url : String = url.replacen("%21", "!").replacen("%23", "#").replacen("%24", "$") \
-    .replacen("%26", "&").replacen("%27", "'").replacen("%28", "(").replacen("%29", ")") \
-    .replacen("%2A", "*").replacen("%2B", "+").replacen("%2C", ",").replacen("%2F", "/") \
-    .replacen("%3A", ":").replacen("%3B", ";").replacen("%3D", "=").replacen("%3F", "?") \
-    .replacen("%40", "@").replacen("%5B", "[").replacen("%5D", "]")
-    return decoded_url
