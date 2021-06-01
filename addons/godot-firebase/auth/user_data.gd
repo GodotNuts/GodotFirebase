@@ -6,9 +6,9 @@ tool
 class_name FirebaseUserData
 extends Reference
 
-var local_id : String = ""            # The uid of the current user.
+var local_id : String = ""           # The uid of the current user.
 var email : String = ""
-var email_verified := false   # Whether or not the account's email has been verified.
+var email_verified := false          # Whether or not the account's email has been verified.
 var password_updated_at : float = 0  # The timestamp, in milliseconds, that the account password was last changed.
 var last_login_at : float = 0        # The timestamp, in milliseconds, that the account last logged in at.
 var created_at : float = 0           # The timestamp, in milliseconds, that the account was created at.

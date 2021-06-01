@@ -1,5 +1,5 @@
 ## @meta-authors TODO
-## @meta-version 2.4
+## @meta-version 2.5
 ## The authentication API for Firebase.
 ## Documentation TODO.
 tool
@@ -23,6 +23,7 @@ const RESPONSE_SIGNUP : String   = "identitytoolkit#SignupNewUserResponse"
 const RESPONSE_SIGNIN : String   = "identitytoolkit#VerifyPasswordResponse"
 const RESPONSE_ASSERTION : String  = "identitytoolkit#VerifyAssertionResponse"
 const RESPONSE_USERDATA : String = "identitytoolkit#GetAccountInfoResponse"
+const RESPONSE_CUSTOM_TOKEN : String = "identitytoolkit#VerifyCustomTokenResponse"
 
 var _signup_request_url : String = "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=%s"
 var _signin_with_oauth_request_url : String = "https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=%s"
@@ -41,6 +42,11 @@ var auth : Dictionary = {}
 var _needs_refresh : bool = false
 var is_busy : bool = false
 
+
+var tcp_server : TCP_Server = TCP_Server.new()
+var tcp_timer : Timer = Timer.new()
+var tcp_timeout : float = 0.5
+
 var _headers : PoolStringArray = [
     "Accept: application/json"
    ]
@@ -50,8 +56,7 @@ var requesting : int = -1
 enum Requests {
     NONE = -1,
     EXCHANGE_TOKEN,
-    LOGIN_WITH_OAUTH,
-    EXCHANGE_CUSTOM_TOKEN
+    LOGIN_WITH_OAUTH
 }
 
 var _login_request_body : Dictionary = {
@@ -121,7 +126,7 @@ var _update_profile_body : Dictionary = {
 var _google_auth_body : Dictionary = {
     "scope":"email openid profile",
     "response_type":"code",
-    "redirect_uri":"urn:ietf:wg:oauth:2.0:oob",
+    "redirect_uri":"",
     "client_id":"[CLIENT_ID]"
 }
 
@@ -129,10 +134,13 @@ var _google_token_body : Dictionary = {
     "code":"",
     "client_id":"",
     "client_secret":"",
-    "redirect_uri":"urn:ietf:wg:oauth:2.0:oob",
+    "redirect_uri":"",
     "grant_type":"authorization_code"
 }
 
+func _ready() -> void:
+    tcp_timer.wait_time = tcp_timeout
+    tcp_timer.connect("timeout", self, "_tcp_stream_timer")
 
 # Sets the configuration needed for the plugin to talk to Firebase
 # These settings come from the Firebase.gd script automatically
@@ -190,38 +198,65 @@ func login_with_email_and_password(email : String, password : String) -> void:
         _login_request_body.password = password
         request(_signin_request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_login_request_body))
 
+# Login with a custom valid token
+# The token needs to be generated using an external service/function
 func login_with_custom_token(token : String) -> void:
     if _is_ready():
         is_busy = true
         _custom_token_body.token = token
-        requesting = Requests.EXCHANGE_CUSTOM_TOKEN
         request(_signin_custom_token_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_custom_token_body))
 
 # Open a web page in browser redirecting to Google oAuth2 page for the current project
 # Once given user's authorization, a token will be generated.
 # NOTE** with this method, the authorization process will be copy-pasted
-func get_google_auth(client_id : String = _config.clientId) -> void:
+func get_google_auth_manual() -> void:
     var url_endpoint : String = _google_auth_request_url
+    _google_auth_body.redirect_uri = "urn:ietf:wg:oauth:2.0:oob"
     for key in _google_auth_body.keys():
         url_endpoint+=key+"="+_google_auth_body[key]+"&"
-    url_endpoint = url_endpoint.replace("[CLIENT_ID]&", client_id)
+    url_endpoint = url_endpoint.replace("[CLIENT_ID]&", _config.clientId)
     OS.shell_open(url_endpoint)
 
-# Exchange the authorization oAuth2 code obtained from browser with a proper access id_token
-func exchange_google_token(google_token : String) -> void:
-    if _is_ready():
-        is_busy = true
-        _google_token_body.code = google_token
-        _google_token_body.client_id = _config.clientId
-        _google_token_body.client_secret = _config.clientSecret
-        requesting = Requests.EXCHANGE_TOKEN
-        request(_google_token_request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_google_token_body))
+
+func get_google_auth_redirect(redirect_uri : String, listen_to_port : int) -> void:
+    var url_endpoint : String = _google_auth_request_url
+    _google_auth_body.redirect_uri = redirect_uri
+    for key in _google_auth_body.keys():
+        url_endpoint+=key+"="+_google_auth_body[key]+"&"
+    url_endpoint = url_endpoint.replace("[CLIENT_ID]&", _config.clientId)
+    OS.shell_open(url_endpoint)
+      
+    add_child(tcp_timer)
+    tcp_timer.start()
+    tcp_server.listen(listen_to_port, "::")
+
+
+# Open a web page in browser redirecting to Google oAuth2 page for the current project
+# Once given user's authorization, a token will be generated.
+# NOTE** the generated token will be automatically captured and a login request will be made if the token is correct
+func get_google_auth_localhost(port : int = 49152):
+    get_google_auth_redirect("http://localhost:%s/" % port, port)
+
+
+# A timer used to listen through TCP on the redirect uri of the request
+func _tcp_stream_timer() -> void:
+    var peer : StreamPeer = tcp_server.take_connection()
+    if peer != null:
+        var raw_result : String = peer.get_utf8_string(100)
+        if raw_result != "" and raw_result.begins_with("GET"):
+            var token : String = raw_result.rsplit("=")[1].rstrip("&scope")
+            tcp_server.stop()
+            peer.disconnect_from_host()
+            tcp_timer.stop()
+            remove_child(tcp_timer)
+            login_with_oauth(token, _google_auth_body.redirect_uri)
 
 # Login with Google oAuth2.
 # A token is automatically obtained using an authorization code using @get_google_auth()
 # @provider_id and @request_uri can be changed
-func login_with_oauth(google_token: String, provider_id : String = "google.com", request_uri : String = "http://localhost") -> void:
-    exchange_google_token(google_token)
+func login_with_oauth(_google_token: String, request_uri : String = "http://localhost", provider_id : String = "google.com") -> void:
+    var google_token : String = _google_token.percent_decode()
+    _exchange_google_token(google_token, request_uri)
     var is_successful : bool = yield(self, "token_exchanged")
     if is_successful and _is_ready():
         is_busy = true
@@ -229,6 +264,17 @@ func login_with_oauth(google_token: String, provider_id : String = "google.com",
         _oauth_login_request_body.requestUri = _request_uri.replace("[REQUEST_URI]", request_uri)
         requesting = Requests.LOGIN_WITH_OAUTH
         request(_signin_with_oauth_request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_oauth_login_request_body))
+
+# Exchange the authorization oAuth2 code obtained from browser with a proper access id_token
+func _exchange_google_token(google_token : String, redirect_uri : String = "urn:ietf:wg:oauth:2.0:oob") -> void:
+    if _is_ready():
+        is_busy = true
+        _google_token_body.code = google_token
+        _google_token_body.redirect_uri = redirect_uri
+        _google_token_body.client_id = _config.clientId
+        _google_token_body.client_secret = _config.clientSecret
+        requesting = Requests.EXCHANGE_TOKEN
+        request(_google_token_request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_google_token_body))
 
 # Function used to logout of the system, this will also remove the local encrypted auth file if there is one
 func logout() -> void:
@@ -266,8 +312,6 @@ func _on_FirebaseAuth_request_completed(result : int, response_code : int, heade
             match requesting:
                 Requests.EXCHANGE_TOKEN:
                     emit_signal("token_exchanged", true)
-                Requests.EXCHANGE_CUSTOM_TOKEN:
-                    emit_signal("login_succeeded", auth)
             begin_refresh_countdown()
         else:
             match res.kind:
@@ -275,7 +319,7 @@ func _on_FirebaseAuth_request_completed(result : int, response_code : int, heade
                     auth = get_clean_keys(res)
                     emit_signal("signup_succeeded", auth)
                     begin_refresh_countdown()
-                RESPONSE_SIGNIN, RESPONSE_ASSERTION:
+                RESPONSE_SIGNIN, RESPONSE_ASSERTION, RESPONSE_CUSTOM_TOKEN:
                     auth = get_clean_keys(res)
                     emit_signal("login_succeeded", auth)
                     begin_refresh_countdown()
@@ -301,7 +345,7 @@ func save_auth(auth : Dictionary) -> void:
         var encrypted_file = File.new()
         var err = encrypted_file.open_encrypted_with_pass("user://user.auth", File.WRITE, OS.get_unique_id())
         if err != OK:
-            Firebase._printerr("Error Opening File. Error Code: "+ str(err))
+            Firebase._printerr("Error Opening File. Error Code: "+ err)
         else:
             encrypted_file.store_line(to_json(auth))
             encrypted_file.close()
@@ -315,7 +359,7 @@ func load_auth() -> void:
         var encrypted_file = File.new()
         var err = encrypted_file.open_encrypted_with_pass("user://user.auth", File.READ, OS.get_unique_id())
         if err != OK:
-            Firebase._printerr("Error Opening File. Error Code: "+ str(err))
+            Firebase._printerr("Error Opening File. Error Code: "+ err)
         else:
             var encrypted_file_data = parse_json(encrypted_file.get_line())
             manual_token_refresh(encrypted_file_data)
@@ -434,5 +478,3 @@ func get_clean_keys(auth_result : Dictionary) -> Dictionary:
     for key in auth_result.keys():
         cleaned[key.replace("_", "").to_lower()] = auth_result[key]
     return cleaned
-
-
