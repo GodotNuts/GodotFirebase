@@ -225,7 +225,7 @@ func get_google_auth_redirect(redirect_uri : String, listen_to_port : int) -> vo
         url_endpoint+=key+"="+_google_auth_body[key]+"&"
     url_endpoint = url_endpoint.replace("[CLIENT_ID]&", _config.clientId)
     OS.shell_open(url_endpoint)
-      
+    yield(get_tree().create_timer(1),"timeout")
     add_child(tcp_timer)
     tcp_timer.start()
     tcp_server.listen(listen_to_port, "::")
@@ -254,14 +254,14 @@ func _tcp_stream_timer() -> void:
 # Login with Google oAuth2.
 # A token is automatically obtained using an authorization code using @get_google_auth()
 # @provider_id and @request_uri can be changed
-func login_with_oauth(_google_token: String, request_uri : String = "http://localhost", provider_id : String = "google.com") -> void:
+func login_with_oauth(_google_token: String, request_uri : String = "urn:ietf:wg:oauth:2.0:oob", provider_id : String = "google.com") -> void:
     var google_token : String = _google_token.percent_decode()
     _exchange_google_token(google_token, request_uri)
     var is_successful : bool = yield(self, "token_exchanged")
     if is_successful and _is_ready():
         is_busy = true
         _oauth_login_request_body.postBody = _post_body.replace("[GOOGLE_ID_TOKEN]", auth.idtoken).replace("[PROVIDER_ID]", provider_id)
-        _oauth_login_request_body.requestUri = _request_uri.replace("[REQUEST_URI]", request_uri)
+        _oauth_login_request_body.requestUri = _request_uri.replace("[REQUEST_URI]", request_uri if request_uri != "urn:ietf:wg:oauth:2.0:oob" else "http://localhost")
         requesting = Requests.LOGIN_WITH_OAUTH
         request(_signin_with_oauth_request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_oauth_login_request_body))
 
@@ -301,11 +301,13 @@ func _on_FirebaseAuth_request_completed(result : int, response_code : int, heade
     is_busy = false
     var bod = body.get_string_from_utf8()
     var json_result = JSON.parse(bod)
+#    print(json_result.result)
     if json_result.error != OK:
         Firebase._printerr("Error while parsing body json")
         return
         
     var res = json_result.result
+    print(res)
     if response_code == HTTPClient.RESPONSE_OK:
         if not res.has("kind"):
             auth = get_clean_keys(res)
