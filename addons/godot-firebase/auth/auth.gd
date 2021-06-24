@@ -301,13 +301,11 @@ func _on_FirebaseAuth_request_completed(result : int, response_code : int, heade
     is_busy = false
     var bod = body.get_string_from_utf8()
     var json_result = JSON.parse(bod)
-#    print(json_result.result)
     if json_result.error != OK:
         Firebase._printerr("Error while parsing body json")
         return
         
     var res = json_result.result
-    print(res)
     if response_code == HTTPClient.RESPONSE_OK:
         if not res.has("kind"):
             auth = get_clean_keys(res)
