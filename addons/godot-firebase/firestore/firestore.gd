@@ -21,6 +21,9 @@ extends Node
 signal listed_documents(documents)
 ## Emitted when a  [code]query()[/code] request is successfully completed. [code]error()[/code] signal will be emitted otherwise.
 ## @arg-types Array
+signal result_query(result)
+## Emitted when a  [code]query()[/code] request is successfully completed. [code]error()[/code] signal will be emitted otherwise.
+## @arg-types Array
 ## Emitted when a [code]list()[/code] or [code]query()[/code] request is [b]not[/b] successfully completed.
 signal task_error(code,status,message)
 
