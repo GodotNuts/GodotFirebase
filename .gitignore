@@ -2,6 +2,7 @@
 scn/
 icon.png.import
 default_env.tres
+.env
 
 #
 # Godot-specific ignores
@@ -9,6 +10,7 @@ default_env.tres
 .import/
 export.cfg
 export_presets.cfg
+project.godot
 
 #
 # Mono-specific ignores
