@@ -209,32 +209,14 @@ func login_with_custom_token(token : String) -> void:
 # Open a web page in browser redirecting to Google oAuth2 page for the current project
 # Once given user's authorization, a token will be generated.
 # NOTE** with this method, the authorization process will be copy-pasted
-<<<<<<< HEAD
-func get_google_auth(redirect_uri : String = "urn:ietf:wg:oauth:2.0:oob", client_id : String = _config.clientId) -> void:
-    var url_endpoint : String = _google_auth_request_url
-    _google_auth_body.redirect_uri = redirect_uri
-=======
 func get_google_auth_manual() -> void:
     var url_endpoint : String = _google_auth_request_url
     _google_auth_body.redirect_uri = "urn:ietf:wg:oauth:2.0:oob"
->>>>>>> d361a440204336b2289f70a026961c50922a18a7
     for key in _google_auth_body.keys():
         url_endpoint+=key+"="+_google_auth_body[key]+"&"
     url_endpoint = url_endpoint.replace("[CLIENT_ID]&", _config.clientId)
     OS.shell_open(url_endpoint)
 
-<<<<<<< HEAD
-# Exchange the authorization oAuth2 code obtained from browser with a proper access id_token
-func exchange_google_token(google_token : String, redirect_uri : String = "urn:ietf:wg:oauth:2.0:oob") -> void:
-    if _is_ready():
-        is_busy = true
-        _google_token_body.code = google_token
-        _google_token_body.client_id = _config.clientId
-        _google_token_body.client_secret = _config.clientSecret
-        _google_token_body.redirect_uri = redirect_uri
-        requesting = Requests.EXCHANGE_TOKEN
-        request(_google_token_request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_google_token_body))
-=======
 
 func get_google_auth_redirect(redirect_uri : String, listen_to_port : int) -> void:
     var url_endpoint : String = _google_auth_request_url
@@ -268,7 +250,6 @@ func _tcp_stream_timer() -> void:
             tcp_timer.stop()
             remove_child(tcp_timer)
             login_with_oauth(token, _google_auth_body.redirect_uri)
->>>>>>> d361a440204336b2289f70a026961c50922a18a7
 
 # Login with Google oAuth2.
 # A token is automatically obtained using an authorization code using @get_google_auth()
