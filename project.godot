@@ -172,4 +172,4 @@ window/dpi/allow_hidpi=true
 
 [editor_plugins]
 
-enabled=PoolStringArray( "godot-firebase", "silicon.util.custom_docs" )
+enabled=PoolStringArray( "godot-firebase" )
