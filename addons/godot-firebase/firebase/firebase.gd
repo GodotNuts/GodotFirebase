@@ -62,18 +62,18 @@ func _ready() -> void:
         Auth.connect("logged_out", module, "_on_FirebaseAuth_logout")
 
 func _load_config() -> void:
-    if config.apiKey != "" and config.authDomain != "":
+    if _config.apiKey != "" and _config.authDomain != "":
         return
     else:    
         var env = ConfigFile.new()
         var err = env.load("res://addons/godot-firebase/.env")
         if err == OK:
-            for key in config.keys(): 
+            for key in _config.keys(): 
                 var value : String = env.get_value(ENVIRONMENT_VARIABLES, key, "")
                 if value == "":
                     printerr("%s has not a valid value." % key)
                 else:
-                    config[key] = value
+                    _config[key] = value
         else:
             printerr("Unable to read .env file at path 'res://addons/godot-firebase/.env'")
 
