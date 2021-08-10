@@ -69,7 +69,7 @@ func _load_config() -> void:
         var err = env.load("res://addons/godot-firebase/.env")
         if err == OK:
             for key in _config.keys(): 
-                var value : String = env.get_value(ENVIRONMENT_VARIABLES, key, "")
+                var value : String = env.get_value(_ENVIRONMENT_VARIABLES, key, "")
                 if value == "":
                     printerr("%s has not a valid value." % key)
                 else:
