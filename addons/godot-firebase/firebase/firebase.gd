@@ -46,9 +46,8 @@ var _config : Dictionary = {
     "appId": "",
     "measurementId": "",
     "clientId": "",
-    "clientSecret": "",
-    "domainUriPrefix": "",
-    "cacheLocation": "user://.firebase_cache"
+    "clientSecret" : "",
+    "cacheLocation":"user://.firebase_cache"
 }
 
 func _ready() -> void:
@@ -63,17 +62,20 @@ func _ready() -> void:
         Auth.connect("logged_out", module, "_on_FirebaseAuth_logout")
 
 func _load_config() -> void:
-    if ProjectSettings.has_setting(_ENVIRONMENT_VARIABLES+"apiKey"):
-        for key in _config.keys():
-            var env_var : String = _ENVIRONMENT_VARIABLES + key
-            if ProjectSettings.has_setting(env_var) and ProjectSettings.get_setting(env_var) != "":
-                _config[key] = ProjectSettings.get_setting(env_var)
-            else:
-                if _config[key] == "":
-                    _printerr("Configuration key '{key}' not found!".format({key = key}))
-    else:
-        _printerr("No configuration settings found, add them in override.cfg file.")
-    print("")
+    if _config.apiKey != "" and _config.authDomain != "":
+        return
+    else:    
+        var env = ConfigFile.new()
+        var err = env.load("res://addons/godot-firebase/.env")
+        if err == OK:
+            for key in _config.keys(): 
+                var value : String = env.get_value(_ENVIRONMENT_VARIABLES, key, "")
+                if value == "":
+                    printerr("%s has not a valid value." % key)
+                else:
+                    _config[key] = value
+        else:
+            printerr("Unable to read .env file at path 'res://addons/godot-firebase/.env'")
 
 func _printerr(error : String) -> void:
     print("[Firebase Error] >> "+error)

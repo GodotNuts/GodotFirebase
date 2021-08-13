@@ -172,23 +172,4 @@ window/dpi/allow_hidpi=true
 
 [editor_plugins]
 
-enabled=PoolStringArray( "godot-firebase", "silicon.util.custom_docs" )
-
-[firebase]
-
-environment_variables/apiKey=""
-environment_variables/authDomain=""
-environment_variables/databaseURL=""
-environment_variables/projectId=""
-environment_variables/storageBucket=""
-environment_variables/messagingSenderId=""
-environment_variables/appId=""
-environment_variables/measurementId=""
-environment_variables/googleId=""
-environment_variables/googleSecret=""
-environment_variables/googleClientId=""
-environment_variables/googleClientSecret=""
-environment_variables/clientId=""
-environment_variables/clientSecret=""
-environment_variables/domainUriPrefix=""
-environment_variables/cacheLocation="user://.firebase_cache"
+enabled=PoolStringArray( "godot-firebase" )
