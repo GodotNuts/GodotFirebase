@@ -1,5 +1,5 @@
-## @meta-authors SIsilicon
-## @meta-version 2.4
+## @meta-authors Kyle Szklenski
+## @meta-version 2.5
 ## The Firebase Godot API.
 ## This singleton gives you access to your Firebase project and its capabilities. Using this requires you to fill out some Firebase configuration settings. It currently comes with four modules.
 ## 	- [code]Auth[/code]: Manages user authentication (logging and out, etc...)
@@ -11,7 +11,7 @@
 tool
 extends Node
 
-const _ENVIRONMENT_VARIABLES : String = "firebase/environment_variables/"
+const _ENVIRONMENT_VARIABLES : String = "firebase/environment_variables"
 
 ## @type FirebaseAuth
 ## The Firebase Authentication API.
