@@ -14,6 +14,7 @@ signal auth_request(result_code, result_content)
 signal signup_succeeded(auth_result)
 signal login_succeeded(auth_result)
 signal login_failed(code, message)
+signal signup_failed(code, message)
 signal userdata_received(userdata)
 signal token_exchanged(successful)
 signal token_refresh_succeeded(auth_result)
@@ -57,6 +58,17 @@ enum Requests {
     NONE = -1,
     EXCHANGE_TOKEN,
     LOGIN_WITH_OAUTH
+}
+
+var auth_request_type : int = -1
+
+enum Auth_Type {
+    NONE = -1
+    LOGIN_EP,
+    LOGIN_ANON,
+    LOGIN_CT,
+    LOGIN_OAUTH,
+    SIGNUP_EP
 }
 
 var _login_request_body : Dictionary = {
@@ -175,6 +187,7 @@ func signup_with_email_and_password(email : String, password : String) -> void:
         is_busy = true
         _login_request_body.email = email
         _login_request_body.password = password
+        auth_request_type = Auth_Type.SIGNUP_EP
         request(_signup_request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_login_request_body))
 
 
@@ -185,6 +198,7 @@ func signup_with_email_and_password(email : String, password : String) -> void:
 func login_anonymous() -> void:
     if _is_ready():
         is_busy = true
+        auth_request_type = Auth_Type.LOGIN_ANON
         request(_signup_request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_anonymous_login_request_body))
 
 
@@ -196,6 +210,7 @@ func login_with_email_and_password(email : String, password : String) -> void:
         is_busy = true
         _login_request_body.email = email
         _login_request_body.password = password
+        auth_request_type = Auth_Type.LOGIN_EP
         request(_signin_request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_login_request_body))
 
 # Login with a custom valid token
@@ -204,6 +219,7 @@ func login_with_custom_token(token : String) -> void:
     if _is_ready():
         is_busy = true
         _custom_token_body.token = token
+        auth_request_type = Auth_Type.LOGIN_CT
         request(_signin_custom_token_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_custom_token_body))
 
 # Open a web page in browser redirecting to Google oAuth2 page for the current project
@@ -263,6 +279,7 @@ func login_with_oauth(_google_token: String, request_uri : String = "urn:ietf:wg
         _oauth_login_request_body.postBody = _post_body.replace("[GOOGLE_ID_TOKEN]", auth.idtoken).replace("[PROVIDER_ID]", provider_id)
         _oauth_login_request_body.requestUri = _request_uri.replace("[REQUEST_URI]", request_uri if request_uri != "urn:ietf:wg:oauth:2.0:oob" else "http://localhost")
         requesting = Requests.LOGIN_WITH_OAUTH
+        auth_request_type = Auth_Type.LOGIN_OAUTH
         request(_signin_with_oauth_request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_oauth_login_request_body))
 
 # Exchange the authorization oAuth2 code obtained from browser with a proper access id_token
@@ -334,9 +351,11 @@ func _on_FirebaseAuth_request_completed(result : int, response_code : int, heade
             emit_signal("login_failed", res.error, res.error_description)
             emit_signal("auth_request", res.error, res.error_description)
         else:
-            emit_signal("login_failed", res.error.code, res.error.message)
+            var sig = "signup_failed" if auth_request_type == Auth_Type.SIGNUP_EP else "login_failed"
+            emit_signal(sig, res.error.code, res.error.message)
             emit_signal("auth_request", res.error.code, res.error.message)
     requesting = Requests.NONE
+    auth_request_type = Auth_Type.NONE
 
 # Function used to save the auth data provided by Firebase into an encrypted file
 # Note this does not work in HTML5 or UWP
