@@ -371,16 +371,14 @@ func save_auth(auth : Dictionary) -> void:
 # Function used to load the auth data file that has been stored locally
 # Note this does not work in HTML5 or UWP
 func load_auth() -> void:
-    if OS.get_name() != 'HTML5' and OS.get_name() != 'UWP':
-        var encrypted_file = File.new()
-        var err = encrypted_file.open_encrypted_with_pass("user://user.auth", File.READ, _config.apiKey)
-        if err != OK:
-            Firebase._printerr("Error Opening File. Error Code: "+ err)
-        else:
-            var encrypted_file_data = parse_json(encrypted_file.get_line())
-            manual_token_refresh(encrypted_file_data)
+
+    var encrypted_file = File.new()
+    var err = encrypted_file.open_encrypted_with_pass("user://user.auth", File.READ, _config.apiKey)
+    if err != OK:
+        Firebase._printerr("Error Opening File. Error Code: "+ err)
     else:
-        Firebase._printerr("OS Not supported for loading auth data")
+        var encrypted_file_data = parse_json(encrypted_file.get_line())
+        manual_token_refresh(encrypted_file_data)
 
 # Function used to remove the local encrypted auth file
 func remove_auth() -> void:
