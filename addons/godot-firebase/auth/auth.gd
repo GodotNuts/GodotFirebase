@@ -360,30 +360,25 @@ func _on_FirebaseAuth_request_completed(result : int, response_code : int, heade
 # Function used to save the auth data provided by Firebase into an encrypted file
 # Note this does not work in HTML5 or UWP
 func save_auth(auth : Dictionary) -> void:
-    if (OS.get_name() != 'HTML5' and OS.get_name() != 'UWP'):
-        var encrypted_file = File.new()
-        var err = encrypted_file.open_encrypted_with_pass("user://user.auth", File.WRITE, OS.get_unique_id())
-        if err != OK:
-            Firebase._printerr("Error Opening File. Error Code: "+ err)
-        else:
-            encrypted_file.store_line(to_json(auth))
-            encrypted_file.close()
+    var encrypted_file = File.new()
+    var err = encrypted_file.open_encrypted_with_pass("user://user.auth", File.WRITE, _config.apiKey)
+    if err != OK:
+        Firebase._printerr("Error Opening File. Error Code: " + String(err))
     else:
-        Firebase._printerr("OS Not supported for saving auth data")
+        encrypted_file.store_line(to_json(auth))
+        encrypted_file.close()
 
 # Function used to load the auth data file that has been stored locally
 # Note this does not work in HTML5 or UWP
 func load_auth() -> void:
-    if OS.get_name() != 'HTML5' and OS.get_name() != 'UWP':
-        var encrypted_file = File.new()
-        var err = encrypted_file.open_encrypted_with_pass("user://user.auth", File.READ, OS.get_unique_id())
-        if err != OK:
-            Firebase._printerr("Error Opening File. Error Code: "+ err)
-        else:
-            var encrypted_file_data = parse_json(encrypted_file.get_line())
-            manual_token_refresh(encrypted_file_data)
+
+    var encrypted_file = File.new()
+    var err = encrypted_file.open_encrypted_with_pass("user://user.auth", File.READ, _config.apiKey)
+    if err != OK:
+        Firebase._printerr("Error Opening File. Error Code: "+ err)
     else:
-        Firebase._printerr("OS Not supported for loading auth data")
+        var encrypted_file_data = parse_json(encrypted_file.get_line())
+        manual_token_refresh(encrypted_file_data)
 
 # Function used to remove the local encrypted auth file
 func remove_auth() -> void:
