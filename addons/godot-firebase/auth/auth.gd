@@ -363,7 +363,7 @@ func save_auth(auth : Dictionary) -> void:
     var encrypted_file = File.new()
     var err = encrypted_file.open_encrypted_with_pass("user://user.auth", File.WRITE, _config.apiKey)
     if err != OK:
-        Firebase._printerr("Error Opening File. Error Code: "+ err)
+        Firebase._printerr("Error Opening File. Error Code: " + String(err))
     else:
         encrypted_file.store_line(to_json(auth))
         encrypted_file.close()
