@@ -373,7 +373,7 @@ func save_auth(auth : Dictionary) -> void:
 func load_auth() -> void:
     if OS.get_name() != 'HTML5' and OS.get_name() != 'UWP':
         var encrypted_file = File.new()
-        var err = encrypted_file.open_encrypted_with_pass("user://user.auth", File.READ, OS.get_unique_id())
+        var err = encrypted_file.open_encrypted_with_pass("user://user.auth", File.READ, _config.apiKey)
         if err != OK:
             Firebase._printerr("Error Opening File. Error Code: "+ err)
         else:
