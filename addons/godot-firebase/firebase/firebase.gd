@@ -47,6 +47,7 @@ var _config : Dictionary = {
     "measurementId": "",
     "clientId": "",
     "clientSecret" : "",
+    "domainUriPrefix" : "",
     "cacheLocation":"user://.firebase_cache"
 }
 
