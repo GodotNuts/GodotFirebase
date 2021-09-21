@@ -55,7 +55,7 @@ func _ready() -> void:
     _load_config()
     for module in get_children():
         module._set_config(_config)
-        if module is FirebaseAuth:
+        if not module.has_method("_on_FirebaseAuth_login_succeeded"):
             continue
         Auth.connect("login_succeeded", module, "_on_FirebaseAuth_login_succeeded")
         Auth.connect("signup_succeeded", module, "_on_FirebaseAuth_login_succeeded")
@@ -72,7 +72,7 @@ func _load_config() -> void:
             for key in _config.keys(): 
                 var value : String = env.get_value(_ENVIRONMENT_VARIABLES, key, "")
                 if value == "":
-                    printerr("%s has not a valid value." % key)
+                    printerr("The value for %s is invalid." % key)
                 else:
                     _config[key] = value
         else:
