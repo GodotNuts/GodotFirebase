@@ -328,14 +328,23 @@ func manual_token_refresh(auth_data):
 # On an error, this function with emit the signal 'login_failed' and print the error to the console
 func _on_FirebaseAuth_request_completed(result : int, response_code : int, headers : PoolStringArray, body : PoolByteArray) -> void:
     is_busy = false
-    var bod = body.get_string_from_utf8()
-    var json_result = JSON.parse(bod)
-    if json_result.error != OK:
-        Firebase._printerr("Error while parsing auth body json")
-        emit_signal("auth_request", "Error while parsing auth body json", json_result)
-        return
-        
-    var res = json_result.result
+    var res
+    if response_code == 0:
+        # Mocked error results to trigger the correct signal.
+        # Can occur if there is no internet connection, or the service is down,
+        # in which case there is no json_body (and thus parsing would fail).
+        res = {"error": {
+            "code": "Connection error",
+            "message": "Error connecting to auth service"}}
+    else:
+        var bod = body.get_string_from_utf8()
+        var json_result = JSON.parse(bod)
+        if json_result.error != OK:
+            Firebase._printerr("Error while parsing auth body json")
+            emit_signal("auth_request", "Error while parsing auth body json", json_result)
+            return
+        res = json_result.result
+
     if response_code == HTTPClient.RESPONSE_OK:
         if not res.has("kind"):
             auth = get_clean_keys(res)
@@ -359,7 +368,7 @@ func _on_FirebaseAuth_request_completed(result : int, response_code : int, heade
                     emit_signal("userdata_received", userdata)
             emit_signal("auth_request", 1, auth)
     else:
-                # error message would be INVALID_EMAIL, EMAIL_NOT_FOUND, INVALID_PASSWORD, USER_DISABLED or WEAK_PASSWORD
+        # error message would be INVALID_EMAIL, EMAIL_NOT_FOUND, INVALID_PASSWORD, USER_DISABLED or WEAK_PASSWORD
         if requesting == Requests.EXCHANGE_TOKEN:
             emit_signal("token_exchanged", false)
             emit_signal("login_failed", res.error, res.error_description)
