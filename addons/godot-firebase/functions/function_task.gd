@@ -27,7 +27,8 @@ signal function_executed(response, result)
 signal task_error(code, status, message)
 
 ## A variable, temporary holding the result of the request.
-var data
+var data: Dictionary
+var error: Dictionary
 
 ## Whether the data came from cache.
 var from_cache : bool = false
@@ -48,13 +49,13 @@ func _on_request_completed(result : int, response_code : int, headers : PoolStri
         bod = {content = body.get_string_from_utf8()}
     
     var offline: bool = typeof(bod) == TYPE_NIL
-    var error: bool = bod is Dictionary and bod.has("error") and response_code != HTTPClient.RESPONSE_OK
     from_cache = offline
 
     data = bod
     if response_code == HTTPClient.RESPONSE_OK and data!=null:
         emit_signal("function_executed", result, data)
     else:
+        error = {result=result, response_code=response_code, data=data}
         emit_signal("task_error", result, response_code, data)
     
     emit_signal("task_finished", data)
