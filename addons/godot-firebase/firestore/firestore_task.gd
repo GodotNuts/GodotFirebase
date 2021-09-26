@@ -44,9 +44,9 @@ signal listed_documents(documents)
 signal result_query(result)
 ## Emitted when a request is [b]not[/b] successfully completed.
 ## @arg-types Dictionary
-signal task_error(error)
-signal task_query_error(error)
-signal task_list_error(error)
+signal task_error(code, status, message)
+signal task_query_error(code, status, message)
+signal task_list_error(code, status, message)
 
 enum Task {
     TASK_GET,       ## A GET Request Task, processing a get() request
