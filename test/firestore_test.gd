@@ -15,7 +15,7 @@ func _ready() -> void:
     task = Firebase.Firestore.list("test_collection", 5, "", "number")
     print(yield(task, "listed_documents"))
     
-    var test := Firebase.Firestore.collection("test_collection")
+    var test : FirestoreCollection = Firebase.Firestore.collection("test_collection")
     
     for i in 5:
         var name = "some_document_%d" % hash(str(i))

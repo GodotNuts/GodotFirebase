@@ -39,6 +39,11 @@ _global_script_classes=[ {
 "language": "GDScript",
 "path": "res://addons/godot-firebase/auth/auth.gd"
 }, {
+"base": "Control",
+"class": "FirebaseContainer",
+"language": "GDScript",
+"path": "res://addons/godot-firebase/containers/container.gd"
+}, {
 "base": "Node",
 "class": "FirebaseDatabase",
 "language": "GDScript",
@@ -63,6 +68,11 @@ _global_script_classes=[ {
 "class": "FirebaseFirestore",
 "language": "GDScript",
 "path": "res://addons/godot-firebase/firestore/firestore.gd"
+}, {
+"base": "Node",
+"class": "FirebaseFunctions",
+"language": "GDScript",
+"path": "res://addons/godot-firebase/functions/functions.gd"
 }, {
 "base": "Resource",
 "class": "FirebaseResource",
@@ -98,6 +108,11 @@ _global_script_classes=[ {
 "class": "FirestoreTask",
 "language": "GDScript",
 "path": "res://addons/godot-firebase/firestore/firestore_task.gd"
+}, {
+"base": "Reference",
+"class": "FunctionTask",
+"language": "GDScript",
+"path": "res://addons/godot-firebase/functions/function_task.gd"
 }, {
 "base": "DocItem",
 "class": "MethodDocItem",
@@ -136,11 +151,13 @@ _global_script_class_icons={
 "DocExporter": "",
 "DocItem": "",
 "FirebaseAuth": "",
+"FirebaseContainer": "",
 "FirebaseDatabase": "",
 "FirebaseDatabaseReference": "",
 "FirebaseDatabaseStore": "",
 "FirebaseDynamicLinks": "",
 "FirebaseFirestore": "",
+"FirebaseFunctions": "",
 "FirebaseResource": "",
 "FirebaseStorage": "",
 "FirebaseUserData": "",
@@ -148,6 +165,7 @@ _global_script_class_icons={
 "FirestoreDocument": "",
 "FirestoreQuery": "",
 "FirestoreTask": "",
+"FunctionTask": "",
 "MethodDocItem": "",
 "PropertyDocItem": "",
 "SignalDocItem": "",
@@ -159,7 +177,7 @@ _global_script_class_icons={
 [application]
 
 config/name="godot-firebase"
-run/main_scene="res://scn/new scene.tscn"
+run/main_scene="res://scn/Control.tscn"
 config/icon="res://icon.png"
 
 [autoload]
@@ -173,3 +191,7 @@ window/dpi/allow_hidpi=true
 [editor_plugins]
 
 enabled=PoolStringArray( "godot-firebase" )
+
+[global]
+
+port=false

@@ -33,6 +33,10 @@ onready var Storage : FirebaseStorage = $Storage
 ## The Firebase Dynamic Links API.
 onready var DynamicLinks : FirebaseDynamicLinks = $DynamicLinks
 
+## @type FirebaseFunctions
+## The Firebase Cloud Functions API
+onready var Functions : FirebaseFunctions = $Functions
+
 # Configuration used by all files in this project
 # These values can be found in your Firebase Project
 # See the README on Github for how to access
@@ -48,6 +52,7 @@ var _config : Dictionary = {
     "clientId": "",
     "clientSecret" : "",
     "domainUriPrefix" : "",
+    "functionsBaseUrl" : "",
     "cacheLocation":"user://.firebase_cache"
 }
 
