@@ -1,5 +1,5 @@
-## @meta-authors SIsilicon
-## @meta-version 2.4
+## @meta-authors Kyle Szklenski
+## @meta-version 2.5
 ## The Firebase Godot API.
 ## This singleton gives you access to your Firebase project and its capabilities. Using this requires you to fill out some Firebase configuration settings. It currently comes with four modules.
 ## 	- [code]Auth[/code]: Manages user authentication (logging and out, etc...)
@@ -11,7 +11,7 @@
 tool
 extends Node
 
-const _ENVIRONMENT_VARIABLES : String = "firebase/environment_variables/"
+const _ENVIRONMENT_VARIABLES : String = "firebase/environment_variables"
 
 ## @type FirebaseAuth
 ## The Firebase Authentication API.
@@ -33,6 +33,10 @@ onready var Storage : FirebaseStorage = $Storage
 ## The Firebase Dynamic Links API.
 onready var DynamicLinks : FirebaseDynamicLinks = $DynamicLinks
 
+## @type FirebaseFunctions
+## The Firebase Cloud Functions API
+onready var Functions : FirebaseFunctions = $Functions
+
 # Configuration used by all files in this project
 # These values can be found in your Firebase Project
 # See the README on Github for how to access
@@ -47,14 +51,25 @@ var _config : Dictionary = {
     "measurementId": "",
     "clientId": "",
     "clientSecret" : "",
-    "cacheLocation":"user://.firebase_cache"
+    "domainUriPrefix" : "",
+    "functionsBaseUrl" : "",
+    "cacheLocation":"user://.firebase_cache",
+    "emulators": {
+        "ports" : {
+            "authentication" : "",
+            "firestore" : "",
+            "realtimeDatabase" : "",
+            "functions" : "",
+            "storage" : ""
+           }
+       }
 }
 
 func _ready() -> void:
     _load_config()
     for module in get_children():
         module._set_config(_config)
-        if module is FirebaseAuth:
+        if not module.has_method("_on_FirebaseAuth_login_succeeded"):
             continue
         Auth.connect("login_succeeded", module, "_on_FirebaseAuth_login_succeeded")
         Auth.connect("signup_succeeded", module, "_on_FirebaseAuth_login_succeeded")
@@ -62,18 +77,18 @@ func _ready() -> void:
         Auth.connect("logged_out", module, "_on_FirebaseAuth_logout")
 
 func _load_config() -> void:
-    if config.apiKey != "" and config.authDomain != "":
+    if _config.apiKey != "" and _config.authDomain != "":
         return
     else:    
         var env = ConfigFile.new()
         var err = env.load("res://addons/godot-firebase/.env")
         if err == OK:
-            for key in config.keys(): 
-                var value : String = env.get_value(ENVIRONMENT_VARIABLES, key, "")
+            for key in _config.keys(): 
+                var value : String = env.get_value(_ENVIRONMENT_VARIABLES, key, "")
                 if value == "":
-                    printerr("%s has not a valid value." % key)
+                    printerr("The value for %s is invalid." % key)
                 else:
-                    config[key] = value
+                    _config[key] = value
         else:
             printerr("Unable to read .env file at path 'res://addons/godot-firebase/.env'")
 
