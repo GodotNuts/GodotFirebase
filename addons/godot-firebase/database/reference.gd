@@ -127,7 +127,8 @@ func _get_remaining_path(is_push : bool = true) -> String:
         return _json_list_tag + _query_tag + _get_filter() + _filter_tag + _auth_tag + Firebase.Auth.auth.idtoken
 
 func _get_list_url() -> String:
-    return _config.databaseURL + _separator # + ListName + _json_list_tag + _auth_tag + _auth.idtoken
+    return Firebase.Database._base_url
+
 
 func _get_filter():
     if !_filter_query:

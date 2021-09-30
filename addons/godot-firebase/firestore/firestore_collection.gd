@@ -102,13 +102,13 @@ func _process_request(task : FirestoreTask, document_id : String, url : String, 
     task.connect("task_error", self, "_on_error")
     
     if not auth:
-        Firebase._printerr("Unauthenticated request issued...")
+        Firebase._print("Unauthenticated request issued...")
         Firebase.Auth.login_anonymous()
         var result : Array = yield(Firebase.Auth, "auth_request")
         if result[0] != 1:
             Firebase.Firestore._check_auth_error(result[0], result[1])
             return null
-        Firebase._printerr("Client authenticated as Anonymous User.")
+        Firebase._print("Client authenticated as Anonymous User.")
     
     task._url = url
     task._fields = fields

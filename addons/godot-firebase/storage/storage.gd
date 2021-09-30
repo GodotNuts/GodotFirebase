@@ -8,6 +8,8 @@ tool
 class_name FirebaseStorage
 extends Node
 
+const _API_VERSION : String = "v0"
+
 ## @arg-types int, int, PoolStringArray
 ## @arg-enums HTTPRequest.Result, HTTPClient.ResponseCode
 ## Emitted when a [StorageTask] has finished successful.
@@ -30,8 +32,8 @@ var _config : Dictionary
 
 var _references : Dictionary = {}
 
-var _base_url : String = "https://firebasestorage.googleapis.com"
-var _extended_url : String = "/v0/b/[APP_ID]/o/[FILE_PATH]"
+var _base_url : String = ""
+var _extended_url : String = "b/[APP_ID]/o/[FILE_PATH]"
 var _root_ref : StorageReference
 
 var _http_client : HTTPClient = HTTPClient.new()
@@ -141,6 +143,20 @@ func _set_config(config_json : Dictionary) -> void:
     if bucket != _config.storageBucket:
         bucket = _config.storageBucket
         _http_client.close()
+    _check_emulating()
+
+
+func _check_emulating() -> void :
+    ## Check emulating
+    if not Firebase.emulating:
+        _base_url = "https://firebasestorage.googleapis.com/{version}/".format({ version = _API_VERSION })
+    else:
+        var port : String = _config.emulators.ports.storage
+        if port == "":
+            Firebase._printerr("You are in 'emulated' mode, but the port for Storage has not been configured.")
+        else:
+            _base_url = "http://127.0.0.1:{port}/{version}/".format({ version = _API_VERSION, port = port })
+
 
 func _upload(data : PoolByteArray, headers : PoolStringArray, ref : StorageReference, meta_only : bool) -> StorageTask:
     if not (_config and _auth):
