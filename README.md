@@ -8,6 +8,8 @@ A Google Firebase SDK written in GDScript for use in Godot Engine projects.
 
 https://discord.gg/xXKYN2ZxDB
 
+godotnuts@gmail.com
+
 ## :coffee: Contributors
 
 The following individuals and many more have contributed significantly to this project. If you would like to support this project's further development, consider supporting them.
