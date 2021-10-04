@@ -127,9 +127,20 @@ func _set_config(config_json : Dictionary) -> void:
     _config = config_json
     _cache_loc = _config["cacheLocation"]
     
-    _base_url = _config.functionsBaseUrl
     if _encrypt_key == "": _encrypt_key = _config.apiKey
-    
+    _check_emulating()
+
+
+func _check_emulating() -> void :
+    ## Check emulating
+    if not Firebase.emulating:
+        _base_url = "https://{zone}-{projectId}.cloudfunctions.net/".format({ zone = _config.functionsGeoZone, projectId = _config.projectId })
+    else:
+        var port : String = _config.emulators.ports.functions
+        if port == "":
+            Firebase._printerr("You are in 'emulated' mode, but the port for Cloud Functions has not been configured.")
+        else:
+            _base_url = "http://127.0.0.1:{port}/{projectId}/{zone}/".format({ port = port, zone = _config.functionsGeoZone, projectId = _config.projectId })    
 
 
 func _pooled_request(task : FunctionTask) -> void:
@@ -137,15 +148,16 @@ func _pooled_request(task : FunctionTask) -> void:
         task._on_request_completed(HTTPRequest.RESULT_CANT_CONNECT, 404, PoolStringArray(), PoolByteArray())
         return
     
-    if not auth:
-        Firebase._printerr("Unauthenticated request issued...")
+    if not auth and not Firebase.emulating:
+        Firebase._print("Unauthenticated request issued...")
         Firebase.Auth.login_anonymous()
         var result : Array = yield(Firebase.Auth, "auth_request")
         if result[0] != 1:
             _check_auth_error(result[0], result[1])
-        Firebase._printerr("Client connected as Anonymous")
+        Firebase._print("Client connected as Anonymous")
         
-    task._headers = Array(task._headers) + [_AUTHORIZATION_HEADER + auth.idtoken]
+    if not Firebase.emulating:
+        task._headers = Array(task._headers) + [_AUTHORIZATION_HEADER + auth.idtoken]
     
     var http_request : HTTPRequest
     for request in _http_request_pool:

@@ -16,6 +16,8 @@ tool
 class_name FirebaseFirestore
 extends Node
 
+const _API_VERSION : String = "v1"
+
 ## Emitted when a  [code]list()[/code] request is successfully completed. [code]error()[/code] signal will be emitted otherwise.
 ## @arg-types Array
 signal listed_documents(documents)
@@ -68,7 +70,8 @@ var _config : Dictionary = {}
 var _cache_loc: String
 var _encrypt_key := "5vg76n90345f7w390346" if OS.get_name() in ["HTML5", "UWP"] else OS.get_unique_id()
 
-var _base_url : String = "https://firestore.googleapis.com/v1/"
+
+var _base_url : String = ""
 var _extended_url : String = "projects/[PROJECT_ID]/databases/(default)/documents/"
 var _query_suffix : String = ":runQuery"
 
@@ -83,16 +86,7 @@ var _http_request_pool := []
 var _offline: bool = false setget _set_offline
 
 func _ready() -> void:
-    #_connect_check_node = HTTPRequest.new()
-    #_connect_check_node.timeout = 5
-    #_connect_check_node.connect("request_completed", self, "_on_connect_check_request_completed")
-    #add_child(_connect_check_node)
-    #_connect_check_node.request(_base_url)
-    
-    _request_list_node = HTTPRequest.new()
-    _request_list_node.connect("request_completed", self, "_on_request_completed")
-    _request_list_node.timeout = 5
-    add_child(_request_list_node)
+    pass
 
 func _process(delta : float) -> void:
     for i in range(_http_request_pool.size() - 1, -1, -1):
@@ -175,17 +169,13 @@ func query(query : FirestoreQuery) -> FirestoreTask:
 ## @arg-types String, int, String, String
 ## @arg-defaults , 0, "", ""
 ## @return FirestoreTask
-func list(path : String, page_size : int = 0, page_token : String = "", order_by : String = "") -> FirestoreTask:
+func list(path : String = "", page_size : int = 0, page_token : String = "", order_by : String = "") -> FirestoreTask:
     var firestore_task : FirestoreTask = FirestoreTask.new()
     firestore_task.connect("listed_documents", self, "_on_listed_documents")
     firestore_task.connect("task_error", self, "_on_task_error")
     firestore_task.connect("task_list_error", self, "_on_task_list_error")
     firestore_task.action = FirestoreTask.Task.TASK_LIST
-    var url : String
-    if not path in [""," "]:
-        url = _base_url + _extended_url + path + "/"
-    else:
-        url = _base_url + _extended_url
+    var url : String = _base_url + _extended_url + path
     if page_size != 0:
         url+="?pageSize="+str(page_size)
     if page_token != "":
@@ -295,22 +285,36 @@ func _set_config(config_json : Dictionary) -> void:
         _offline = true
     else:
         _offline = false
+    
+    _check_emulating()
 
+
+func _check_emulating() -> void :
+    ## Check emulating
+    if not Firebase.emulating:
+        _base_url = "https://firestore.googleapis.com/{version}/".format({ version = _API_VERSION })
+    else:
+        var port : String = _config.emulators.ports.firestore
+        if port == "":
+            Firebase._printerr("You are in 'emulated' mode, but the port for Firestore has not been configured.")
+        else:
+            _base_url = "http://127.0.0.1:{port}/{version}/".format({ version = _API_VERSION, port = port })
 
 func _pooled_request(task : FirestoreTask) -> void:
     if _offline:
         task._on_request_completed(HTTPRequest.RESULT_CANT_CONNECT, 404, PoolStringArray(), PoolByteArray())
         return
     
-    if not auth:
-        Firebase._printerr("Unauthenticated request issued...")
+    if not auth and not Firebase.emulating:
+        Firebase._print("Unauthenticated request issued...")
         Firebase.Auth.login_anonymous()
         var result : Array = yield(Firebase.Auth, "auth_request")
         if result[0] != 1:
             _check_auth_error(result[0], result[1])
-        Firebase._printerr("Client connected as Anonymous")
+        Firebase._print("Client connected as Anonymous")
     
-    task._headers = PoolStringArray([_AUTHORIZATION_HEADER + auth.idtoken])
+    if not Firebase.emulating:
+        task._headers = PoolStringArray([_AUTHORIZATION_HEADER + auth.idtoken])
     
     var http_request : HTTPRequest
     for request in _http_request_pool:
@@ -328,7 +332,7 @@ func _pooled_request(task : FirestoreTask) -> void:
     http_request.set_meta("requesting", true)
     http_request.set_meta("lifetime", 0.0)
     http_request.set_meta("task", task)
-    http_request.request(task._url, task._headers, true, task._method, task._fields)
+    http_request.request(task._url, task._headers, !Firebase.emulating, task._method, task._fields)
 
 
 # -------------

@@ -6,12 +6,29 @@ tool
 class_name FirebaseDatabase
 extends Node
 
+var _base_url : String = ""
+
 var _config : Dictionary = {}
 
 var _auth : Dictionary = {}
 
 func _set_config(config_json : Dictionary) -> void:
     _config = config_json
+    _check_emulating()
+
+
+func _check_emulating() -> void :
+    ## Check emulating
+    if not Firebase.emulating:
+        _base_url = _config.databaseURL + "/" # + ListName + _json_list_tag + _auth_tag + _auth.idtoken
+    else:
+        var port : String = _config.emulators.ports.realtimeDatabase
+        if port == "":
+            Firebase._printerr("You are in 'emulated' mode, but the port for Realtime Database has not been configured.")
+        else:
+            _base_url = "http://localhost:{port}/?ns={projectId}".format({ port = port, projectId = _config.projectId }) + "/"
+
+
 
 func _on_FirebaseAuth_login_succeeded(auth_result : Dictionary) -> void:
     _auth = auth_result

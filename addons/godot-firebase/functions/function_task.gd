@@ -56,7 +56,7 @@ func _on_request_completed(result : int, response_code : int, headers : PoolStri
         emit_signal("function_executed", result, data)
     else:
         error = {result=result, response_code=response_code, data=data}
-        emit_signal("task_error", result, response_code, data)
+        emit_signal("task_error", result, response_code, str(data))
     
     emit_signal("task_finished", data)
 
