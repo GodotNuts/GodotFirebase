@@ -10,10 +10,12 @@ extends Node
 signal dynamic_link_generated(link_result)
 
 const _AUTHORIZATION_HEADER : String = "Authorization: Bearer "
+const _API_VERSION : String = "v1"
 
 var request : int = -1
 
-var _dynamic_link_request_url : String = "https://firebasedynamiclinks.googleapis.com/v1/shortLinks?key=%s"
+var _base_url : String = ""
+var _dynamic_link_request_url : String = "shortLinks?key=%s"
 
 var _config : Dictionary = {}
 
@@ -33,6 +35,20 @@ func _set_config(config_json : Dictionary) -> void:
     _request_list_node = HTTPRequest.new()
     _request_list_node.connect("request_completed", self, "_on_request_completed")
     add_child(_request_list_node)
+    _check_emulating()
+
+
+func _check_emulating() -> void :
+    ## Check emulating
+    if not Firebase.emulating:
+        _base_url = "https://firebasedynamiclinks.googleapis.com/{version}/".format({ version = _API_VERSION })
+    else:
+        var port : String = _config.emulators.ports.dynamicLinks
+        if port == "":
+            Firebase._printerr("You are in 'emulated' mode, but the port for Dynamic Links has not been configured.")
+        else:
+            _base_url = "http://127.0.0.1:{port}/{version}/".format({ version = _API_VERSION, port = port })
+
 
 var _link_request_body : Dictionary = {
     "dynamicLinkInfo": {

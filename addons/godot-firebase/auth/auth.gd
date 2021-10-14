@@ -6,6 +6,8 @@ tool
 class_name FirebaseAuth
 extends HTTPRequest
 
+const _API_VERSION : String = "v1"
+
 # Emitted for each Auth request issued.
 # `result_code` -> Either `1` if auth succeeded or `error_code` if unsuccessful auth request
 # `result_content` -> Either `auth_result` if auth succeeded or `error_message` if unsuccessful auth request
@@ -26,15 +28,17 @@ const RESPONSE_ASSERTION : String  = "identitytoolkit#VerifyAssertionResponse"
 const RESPONSE_USERDATA : String = "identitytoolkit#GetAccountInfoResponse"
 const RESPONSE_CUSTOM_TOKEN : String = "identitytoolkit#VerifyCustomTokenResponse"
 
-var _signup_request_url : String = "https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=%s"
-var _signin_with_oauth_request_url : String = "https://identitytoolkit.googleapis.com/v1/accounts:signInWithIdp?key=%s"
-var _signin_request_url : String = "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=%s"
-var _signin_custom_token_url : String = "https://identitytoolkit.googleapis.com/v1/accounts:signInWithCustomToken?key=%s"
-var _userdata_request_url : String = "https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=%s"
+var _base_url : String = ""
+var _signup_request_url : String = "accounts:signUp?key=%s"
+var _signin_with_oauth_request_url : String = "accounts:signInWithIdp?key=%s"
+var _signin_request_url : String = "accounts:signInWithPassword?key=%s"
+var _signin_custom_token_url : String = "accounts:signInWithCustomToken?key=%s"
+var _userdata_request_url : String = "accounts:lookup?key=%s"
+var _oobcode_request_url : String = "accounts:sendOobCode?key=%s"
+var _delete_account_request_url : String = "accounts:delete?key=%s"
+var _update_account_request_url : String = "accounts:update?key=%s"
+
 var _refresh_request_url : String = "https://securetoken.googleapis.com/v1/token?key=%s"
-var _oobcode_request_url : String = "https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=%s"
-var _delete_account_request_url : String = "https://identitytoolkit.googleapis.com/v1/accounts:delete?key=%s"
-var _update_account_request_url : String = "https://identitytoolkit.googleapis.com/v1/accounts:update?key=%s"
 var _google_auth_request_url : String = "https://accounts.google.com/o/oauth2/v2/auth?"
 var _google_token_request_url : String = "https://oauth2.googleapis.com/token?"
 
@@ -170,6 +174,19 @@ func _set_config(config_json : Dictionary) -> void:
     _update_account_request_url %= _config.apiKey
         
     connect("request_completed", self, "_on_FirebaseAuth_request_completed")
+    _check_emulating()
+
+
+func _check_emulating() -> void :
+    ## Check emulating
+    if not Firebase.emulating:
+        _base_url = "https://identitytoolkit.googleapis.com/{version}/".format({ version = _API_VERSION })
+    else:
+        var port : String = _config.emulators.ports.authentication
+        if port == "":
+            Firebase._printerr("You are in 'emulated' mode, but the port for Authentication has not been configured.")
+        else:
+            _base_url = "http://localhost:{port}/{version}/".format({ version = _API_VERSION ,port = port })
 
 
 # Function is used to check if the auth script is ready to process a request. Returns true if it is not currently processing
@@ -195,7 +212,7 @@ func signup_with_email_and_password(email : String, password : String) -> void:
         _login_request_body.email = email
         _login_request_body.password = password
         auth_request_type = Auth_Type.SIGNUP_EP
-        request(_signup_request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_login_request_body))
+        request(_base_url + _signup_request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_login_request_body))
 
 
 # Called with Firebase.Auth.anonymous_login()
@@ -206,7 +223,7 @@ func login_anonymous() -> void:
     if _is_ready():
         is_busy = true
         auth_request_type = Auth_Type.LOGIN_ANON
-        request(_signup_request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_anonymous_login_request_body))
+        request(_base_url + _signup_request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_anonymous_login_request_body))
 
 
 # Called with Firebase.Auth.login_with_email_and_password(email, password)
@@ -218,7 +235,7 @@ func login_with_email_and_password(email : String, password : String) -> void:
         _login_request_body.email = email
         _login_request_body.password = password
         auth_request_type = Auth_Type.LOGIN_EP
-        request(_signin_request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_login_request_body))
+        request(_base_url + _signin_request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_login_request_body))
 
 # Login with a custom valid token
 # The token needs to be generated using an external service/function
@@ -227,7 +244,7 @@ func login_with_custom_token(token : String) -> void:
         is_busy = true
         _custom_token_body.token = token
         auth_request_type = Auth_Type.LOGIN_CT
-        request(_signin_custom_token_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_custom_token_body))
+        request(_base_url + _signin_custom_token_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_custom_token_body))
 
 # Open a web page in browser redirecting to Google oAuth2 page for the current project
 # Once given user's authorization, a token will be generated.
@@ -305,7 +322,7 @@ func login_with_oauth(_google_token: String, request_uri : String = "urn:ietf:wg
         _oauth_login_request_body.requestUri = _request_uri.replace("[REQUEST_URI]", request_uri if request_uri != "urn:ietf:wg:oauth:2.0:oob" else "http://localhost")
         requesting = Requests.LOGIN_WITH_OAUTH
         auth_request_type = Auth_Type.LOGIN_OAUTH
-        request(_signin_with_oauth_request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_oauth_login_request_body))
+        request(_base_url + _signin_with_oauth_request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_oauth_login_request_body))
 
 
 # Exchange the authorization oAuth2 code obtained from browser with a proper access id_token
@@ -338,7 +355,7 @@ func manual_token_refresh(auth_data):
         refresh_token = auth.refresh_token
     _needs_refresh = true
     _refresh_request_body.refresh_token = refresh_token
-    request(_refresh_request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_refresh_request_body))
+    request(_base_url + _refresh_request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_refresh_request_body))
 
 
 # This function is called whenever there is an authentication request to Firebase
@@ -451,7 +468,7 @@ func change_user_email(email : String) -> void:
         is_busy = true
         _change_email_body.email = email
         _change_email_body.idToken = auth.idtoken
-        request(_update_account_request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_change_email_body))
+        request(_base_url + _update_account_request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_change_email_body))
 
 
 # Function used to change the password for the currently logged in user
@@ -460,7 +477,7 @@ func change_user_password(password : String) -> void:
         is_busy = true
         _change_password_body.password = password
         _change_password_body.idToken = auth.idtoken
-        request(_update_account_request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_change_password_body))
+        request(_base_url + _update_account_request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_change_password_body))
 
 
 # User Profile handlers 
@@ -472,7 +489,7 @@ func update_account(idToken : String, displayName : String, photoUrl : String, d
         _update_profile_body.photoUrl = photoUrl
         _update_profile_body.deleteAttribute = deleteAttribute
         _update_profile_body.returnSecureToken = returnSecureToken
-        request(_update_account_request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_update_profile_body))
+        request(_base_url + _update_account_request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_update_profile_body))
 
 
 # Function to send a account verification email
@@ -480,7 +497,7 @@ func send_account_verification_email() -> void:
     if _is_ready():
         is_busy = true
         _account_verification_body.idToken = auth.idtoken
-        request(_oobcode_request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_account_verification_body))
+        request(_base_url + _oobcode_request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_account_verification_body))
 
 
 # Function used to reset the password for a user who has forgotten in.
@@ -489,7 +506,7 @@ func send_password_reset_email(email : String) -> void:
     if _is_ready():
         is_busy = true
         _password_reset_body.email = email
-        request(_oobcode_request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_password_reset_body))
+        request(_base_url + _oobcode_request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_password_reset_body))
 
 
 # Function called to get all
@@ -501,14 +518,14 @@ func get_user_data() -> void:
             is_busy = false
             return
                         
-        request(_userdata_request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print({"idToken":auth.idtoken}))
+        request(_base_url + _userdata_request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print({"idToken":auth.idtoken}))
 
 
 # Function used to delete the account of the currently authenticated user
 func delete_user_account() -> void:
     if _is_ready():
         is_busy = true
-        request(_delete_account_request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print({"idToken":auth.idtoken}))
+        request(_base_url + _delete_account_request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print({"idToken":auth.idtoken}))
 
 
 # Function is called when a new token is issued to a user. The function will yield until the token has expired, and then request a new one.
