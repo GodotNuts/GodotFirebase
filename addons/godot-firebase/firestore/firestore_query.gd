@@ -1,5 +1,5 @@
 ## @meta-authors Nicoló 'fenix' Santilio
-## @meta-version 1.3
+## @meta-version 1.4
 ## A firestore query.
 ## Documentation TODO.
 tool
@@ -106,15 +106,16 @@ func from_many(collections_array : Array) -> FirestoreQuery:
 # @field : the name of the field
 # @operator : from FirestoreQuery.OPERATOR
 # @value : can be any type - String, int, bool, float
-# @chain : from FirestoreQuery.OPERATOR.[OR/AND], use it only if you want to chain "AND" or "OR" logic with futher where_field() calls
-# eg. .where_field("name", OPERATOR.EQUAL, "Matt", OPERATOR.AND).where_field("age", OPERATOR.LESS_THAN, 20)
+# @chain : from FirestoreQuery.OPERATOR.[OR/AND], use it only if you want to chain "AND" or "OR" logic with futher where() calls
+# eg. .where("name", OPERATOR.EQUAL, "Matt", OPERATOR.AND).where("age", OPERATOR.LESS_THAN, 20)
 func where(field : String, operator : int, value = null, chain : int = -1):
     if operator in [OPERATOR.IS_NAN, OPERATOR.IS_NULL, OPERATOR.IS_NOT_NAN, OPERATOR.IS_NOT_NULL]:
-        if (chain in [OPERATOR.AND, OPERATOR.OR]) or (query.has("where") and query.has("compositeFilter")):
+        if (chain in [OPERATOR.AND, OPERATOR.OR]) or (query.has("where") and query.where.has("compositeFilter")):
             var filters : Array = []
-            if query.has("where") and query.where.has("compositeFilters"):
-                if query.where.compositeFilter.op == chain or chain == -1:
+            if query.has("where") and query.where.has("compositeFilter"):
+                if chain == -1:
                     filters = query.where.compositeFilter.filters.duplicate(true)
+                    chain = OPERATOR.get(query.where.compositeFilter.op)
                 else:
                     filters.append(query.where)
             filters.append(create_unary_filter(field, operator))
@@ -125,11 +126,12 @@ func where(field : String, operator : int, value = null, chain : int = -1):
         if value == null:
             print("A value must be defined to match the field: {field}".format({field = field}))
         else:
-            if (chain in [OPERATOR.AND, OPERATOR.OR]) or (query.has("where") and query.has("compositeFilter")):
+            if (chain in [OPERATOR.AND, OPERATOR.OR]) or (query.has("where") and query.where.has("compositeFilter")):
                 var filters : Array = []
-                if query.has("where") and query.where.has("compositeFilters"):
-                    if query.where.compositeFilter.op == chain or chain == -1:
+                if query.has("where") and query.where.has("compositeFilter"):
+                    if chain == -1:
                         filters = query.where.compositeFilter.filters.duplicate(true)
+                        chain = OPERATOR.get(query.where.compositeFilter.op)
                     else:
                         filters.append(query.where)
                 filters.append(create_field_filter(field, operator, value))
