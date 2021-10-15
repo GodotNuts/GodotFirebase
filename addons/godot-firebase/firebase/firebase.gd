@@ -86,7 +86,7 @@ func _check_emulating() -> void:
 
 func _load_config() -> void:
     if _config.apiKey != "" and _config.authDomain != "":
-        return
+        pass
     else:    
         var env = ConfigFile.new()
         var err = env.load("res://addons/godot-firebase/.env")
@@ -107,7 +107,6 @@ func _load_config() -> void:
     _setup_modules()
 
 func _setup_modules() -> void:
-    
     for module in get_children():
         module._set_config(_config)
         if not module.has_method("_on_FirebaseAuth_login_succeeded"):

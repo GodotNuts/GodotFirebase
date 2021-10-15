@@ -121,9 +121,8 @@ func _process_request(task : FirestoreTask, document_id : String, url : String, 
 #        task._push_request(url, , fields)
 
 
-func _on_task_finished(_arg, document_id : String) -> void:
+func _on_task_finished(task : FirestoreTask, document_id : String) -> void:
     if not _request_queues[document_id].empty():
-        var task: FirestoreTask = _request_queues[document_id].pop_front()
         task._push_request(task._url, _AUTHORIZATION_HEADER + auth.idtoken, task._fields)
 
 
