@@ -33,7 +33,7 @@ var _config : Dictionary
 var _references : Dictionary = {}
 
 var _base_url : String = ""
-var _extended_url : String = "b/[APP_ID]/o/[FILE_PATH]"
+var _extended_url : String = "/[API_VERSION]/b/[APP_ID]/o/[FILE_PATH]"
 var _root_ref : StorageReference
 
 var _http_client : HTTPClient = HTTPClient.new()
@@ -149,7 +149,7 @@ func _set_config(config_json : Dictionary) -> void:
 func _check_emulating() -> void :
     ## Check emulating
     if not Firebase.emulating:
-        _base_url = "https://firebasestorage.googleapis.com/{version}/".format({ version = _API_VERSION })
+        _base_url = "https://firebasestorage.googleapis.com"
     else:
         var port : String = _config.emulators.ports.storage
         if port == "":
@@ -323,6 +323,7 @@ func _finish_request(result : int) -> void:
 
 func _get_file_url(ref : StorageReference) -> String:
     var url := _extended_url.replace("[APP_ID]", ref.bucket)
+    url = url.replace("[API_VERSION]", _API_VERSION)
     return url.replace("[FILE_PATH]", ref.full_path.replace("/", "%2F"))
 
 # Removes any "../" or "./" in the file path.
