@@ -15,7 +15,6 @@ const _API_VERSION : String = "v1"
 var request : int = -1
 
 var _base_url : String = ""
-var _dynamic_link_request_url : String = "shortLinks?key=%s"
 
 var _config : Dictionary = {}
 
@@ -31,7 +30,6 @@ enum Requests {
 
 func _set_config(config_json : Dictionary) -> void:
     _config = config_json
-    _dynamic_link_request_url %= _config.apiKey
     _request_list_node = HTTPRequest.new()
     _request_list_node.connect("request_completed", self, "_on_request_completed")
     add_child(_request_list_node)
@@ -41,7 +39,8 @@ func _set_config(config_json : Dictionary) -> void:
 func _check_emulating() -> void :
     ## Check emulating
     if not Firebase.emulating:
-        _base_url = "https://firebasedynamiclinks.googleapis.com/{version}/".format({ version = _API_VERSION })
+        _base_url = "https://firebasedynamiclinks.googleapis.com/v1/shortLinks?key=%s"
+        _base_url %= _config.apiKey
     else:
         var port : String = _config.emulators.ports.dynamicLinks
         if port == "":
@@ -79,7 +78,7 @@ func generate_dynamic_link(long_link : String, APN : String, IBI : String, is_un
         _link_request_body.suffix.option = "UNGUESSABLE"
     else:
         _link_request_body.suffix.option = "SHORT"
-    _request_list_node.request(_dynamic_link_request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_link_request_body))
+    _request_list_node.request(_base_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_link_request_body))
 
 func _on_request_completed(result : int, response_code : int, headers : PoolStringArray, body : PoolByteArray) -> void:
     var result_body : Dictionary = JSON.parse(body.get_string_from_utf8()).result
