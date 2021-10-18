@@ -149,7 +149,7 @@ func _set_config(config_json : Dictionary) -> void:
 func _check_emulating() -> void :
     ## Check emulating
     if not Firebase.emulating:
-        _base_url = "https://firebasestorage.googleapis.com".format({ version = _API_VERSION })
+        _base_url = "https://firebasestorage.googleapis.com"
     else:
         var port : String = _config.emulators.ports.storage
         if port == "":
