@@ -28,6 +28,7 @@ var _filter_query : Dictionary
 var _db_path : String
 var _cached_filter : String
 var _push_queue : Array = []
+var _update_queue : Array = []
 var _can_connect_to_host : bool = false
 
 const _put_tag : String = "put"
@@ -101,7 +102,7 @@ func update(path : String, data : Dictionary) -> void:
         
         _pusher.request(resolved_path, _headers, true, HTTPClient.METHOD_PATCH, to_update)
     else:
-        _push_queue.append(data)
+        _update_queue.append({"path": path, "data": data})
 
 func push(data : Dictionary) -> void:
     var to_push = JSON.print(data)
@@ -164,3 +165,7 @@ func on_push_request_complete(result : int, response_code : int, headers : PoolS
     
     if _push_queue.size() > 0:
         push(_push_queue.pop_front())
+        return
+    if _update_queue.size() > 0:
+        var e = _update_queue.pop_front()
+        update(e['path'], e['data'])
