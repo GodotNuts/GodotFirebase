@@ -97,7 +97,7 @@ func update(path : String, data : Dictionary) -> void:
         path = ""
     
     var to_update = JSON.print(data)
-    if _pusher.get_http_client_status() != HTTPClient.STATUS_REQUESTING:
+    if _pusher.get_http_client_status() == HTTPClient.STATUS_DISCONNECTED:
         var resolved_path = (_get_list_url() + _db_path + "/" + path + _get_remaining_path())
         
         _pusher.request(resolved_path, _headers, true, HTTPClient.METHOD_PATCH, to_update)
