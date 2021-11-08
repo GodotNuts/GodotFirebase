@@ -355,7 +355,7 @@ func manual_token_refresh(auth_data):
         refresh_token = auth.refresh_token
     _needs_refresh = true
     _refresh_request_body.refresh_token = refresh_token
-    request(_base_url + _refresh_request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_refresh_request_body))
+    request(_refresh_request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_refresh_request_body))
 
 
 # This function is called whenever there is an authentication request to Firebase
