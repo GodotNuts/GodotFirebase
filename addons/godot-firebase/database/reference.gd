@@ -33,6 +33,7 @@ var _can_connect_to_host : bool = false
 
 const _put_tag : String = "put"
 const _patch_tag : String = "patch"
+const _delete_tag : String = "delete"
 const _separator : String = "/"
 const _json_list_tag : String = ".json"
 const _query_tag : String = "?"
@@ -83,6 +84,8 @@ func on_new_sse_event(headers : Dictionary, event : String, data : Dictionary) -
                     emit_signal("new_data_update", FirebaseResource.new(data.path, data.data))
             elif command == _patch_tag:
                 emit_signal("patch_data_update", FirebaseResource.new(data.path, data.data))
+            elif command == _delete_tag:
+                emit_signal("delete_data_update", FirebaseResource.new(data.path, data.data))
     pass
 
 func set_store(store_ref : FirebaseDatabaseStore) -> void:
@@ -108,6 +111,13 @@ func push(data : Dictionary) -> void:
     var to_push = JSON.print(data)
     if _pusher.get_http_client_status() == HTTPClient.STATUS_DISCONNECTED:
         _pusher.request(_get_list_url() + _db_path + _get_remaining_path(), _headers, true, HTTPClient.METHOD_POST, to_push)
+    else:
+        _push_queue.append(data)
+
+func delete(data : Dictionary) -> void:
+    var to_delete = JSON.print(data)
+    if _pusher.get_http_client_status() == HTTPClient.STATUS_DISCONNECTED:
+        _pusher.request(_get_list_url() + _db_path + _get_remaining_path(), _headers, true, HTTPClient.METHOD_DELETE, to_delete)
     else:
         _push_queue.append(data)
 
@@ -156,6 +166,8 @@ func _route_data(command : String, path : String, data) -> void:
         _store.put(path, data)
     elif command == _patch_tag:
         _store.patch(path, data)
+    elif command == _delete_tag:
+        _store.delete(path, data)
 
 func on_push_request_complete(result : int, response_code : int, headers : PoolStringArray, body : PoolByteArray) -> void:
     if response_code == HTTPClient.RESPONSE_OK:
