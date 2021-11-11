@@ -28,8 +28,8 @@ func patch(path : String, payload) -> void:
     _update_data(path, payload, true)
 
 ## @args path, payload
-## Deletes data at the reference point
-## NOTE: This will delete without warning, so make sure the reference is pointed tot he level you want and not the root or you will lose everything
+## Deletes data at the reference point provided
+## NOTE: This will delete without warning, so make sure the reference is pointed to the level you want and not the root or you will lose everything
 func delete(path : String, payload) -> void:
     _update_data(path, payload, true)
 

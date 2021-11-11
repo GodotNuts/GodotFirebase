@@ -115,12 +115,11 @@ func push(data : Dictionary) -> void:
     else:
         _push_queue.append(data)
 
-func delete(data : Dictionary) -> void:
-    var to_delete = JSON.print(data)
+func delete(reference : String) -> void:
     if _pusher.get_http_client_status() == HTTPClient.STATUS_DISCONNECTED:
-        _pusher.request(_get_list_url() + _db_path + _get_remaining_path(), _headers, true, HTTPClient.METHOD_DELETE, to_delete)
+        _pusher.request(_get_list_url() + _db_path + _separator + reference + _get_remaining_path(), _headers, true, HTTPClient.METHOD_DELETE, "")
     else:
-        _delete_queue.append(data)
+        _delete_queue.append(reference)
 
 #
 # Returns a deep copy of the current local copy of the data stored at this reference in the Firebase
