@@ -119,7 +119,7 @@ func delete(data : Dictionary) -> void:
     if _pusher.get_http_client_status() == HTTPClient.STATUS_DISCONNECTED:
         _pusher.request(_get_list_url() + _db_path + _get_remaining_path(), _headers, true, HTTPClient.METHOD_DELETE, to_delete)
     else:
-        _push_queue.append(data)
+        _delete_queue.append(data)
 
 #
 # Returns a deep copy of the current local copy of the data stored at this reference in the Firebase
@@ -181,3 +181,6 @@ func on_push_request_complete(result : int, response_code : int, headers : PoolS
     if _update_queue.size() > 0:
         var e = _update_queue.pop_front()
         update(e['path'], e['data'])
+        return
+    if _delete_queue.size() > 0:
+        delete(_delete_queue.pop_front())
