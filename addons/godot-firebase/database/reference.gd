@@ -29,6 +29,7 @@ var _db_path : String
 var _cached_filter : String
 var _push_queue : Array = []
 var _update_queue : Array = []
+var _delete_queue : Array = []
 var _can_connect_to_host : bool = false
 
 const _put_tag : String = "put"
