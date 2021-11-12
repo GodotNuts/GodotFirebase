@@ -27,6 +27,12 @@ func put(path : String, payload) -> void:
 func patch(path : String, payload) -> void:
     _update_data(path, payload, true)
 
+## @args path, payload
+## Deletes data at the reference point provided
+## NOTE: This will delete without warning, so make sure the reference is pointed to the level you want and not the root or you will lose everything
+func delete(path : String, payload) -> void:
+    _update_data(path, payload, true)
+
 ## Returns a deep copy of this data store's payload.
 func get_data() -> Dictionary:
     return _data[_ROOT].duplicate(true)
