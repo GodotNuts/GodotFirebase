@@ -1,9 +1,9 @@
-## @meta-authors Nicolò 'fenix' Santilio,
-## @meta-version 1.2
+## @meta-authors Nicolò 'fenix' Santilio, Kyle 'backat50ft' Szklenski
+## @meta-version 1.3
 ##
-## A [code]FirestoreTask[/code] is an indipendent node inheriting [code]HTTPRequest[/code] that processes a [code]Firestore[/code] request.
+## A [code]FirestoreTask[/code] is an independent node inheriting [code]HTTPRequest[/code] that processes a [code]Firestore[/code] request.
 ## Once the Task is completed (both if successfully or not) it will emit the relative signal (or a general purpose signal [code]task_finished()[/code]) and will destroy automatically.
-## 
+##
 ## Being a [code]Node[/code] it can be stored in a variable to yield on it, and receive its result as a callback.
 ## All signals emitted by a [code]FirestoreTask[/code] represent a direct level of signal communication, which can be high ([code]get_document(document), result_query(result)[/code]) or low ([code]task_finished(result)[/code]).
 ## An indirect level of communication with Tasks is also provided, redirecting signals to the [class FirebaseFirestore] module.
@@ -14,7 +14,7 @@
 ## [code]var result : Array = yield(task, "result_query")[/code]
 ## [code]var result : Array = yield(Firebase.Firestore, "task_finished")[/code]
 ## [code]var result : Array = yield(Firebase.Firestore, "result_query")[/code]
-## 
+##
 ## @tutorial https://github.com/GodotNuts/GodotFirebase/wiki/Firestore#FirestoreTask
 
 tool
@@ -50,7 +50,7 @@ signal task_list_error(code, status, message)
 
 enum Task {
     TASK_GET,       ## A GET Request Task, processing a get() request
-    TASK_POST,      ## A POST Request Task, processing add() request 
+    TASK_POST,      ## A POST Request Task, processing add() request
     TASK_PATCH,     ## A PATCH Request Task, processing a update() request
     TASK_DELETE,    ## A DELETE Request Task, processing a delete() request
     TASK_QUERY,     ## A POST Request Task, processing a query() request
@@ -98,13 +98,13 @@ func _on_request_completed(result : int, response_code : int, headers : PoolStri
     var bod
     if validate_json(body.get_string_from_utf8()).empty():
         bod = JSON.parse(body.get_string_from_utf8()).result
-    
+
     var offline: bool = typeof(bod) == TYPE_NIL
     var failed: bool = bod is Dictionary and bod.has("error") and response_code != HTTPClient.RESPONSE_OK
     from_cache = offline
-    
+
     Firebase.Firestore._set_offline(offline)
-    
+
     var cache_path : String = Firebase._config["cacheLocation"]
     if not cache_path.empty() and not failed and Firebase.Firestore.persistence_enabled:
         var encrypt_key: String = Firebase.Firestore._encrypt_key
@@ -123,7 +123,7 @@ func _on_request_completed(result : int, response_code : int, headers : PoolStri
         bod = _handle_cache(offline, data, encrypt_key, full_path, bod)
         if not bod.empty() and offline:
             response_code = HTTPClient.RESPONSE_OK
-    
+
     if response_code == HTTPClient.RESPONSE_OK:
         data = bod
         match action:
@@ -155,15 +155,24 @@ func _on_request_completed(result : int, response_code : int, headers : PoolStri
     else:
         match action:
             Task.TASK_LIST:
-                error = bod[0].error
-                emit_signal("task_list_error", error.code, error.status, error.message)
+                if bod and bod.keys().size() > 0:
+                    error = bod[0].error
+                    emit_signal("task_list_error", error.code, error.status, error.message)
+                else:
+                    emit_signal("task_list_error", 1, 0, "Unknown error when returning from list")
             Task.TASK_QUERY:
-                error = bod[0].error
-                emit_signal("task_query_error", error.code, error.status, error.message)
+                if bod and bod.keys().size() > 0:
+                    error = bod[0].error
+                    emit_signal("task_query_error", error.code, error.status, error.message)
+                else:
+                    emit_signal("task_query_error", 1, 0, "Unknown error when returning from query")
             _:
-                error = bod.error
-                emit_signal("task_error", error.code, error.status, error.message)
-    
+                if bod:
+                    error = bod.error
+                    emit_signal("task_error", error.code, error.status, error.message)
+                else:
+                    emit_signal("task_error", 1, 0, "Unknown error when returning from task")
+
     emit_signal("task_finished", self)
 
 
@@ -182,7 +191,7 @@ func set_action(value : int) -> void:
 
 func _handle_cache(offline : bool, data, encrypt_key : String, cache_path : String, body) -> Dictionary:
     var body_return := {}
-    
+
     var dir := Directory.new()
     dir.make_dir_recursive(cache_path)
     var file := File.new()
@@ -199,7 +208,7 @@ func _handle_cache(offline : bool, data, encrypt_key : String, cache_path : Stri
                     }
                 else:
                     save = body.duplicate()
-                
+
                 if file.open_encrypted_with_pass(cache_path, File.READ, encrypt_key) == OK:
                     file.store_line(data)
                     file.store_line(JSON.print(save))
@@ -207,7 +216,7 @@ func _handle_cache(offline : bool, data, encrypt_key : String, cache_path : Stri
                 else:
                     Firebase._printerr("Error saving cache file! Error code: %d" % file.get_error())
                 file.close()
-        
+
         Task.TASK_PATCH:
             if offline:
                 var save := {
@@ -221,7 +230,7 @@ func _handle_cache(offline : bool, data, encrypt_key : String, cache_path : Stri
                         "createTime": "from_cache_file",
                         "updateTime": "from_cache_file"
                     }
-                    
+
                     if file.file_exists(cache_path):
                         if file.open_encrypted_with_pass(cache_path, File.READ, encrypt_key) == OK:
                             if file.get_len():
@@ -232,7 +241,7 @@ func _handle_cache(offline : bool, data, encrypt_key : String, cache_path : Stri
                         else:
                             Firebase._printerr("Error updating cache file! Error code: %d" % file.get_error())
                         file.close()
-                    
+
                     save.fields = FirestoreDocument.dict2fields(_merge_dict(
                         FirestoreDocument.fields2dict({"fields": save.fields}),
                         FirestoreDocument.fields2dict({"fields": mod.fields}),
@@ -243,8 +252,8 @@ func _handle_cache(offline : bool, data, encrypt_key : String, cache_path : Stri
                     save.updateTime = mod.updateTime
                 else:
                     save = body.duplicate()
-                
-                
+
+
                 if file.open_encrypted_with_pass(cache_path, File.WRITE, encrypt_key) == OK:
                     file.store_line(data)
                     file.store_line(JSON.print(save))
@@ -252,7 +261,7 @@ func _handle_cache(offline : bool, data, encrypt_key : String, cache_path : Stri
                 else:
                     Firebase._printerr("Error updating cache file! Error code: %d" % file.get_error())
                 file.close()
-        
+
         Task.TASK_GET:
             if offline and file.file_exists(cache_path):
                 if file.open_encrypted_with_pass(cache_path, File.READ, encrypt_key) == OK:
@@ -263,7 +272,7 @@ func _handle_cache(offline : bool, data, encrypt_key : String, cache_path : Stri
                 else:
                     Firebase._printerr("Error reading cache file! Error code: %d" % file.get_error())
                 file.close()
-        
+
         Task.TASK_DELETE:
             if offline:
                 if file.open_encrypted_with_pass(cache_path, File.WRITE, encrypt_key) == OK:
@@ -275,7 +284,7 @@ func _handle_cache(offline : bool, data, encrypt_key : String, cache_path : Stri
                 file.close()
             else:
                 dir.remove(cache_path)
-        
+
         Task.TASK_LIST:
             if offline:
                 var cache_dir := Directory.new()
@@ -291,7 +300,7 @@ func _handle_cache(offline : bool, data, encrypt_key : String, cache_path : Stri
                 cache_files.erase(cache_path.plus_file(Firebase.Firestore._CACHE_RECORD_FILE))
                 cache_dir.remove(cache_path.plus_file(Firebase.Firestore._CACHE_RECORD_FILE))
                 print(cache_files)
-                
+
                 body_return.documents = []
                 for cache in cache_files:
                     if file.open_encrypted_with_pass(cache, File.READ, encrypt_key) == OK:
@@ -302,11 +311,11 @@ func _handle_cache(offline : bool, data, encrypt_key : String, cache_path : Stri
                     file.close()
                 body_return.documents.resize(min(data[1], body_return.documents.size()))
                 body_return.nextPageToken = ""
-        
+
         Task.TASK_QUERY:
             if offline:
                 Firebase._printerr("Offline queries are currently unsupported!")
-    
+
     if not offline:
         return body
     else:
@@ -317,7 +326,7 @@ func _merge_dict(dic_a : Dictionary, dic_b : Dictionary, nullify := false) -> Di
     var ret := dic_a.duplicate(true)
     for key in dic_b:
         var val = dic_b[key]
-        
+
         if val == null and nullify:
             ret.erase(key)
         elif val is Array:
@@ -332,7 +341,7 @@ func _merge_dict(dic_a : Dictionary, dic_b : Dictionary, nullify := false) -> Di
 func _merge_array(arr_a : Array, arr_b : Array, nullify := false) -> Array:
     var ret := arr_a.duplicate(true)
     ret.resize(len(arr_b))
-    
+
     var deletions := 0
     for i in len(arr_b):
         var index : int = i - deletions
@@ -360,7 +369,7 @@ static func _get_doc_file(cache_path : String, document_id : String, encrypt_key
             if file.open_encrypted_with_pass(path, File.READ, encrypt_key) == OK:
                 is_file = file.get_line() == document_id
             file.close()
-            
+
             if is_file:
                 return path
             else:
