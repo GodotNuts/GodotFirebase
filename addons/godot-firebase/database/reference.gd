@@ -8,6 +8,7 @@ extends Node
 
 signal new_data_update(data)
 signal patch_data_update(data)
+signal delete_data_update(data)
 
 signal push_successful()
 signal push_failed()
