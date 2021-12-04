@@ -29,6 +29,7 @@ const RESPONSE_USERDATA : String = "identitytoolkit#GetAccountInfoResponse"
 const RESPONSE_CUSTOM_TOKEN : String = "identitytoolkit#VerifyCustomTokenResponse"
 
 var _base_url : String = ""
+var _refresh_request_base_url = ""
 var _signup_request_url : String = "accounts:signUp?key=%s"
 var _signin_with_oauth_request_url : String = "accounts:signInWithIdp?key=%s"
 var _signin_request_url : String = "accounts:signInWithPassword?key=%s"
@@ -38,7 +39,7 @@ var _oobcode_request_url : String = "accounts:sendOobCode?key=%s"
 var _delete_account_request_url : String = "accounts:delete?key=%s"
 var _update_account_request_url : String = "accounts:update?key=%s"
 
-var _refresh_request_url : String = "https://securetoken.googleapis.com/v1/token?key=%s"
+var _refresh_request_url : String = "/v1/token?key=%s"
 var _google_auth_request_url : String = "https://accounts.google.com/o/oauth2/v2/auth?"
 var _google_token_request_url : String = "https://oauth2.googleapis.com/token?"
 
@@ -53,8 +54,9 @@ var tcp_timer : Timer = Timer.new()
 var tcp_timeout : float = 0.5
 
 var _headers : PoolStringArray = [
-    "Accept: application/json"
-   ]
+    "Accept: application/json",
+    "Content-Type: application/json"
+]
 
 var requesting : int = -1
 
@@ -79,7 +81,7 @@ var _login_request_body : Dictionary = {
     "email":"",
     "password":"",
     "returnSecureToken": true,
-    }
+}
 
 var _post_body : String = "id_token=[GOOGLE_ID_TOKEN]&providerId=[PROVIDER_ID]"
 var _request_uri : String = "[REQUEST_URI]"
@@ -103,7 +105,7 @@ var _refresh_request_body : Dictionary = {
 var _custom_token_body : Dictionary = {
     "token":"",
     "returnSecureToken":true
-    }
+}
 
 var _password_reset_body : Dictionary = {
     "requestType":"password_reset",
@@ -181,12 +183,14 @@ func _check_emulating() -> void :
     ## Check emulating
     if not Firebase.emulating:
         _base_url = "https://identitytoolkit.googleapis.com/{version}/".format({ version = _API_VERSION })
+        _refresh_request_base_url = "https://securetoken.googleapis.com"
     else:
         var port : String = _config.emulators.ports.authentication
         if port == "":
             Firebase._printerr("You are in 'emulated' mode, but the port for Authentication has not been configured.")
         else:
-            _base_url = "http://localhost:{port}/{version}/".format({ version = _API_VERSION ,port = port })
+            _base_url = "http://localhost:{port}/identitytoolkit.googleapis.com/{version}/".format({ version = _API_VERSION ,port = port })
+            _refresh_request_base_url = "http://localhost:{port}/identitytoolkit.googleapis.com".format({port = port})
 
 
 # Function is used to check if the auth script is ready to process a request. Returns true if it is not currently processing
@@ -355,7 +359,7 @@ func manual_token_refresh(auth_data):
         refresh_token = auth.refresh_token
     _needs_refresh = true
     _refresh_request_body.refresh_token = refresh_token
-    request(_refresh_request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_refresh_request_body))
+    request(_refresh_request_base_url + _refresh_request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_refresh_request_body))
 
 
 # This function is called whenever there is an authentication request to Firebase
@@ -545,7 +549,7 @@ func begin_refresh_countdown() -> void:
     emit_signal("token_refresh_succeeded", auth)
     yield(get_tree().create_timer(float(expires_in)), "timeout")
     _refresh_request_body.refresh_token = refresh_token
-    request(_refresh_request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_refresh_request_body))
+    request(_refresh_request_base_url + _refresh_request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_refresh_request_body))
 
 
 # This function is used to make all keys lowercase
