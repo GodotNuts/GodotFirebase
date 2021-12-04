@@ -190,7 +190,7 @@ func _check_emulating() -> void :
             Firebase._printerr("You are in 'emulated' mode, but the port for Authentication has not been configured.")
         else:
             _base_url = "http://localhost:{port}/identitytoolkit.googleapis.com/{version}/".format({ version = _API_VERSION ,port = port })
-            _refresh_request_base_url = "http://localhost:{port}/identitytoolkit.googleapis.com".format({port = port})
+            _refresh_request_base_url = "http://localhost:{port}/securetoken.googleapis.com".format({port = port})
 
 
 # Function is used to check if the auth script is ready to process a request. Returns true if it is not currently processing
