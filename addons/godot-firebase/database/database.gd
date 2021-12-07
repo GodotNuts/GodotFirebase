@@ -20,13 +20,13 @@ func _set_config(config_json : Dictionary) -> void:
 func _check_emulating() -> void :
     ## Check emulating
     if not Firebase.emulating:
-        _base_url = _config.databaseURL + "/" # + ListName + _json_list_tag + _auth_tag + _auth.idtoken
+        _base_url = _config.databaseURL
     else:
         var port : String = _config.emulators.ports.realtimeDatabase
         if port == "":
             Firebase._printerr("You are in 'emulated' mode, but the port for Realtime Database has not been configured.")
         else:
-            _base_url = "http://localhost:{port}/?ns={projectId}".format({ port = port, projectId = _config.projectId }) + "/"
+            _base_url = "http://localhost"
 
 
 
