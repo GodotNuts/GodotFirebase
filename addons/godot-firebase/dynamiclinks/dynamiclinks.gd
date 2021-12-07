@@ -46,7 +46,7 @@ func _check_emulating() -> void :
         if port == "":
             Firebase._printerr("You are in 'emulated' mode, but the port for Dynamic Links has not been configured.")
         else:
-            _base_url = "http://127.0.0.1:{port}/{version}/".format({ version = _API_VERSION, port = port })
+            _base_url = "http://localhost:{port}/{version}/".format({ version = _API_VERSION, port = port })
 
 
 var _link_request_body : Dictionary = {
