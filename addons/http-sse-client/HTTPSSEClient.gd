@@ -89,7 +89,7 @@ func _process(delta):
                             
             _parse_response_body(headers)
                 
-        elif Firebase.emulating:
+        elif Firebase.emulating and Firebase._config.workarounds.database_connection_closed_issue:
             # Emulation does not send the close connection header currently, so we need to manually read the response body
             # see issue https://github.com/firebase/firebase-tools/issues/3329 in firebase-tools
             # also comment https://github.com/GodotNuts/GodotFirebase/issues/154#issuecomment-831377763 which explains the issue

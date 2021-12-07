@@ -65,8 +65,11 @@ var _config : Dictionary = {
             "functions" : "",
             "storage" : "",
             "dynamicLinks" : ""
-           }
-       }
+        }
+    },
+    "workarounds":{
+        "database_connection_closed_issue": false, # fixes https://github.com/firebase/firebase-tools/issues/3329
+    }
 }
 
 func _ready() -> void:
