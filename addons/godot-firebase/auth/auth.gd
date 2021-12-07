@@ -379,7 +379,7 @@ func _on_FirebaseAuth_request_completed(result : int, response_code : int, heade
         var json_result = JSON.parse(bod)
         if json_result.error != OK:
             Firebase._printerr("Error while parsing auth body json")
-            emit_signal("auth_request", "Error while parsing auth body json", json_result)
+            emit_signal("auth_request", ERR_PARSE_ERROR, "Error while parsing auth body json")
             return
         res = json_result.result
 
@@ -390,7 +390,8 @@ func _on_FirebaseAuth_request_completed(result : int, response_code : int, heade
                 Requests.EXCHANGE_TOKEN:
                     emit_signal("token_exchanged", true)
             begin_refresh_countdown()
-            emit_signal("auth_request", "Refresh token countdown", auth)
+            # Refresh token countdown
+            emit_signal("auth_request", 1, auth)
         else:
             match res.kind:
                 RESPONSE_SIGNUP:
@@ -439,7 +440,7 @@ func load_auth() -> void:
     var err = encrypted_file.open_encrypted_with_pass("user://user.auth", File.READ, _config.apiKey)
     if err != OK:
         Firebase._printerr("Error Opening Firebase Auth File. Error Code: " + err)
-        emit_signal("auth_request", "Error Opening Firebase Auth File. Error Code: " + err, auth)
+        emit_signal("auth_request", err, "Error Opening Firebase Auth File.")
     else:
         var encrypted_file_data = parse_json(encrypted_file.get_line())
         manual_token_refresh(encrypted_file_data)
@@ -463,7 +464,7 @@ func check_auth_file() -> void:
         load_auth()
     else:
         Firebase._printerr("Encrypted Firebase Auth file does not exist")
-        emit_signal("auth_request", "Encrypted Firebase Auth file does not exist", auth)
+        emit_signal("auth_request", ERR_DOES_NOT_EXIST, "Encrypted Firebase Auth file does not exist")
 
 
 # Function used to change the email account for the currently logged in user

@@ -19,7 +19,6 @@ var use_ssl
 var verify_host
 var told_to_connect = false
 var connection_in_progress = false
-var request_in_progress = false
 var is_requested = false
 var response_body = PoolByteArray()
 
@@ -48,6 +47,19 @@ func attempt_to_request(httpclient_status):
         if err == OK:
             is_requested = true
 
+func _parse_response_body(headers):
+    var body = response_body.get_string_from_utf8()
+    if body:
+        var event_data = get_event_data(body)
+        if event_data.event != "keep-alive" and event_data.event != continue_internal:
+            var result = JSON.parse(event_data.data).result
+            if response_body.size() > 0 and result: # stop here if the value doesn't parse
+                response_body.resize(0)
+                emit_signal("new_sse_event", headers, event_data.event, result)
+        else:
+            if event_data.event != continue_internal:
+                response_body.resize(0)
+
 func _process(delta):
     if !told_to_connect:
         return
@@ -61,33 +73,32 @@ func _process(delta):
     httpclient.poll()
     var httpclient_status = httpclient.get_status()
     if !is_requested:
-        if !request_in_progress:
-            attempt_to_request(httpclient_status)
+        attempt_to_request(httpclient_status)
         return
-                
-    var httpclient_has_response = httpclient.has_response()
-                
-    if httpclient_has_response or httpclient_status == HTTPClient.STATUS_BODY:
+    
+    if httpclient.has_response():
         var headers = httpclient.get_response_headers_as_dictionary()
 
-        httpclient.poll()
-        var chunk = httpclient.read_response_body_chunk()
-        if(chunk.size() == 0):
-            return
-        else:
-            response_body = response_body + chunk
-                        
-        var body = response_body.get_string_from_utf8()
-        if body:
-            var event_data = get_event_data(body)
-            if event_data.event != "keep-alive" and event_data.event != continue_internal:
-                var result = JSON.parse(event_data.data).result
-                if response_body.size() > 0 and result: # stop here if the value doesn't parse
-                    response_body.resize(0)
-                    emit_signal("new_sse_event", headers, event_data.event, result)
+        if httpclient_status == HTTPClient.STATUS_BODY:
+            httpclient.poll()
+            var chunk = httpclient.read_response_body_chunk()
+            if(chunk.size() == 0):
+                return
             else:
-                if event_data.event != continue_internal:
-                    response_body.resize(0)
+                response_body = response_body + chunk
+                            
+            _parse_response_body(headers)
+                
+        elif Firebase.emulating and Firebase._config.workarounds.database_connection_closed_issue:
+            # Emulation does not send the close connection header currently, so we need to manually read the response body
+            # see issue https://github.com/firebase/firebase-tools/issues/3329 in firebase-tools
+            # also comment https://github.com/GodotNuts/GodotFirebase/issues/154#issuecomment-831377763 which explains the issue
+            while httpclient.connection.get_available_bytes():
+                var data = httpclient.connection.get_partial_data(1)
+                if data[0] == OK:
+                    response_body.append_array(data[1])
+            if response_body.size() > 0:
+                _parse_response_body(headers)
 
 func get_event_data(body : String) -> Dictionary:
     var result = {}
