@@ -390,7 +390,8 @@ func _on_FirebaseAuth_request_completed(result : int, response_code : int, heade
                 Requests.EXCHANGE_TOKEN:
                     emit_signal("token_exchanged", true)
             begin_refresh_countdown()
-            emit_signal("auth_request", 1, "Refresh token countdown")
+            # Refresh token countdown
+            emit_signal("auth_request", 1, auth)
         else:
             match res.kind:
                 RESPONSE_SIGNUP:
