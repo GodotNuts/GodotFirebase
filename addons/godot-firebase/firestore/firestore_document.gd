@@ -54,7 +54,11 @@ static func dict2fields(dict : Dictionary) -> Dictionary:
             TYPE_ARRAY:
                 var_type = "arrayValue"
                 field_value = {"values": array2fields(field_value)}
-        fields[field] = { var_type : field_value }
+        if fields.has(field) and fields[field].has("mapValue") and field_value.has("fields"):
+            for key in field_value["fields"].keys():
+                fields[field]["mapValue"]["fields"][key] = field_value["fields"][key]
+        else:
+            fields[field] = { var_type : field_value }
     return {'fields' : fields}
 
 # Pass the .fields inside a Firestore Document to print out the Dictionary { 'key' : 'value' }
