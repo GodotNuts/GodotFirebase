@@ -155,13 +155,13 @@ func _on_request_completed(result : int, response_code : int, headers : PoolStri
     else:
         match action:
             Task.TASK_LIST:
-                if bod and bod.keys().size() > 0:
+                if bod and bod.size() > 0:
                     error = bod[0].error
                     emit_signal("task_list_error", error.code, error.status, error.message)
                 else:
                     emit_signal("task_list_error", 1, 0, "Unknown error when returning from list")
             Task.TASK_QUERY:
-                if bod and bod.keys().size() > 0:
+                if bod and bod.size() > 0:
                     error = bod[0].error
                     emit_signal("task_query_error", error.code, error.status, error.message)
                 else:
