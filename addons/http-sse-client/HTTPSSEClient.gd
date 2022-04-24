@@ -41,7 +41,7 @@ func attempt_to_connect():
 func attempt_to_request(httpclient_status):
     if httpclient_status == HTTPClient.STATUS_CONNECTING or httpclient_status == HTTPClient.STATUS_RESOLVING:
         return
-                
+
     if httpclient_status == HTTPClient.STATUS_CONNECTED:
         var err = httpclient.request(HTTPClient.METHOD_POST, url_after_domain, ["Accept: text/event-stream"])
         if err == OK:
@@ -63,20 +63,20 @@ func _parse_response_body(headers):
 func _process(delta):
     if !told_to_connect:
         return
-                
+
     if !is_connected:
         if !connection_in_progress:
             attempt_to_connect()
             connection_in_progress = true
         return
-                
+
     httpclient.poll()
     var httpclient_status = httpclient.get_status()
     if !is_requested:
         attempt_to_request(httpclient_status)
         return
-    
-    if httpclient.has_response():
+
+    if httpclient.has_response() or httpclient_status == HTTPClient.STATUS_BODY:
         var headers = httpclient.get_response_headers_as_dictionary()
 
         if httpclient_status == HTTPClient.STATUS_BODY:
@@ -86,9 +86,9 @@ func _process(delta):
                 return
             else:
                 response_body = response_body + chunk
-                            
+
             _parse_response_body(headers)
-                
+
         elif Firebase.emulating and Firebase._config.workarounds.database_connection_closed_issue:
             # Emulation does not send the close connection header currently, so we need to manually read the response body
             # see issue https://github.com/firebase/firebase-tools/issues/3329 in firebase-tools
