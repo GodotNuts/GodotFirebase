@@ -2,10 +2,10 @@
 ## @meta-version 2.5
 ##
 ## Referenced by [code]Firebase.Firestore[/code]. Represents the Firestore module.
-## Cloud Firestore is a flexible, scalable database for mobile, web, and server development from Firebase and Google Cloud. 
+## Cloud Firestore is a flexible, scalable database for mobile, web, and server development from Firebase and Google Cloud.
 ## Like Firebase Realtime Database, it keeps your data in sync across client apps through realtime listeners and offers offline support for mobile and web so you can build responsive apps that work regardless of network latency or Internet connectivity. Cloud Firestore also offers seamless integration with other Firebase and Google Cloud products, including Cloud Functions.
 ##
-## Following Cloud Firestore's NoSQL data model, you store data in [b]documents[/b] that contain fields mapping to values. These documents are stored in [b]collections[/b], which are containers for your documents that you can use to organize your data and build queries. 
+## Following Cloud Firestore's NoSQL data model, you store data in [b]documents[/b] that contain fields mapping to values. These documents are stored in [b]collections[/b], which are containers for your documents that you can use to organize your data and build queries.
 ## Documents support many different data types, from simple strings and numbers, to complex, nested objects. You can also create subcollections within documents and build hierarchical data structures that scale as your database grows.
 ## The Cloud Firestore data model supports whatever data structure works best for your app.
 ##
@@ -100,7 +100,7 @@ func _process(delta : float) -> void:
 
 
 ## Returns a reference collection by its [i]path[/i].
-## 
+##
 ## The returned object will be of [code]FirestoreCollection[/code] type.
 ## If saved into a variable, it can be used to issue requests on the collection itself.
 ## @args path
@@ -121,19 +121,19 @@ func collection(path : String) -> FirestoreCollection:
 
 
 ## Issue a query on your Firestore database.
-## 
+##
 ## [b]Note:[/b] a [code]FirestoreQuery[/code] object needs to be created to issue the query.
 ## This method will return a [code]FirestoreTask[/code] object, representing a reference to the request issued.
 ## If saved into a variable, the [code]FirestoreTask[/code] object can be used to yield on the [code]result_query(result)[/code] signal, or the more generic [code]task_finished(result)[/code] signal.
-## 
-## ex. 
+##
+## ex.
 ## [code]var query_task : FirestoreTask = Firebase.Firestore.query(FirestoreQuery.new())[/code]
 ## [code]yield(query_task, "task_finished")[/code]
 ## Since the emitted signal is holding an argument, it can be directly retrieved as a return variable from the [code]yield()[/code] function.
-## 
+##
 ## ex.
 ## [code]var result : Array = yield(query_task, "task_finished")[/code]
-## 
+##
 ## [b]Warning:[/b] It currently does not work offline!
 ##
 ## @args query
@@ -147,7 +147,7 @@ func query(query : FirestoreQuery) -> FirestoreTask:
     firestore_task.action = FirestoreTask.Task.TASK_QUERY
     var body : Dictionary = { structuredQuery = query.query }
     var url : String = _base_url + _extended_url + _query_suffix
-    
+
     firestore_task.data = query
     firestore_task._fields = JSON.print(body)
     firestore_task._url = url
@@ -157,14 +157,14 @@ func query(query : FirestoreQuery) -> FirestoreTask:
 
 ## Request a list of contents (documents and/or collections) inside a collection, specified by its [i]id[/i]. This method will return a [code]FirestoreTask[/code] object, representing a reference to the request issued. If saved into a variable, the [code]FirestoreTask[/code] object can be used to yield on the [code]result_query(result)[/code] signal, or the more generic [code]task_finished(result)[/code] signal.
 ## [b]Note:[/b] [code]order_by[/code] does not work in offline mode.
-## ex. 
+## ex.
 ## [code]var query_task : FirestoreTask = Firebase.Firestore.query(FirestoreQuery.new())[/code]
 ## [code]yield(query_task, "task_finished")[/code]
 ## Since the emitted signal is holding an argument, it can be directly retrieved as a return variable from the [code]yield()[/code] function.
-## 
+##
 ## ex.
 ## [code]var result : Array = yield(query_task, "task_finished")[/code]
-## 
+##
 ## @args collection_id, page_size, page_token, order_by
 ## @arg-types String, int, String, String
 ## @arg-defaults , 0, "", ""
@@ -182,7 +182,7 @@ func list(path : String = "", page_size : int = 0, page_token : String = "", ord
         url+="&pageToken="+page_token
     if order_by != "":
         url+="&orderBy="+order_by
-    
+
     firestore_task.data = [path, page_size, page_token, order_by]
     firestore_task._url = url
     _pooled_request(firestore_task)
@@ -218,11 +218,11 @@ func disable_networking() -> void:
 func _set_offline(value: bool) -> void:
     if value == _offline:
         return
-    
+
     _offline = value
     if not persistence_enabled:
         return
-    
+
     var event_record_path: String = _config["cacheLocation"].plus_file(_CACHE_RECORD_FILE)
     if not value:
         var offline_time := 2147483647 # Maximum signed 32-bit integer
@@ -230,7 +230,7 @@ func _set_offline(value: bool) -> void:
         if file.open_encrypted_with_pass(event_record_path, File.READ, _encrypt_key) == OK:
             offline_time = int(file.get_buffer(file.get_len()).get_string_from_utf8()) - 2
         file.close()
-        
+
         var cache_dir := Directory.new()
         var cache_files := []
         if cache_dir.open(_cache_loc) == OK:
@@ -244,10 +244,10 @@ func _set_offline(value: bool) -> void:
 #                        print("%s is old! It's time is %d, but the time offline was %d." % [file_name, file.get_modified_time(_cache_loc.plus_file(file_name)), offline_time])
                 file_name = cache_dir.get_next()
             cache_dir.list_dir_end()
-        
+
         cache_files.erase(event_record_path)
         cache_dir.remove(event_record_path)
-        
+
         for cache in cache_files:
             var deleted := false
             if file.open_encrypted_with_pass(cache, File.READ, _encrypt_key) == OK:
@@ -255,7 +255,7 @@ func _set_offline(value: bool) -> void:
                 var content := file.get_line()
                 var collection_id := name.left(name.find_last("/"))
                 var document_id := name.right(name.find_last("/") + 1)
-                
+
                 var collection := collection(collection_id)
                 if content == "--deleted--":
                     collection.delete(document_id)
@@ -267,7 +267,7 @@ func _set_offline(value: bool) -> void:
             file.close()
             if deleted:
                 cache_dir.remove(cache)
-    
+
     else:
         var file := File.new()
         if file.open_encrypted_with_pass(event_record_path, File.WRITE, _encrypt_key) == OK:
@@ -279,13 +279,13 @@ func _set_config(config_json : Dictionary) -> void:
     _config = config_json
     _cache_loc = _config["cacheLocation"]
     _extended_url = _extended_url.replace("[PROJECT_ID]", _config.projectId)
-    
+
     var file := File.new()
     if file.file_exists(_cache_loc.plus_file(_CACHE_RECORD_FILE)):
         _offline = true
     else:
         _offline = false
-    
+
     _check_emulating()
 
 
@@ -304,7 +304,7 @@ func _pooled_request(task : FirestoreTask) -> void:
     if _offline:
         task._on_request_completed(HTTPRequest.RESULT_CANT_CONNECT, 404, PoolStringArray(), PoolByteArray())
         return
-    
+
     if not auth and not Firebase.emulating:
         Firebase._print("Unauthenticated request issued...")
         Firebase.Auth.login_anonymous()
@@ -312,23 +312,23 @@ func _pooled_request(task : FirestoreTask) -> void:
         if result[0] != 1:
             _check_auth_error(result[0], result[1])
         Firebase._print("Client connected as Anonymous")
-    
+
     if not Firebase.emulating:
         task._headers = PoolStringArray([_AUTHORIZATION_HEADER + auth.idtoken])
-    
+
     var http_request : HTTPRequest
     for request in _http_request_pool:
         if not request.get_meta("requesting"):
             http_request = request
             break
-    
+
     if not http_request:
         http_request = HTTPRequest.new()
         http_request.timeout = 5
         _http_request_pool.append(http_request)
         add_child(http_request)
         http_request.connect("request_completed", self, "_on_pooled_request_completed", [http_request])
-    
+
     http_request.set_meta("requesting", true)
     http_request.set_meta("lifetime", 0.0)
     http_request.set_meta("task", task)
@@ -385,5 +385,6 @@ func _on_FirebaseAuth_logout() -> void:
 func _check_auth_error(code : int, message : String) -> void:
     var err : String
     match code:
-        400: err = "Please, enable Anonymous Sign-in method or Authenticate the Client before issuing a request (best option)"
+        400: err = "Please enable the Anonymous Sign-in method, or Authenticate the Client before issuing a request"
     Firebase._printerr(err)
+    Firebase._printerr(message)
