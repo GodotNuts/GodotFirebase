@@ -157,11 +157,17 @@ func _on_request_completed(result : int, response_code : int, headers : PoolStri
     emit_signal("task_finished", self)
 
 func emit_error(signal_name : String, bod, task) -> void:
-    if bod and bod.size() > 0:
-        error = bod[0].error
+    if bod:
+        if bod is Array and bod.size() > 0 and bod[0].has("error"):
+            error = bod[0].error
+        elif bod is Dictionary and bod.keys().size() > 0 and bod.has("error"):
+            error = bod.error
+
         emit_signal(signal_name, error.code, error.status, error.message, task)
-    else:
-        emit_signal(signal_name, 1, 0, "Unknown error", task)
+
+        return
+
+    emit_signal(signal_name, 1, 0, "Unknown error", task)
 
 func set_action(value : int) -> void:
     action = value
