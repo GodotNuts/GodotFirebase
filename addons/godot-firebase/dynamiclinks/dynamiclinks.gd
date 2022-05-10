@@ -8,6 +8,7 @@ class_name FirebaseDynamicLinks
 extends Node
 
 signal dynamic_link_generated(link_result)
+signal generate_dynamic_link_error(error)
 
 const _AUTHORIZATION_HEADER : String = "Authorization: Bearer "
 const _API_VERSION : String = "v1"
@@ -69,6 +70,11 @@ var _link_request_body : Dictionary = {
 ## This function is used to generate a dynamic link using the Firebase REST API
 ## It will return a JSON with the shortened link
 func generate_dynamic_link(long_link : String, APN : String, IBI : String, is_unguessable : bool) -> void:
+    if not _config.domainUriPrefix or _config.domainUriPrefix == "":
+        emit_signal("generate_dynamic_link_error", "You're missing the domainUriPrefix in config file! Error!")
+        Firebase._printerr("You're missing the domainUriPrefix in config file! Error!")
+        return
+
     request = Requests.GENERATE
     _link_request_body.dynamicLinkInfo.domainUriPrefix = _config.domainUriPrefix
     _link_request_body.dynamicLinkInfo.link = long_link
@@ -81,7 +87,13 @@ func generate_dynamic_link(long_link : String, APN : String, IBI : String, is_un
     _request_list_node.request(_base_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_link_request_body))
 
 func _on_request_completed(result : int, response_code : int, headers : PoolStringArray, body : PoolByteArray) -> void:
-    var result_body : Dictionary = JSON.parse(body.get_string_from_utf8()).result
+    var result_body = JSON.parse(body.get_string_from_utf8())
+    if result_body.error:
+        emit_signal("generate_dynamic_link_error", result_body.error_string)
+        return
+    else:
+        result_body = result_body.result
+
     emit_signal("dynamic_link_generated", result_body.shortLink)
     request = Requests.NONE
 
