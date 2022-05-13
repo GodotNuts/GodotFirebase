@@ -139,6 +139,6 @@ func _on_update_document(document : FirestoreDocument):
 func _on_delete_document():
     emit_signal("delete_document")
 
-func _on_error(code, status, message):
+func _on_error(code, status, message, task):
     emit_signal("error", code, status, message)
     Firebase._printerr(message)

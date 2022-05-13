@@ -173,7 +173,6 @@ func list(path : String = "", page_size : int = 0, page_token : String = "", ord
     var firestore_task : FirestoreTask = FirestoreTask.new()
     firestore_task.connect("listed_documents", self, "_on_listed_documents")
     firestore_task.connect("task_error", self, "_on_task_error")
-    firestore_task.connect("task_list_error", self, "_on_task_list_error")
     firestore_task.action = FirestoreTask.Task.TASK_LIST
     var url : String = _base_url + _extended_url + path
     if page_size != 0:
@@ -345,11 +344,7 @@ func _on_listed_documents(listed_documents : Array):
 func _on_result_query(result : Array):
     emit_signal("result_query", result)
 
-func _on_task_error(code : int, status : String, message : String):
-    emit_signal("task_error", code, status, message)
-    Firebase._printerr(message)
-
-func _on_task_list_error(code : int, status : String, message : String):
+func _on_task_error(code : int, status : String, message : String, task : int):
     emit_signal("task_error", code, status, message)
     Firebase._printerr(message)
 
