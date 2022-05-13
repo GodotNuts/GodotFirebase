@@ -143,7 +143,6 @@ func query(query : FirestoreQuery) -> FirestoreTask:
     var firestore_task : FirestoreTask = FirestoreTask.new()
     firestore_task.connect("result_query", self, "_on_result_query")
     firestore_task.connect("task_error", self, "_on_task_error")
-    firestore_task.connect("task_query_error", self, "_on_task_query_error")
     firestore_task.action = FirestoreTask.Task.TASK_QUERY
     var body : Dictionary = { structuredQuery = query.query }
     var url : String = _base_url + _extended_url + _query_suffix
@@ -345,10 +344,6 @@ func _on_result_query(result : Array):
     emit_signal("result_query", result)
 
 func _on_task_error(code : int, status : String, message : String, task : int):
-    emit_signal("task_error", code, status, message)
-    Firebase._printerr(message)
-
-func _on_task_query_error(code : int, status : String, message : String):
     emit_signal("task_error", code, status, message)
     Firebase._printerr(message)
 
