@@ -47,12 +47,14 @@ signal result_query(result)
 signal task_error(code, status, message, task)
 
 enum Task {
-    TASK_GET,       ## A GET Request Task, processing a get() request
-    TASK_POST,      ## A POST Request Task, processing add() request
-    TASK_PATCH,     ## A PATCH Request Task, processing a update() request
-    TASK_DELETE,    ## A DELETE Request Task, processing a delete() request
-    TASK_QUERY,     ## A POST Request Task, processing a query() request
-    TASK_LIST       ## A POST Request Task, processing a list() request
+    TASK_GET,        ## A GET Request Task, processing a get() request
+    TASK_POST,       ## A POST Request Task, processing add() request
+    TASK_PATCH,      ## A PATCH Request Task, processing a update() request
+    TASK_DELETE,     ## A DELETE Request Task, processing a delete() request
+    TASK_QUERY,      ## A POST Request Task, processing a query() request
+    TASK_LIST,       ## A POST Request Task, processing a list() request,
+    TASK_COMMIT,     ## A POST Request Task, processing a commit transaction request
+    TASK_TRANSACTION ##
 }
 
 ## The code indicating the request Firestore is processing.
@@ -63,7 +65,7 @@ var action : int = -1 setget set_action
 ## A variable, temporary holding the result of the request.
 var data
 var error : Dictionary
-var document : FirestoreDocument
+var document
 ## Whether the data came from cache.
 var from_cache : bool = false
 

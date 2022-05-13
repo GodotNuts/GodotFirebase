@@ -25,6 +25,10 @@ func _init(doc: Dictionary = {}, _doc_name: String = "", _doc_fields: Dictionary
     self.doc_fields = fields2dict(self.document)
     self.create_time = doc.createTime
 
+# Begin a transaction so a group of changes to a document can be atomic,
+# and conflicts are handled by the server.
+func begin_transaction():
+    return FirestoreTransaction.new(self)
 
 # Pass a dictionary { 'key' : 'value' } to format it in a APIs usable .fields
 # Field Path using the "dot" (`.`) notation are supported:
@@ -61,9 +65,13 @@ static func dict2fields(dict: Dictionary) -> Dictionary:
             for key in field_value["fields"].keys():
                 fields[field]["mapValue"]["fields"][key] = field_value["fields"][key]
         else:
-            fields[field] = {var_type: field_value}
-    return {"fields": fields}
+            fields[field] = { var_type : field_value }
+    return {"fields" : fields} # Pass a dictionary { 'key' : 'value' } to format it in a APIs usable .fields
 
+# Field Path using the "dot" (`.`) notation are supported:
+# ex. { "PATH.TO.SUBKEY" : "VALUE" } ==> { "PATH" : { "TO" : { "SUBKEY" : "VALUE" } } }
+func dict2fields_(dict : Dictionary) -> Dictionary:
+    return dict2fields(dict)
 
 # Pass the .fields inside a Firestore Document to print out the Dictionary { 'key' : 'value' }
 static func fields2dict(doc: Dictionary) -> Dictionary:
