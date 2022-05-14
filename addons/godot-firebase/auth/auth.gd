@@ -156,6 +156,9 @@ var _google_token_body : Dictionary = {
     "grant_type":"authorization_code"
 }
 
+var _local_port : int = 8060
+var _local_uri : String = "http://localhost:%s/"%_local_port
+
 func _ready() -> void:
     tcp_timer.wait_time = tcp_timeout
     tcp_timer.connect("timeout", self, "_tcp_stream_timer")
@@ -250,53 +253,37 @@ func login_with_custom_token(token : String) -> void:
         auth_request_type = Auth_Type.LOGIN_CT
         request(_base_url + _signin_custom_token_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_custom_token_body))
 
+
+func get_auth_with_redirect(redirect_uri : String = _local_uri) -> void:
+    set_redirect_uri(redirect_uri)
+    var url_endpoint : String = _google_auth_request_url
+    _google_auth_body.redirect_uri = redirect_uri
+    for key in _google_auth_body.keys():
+        url_endpoint+=key+"="+_google_auth_body[key]+"&"
+    url_endpoint = url_endpoint.replace("[CLIENT_ID]&", _config.clientId)
+    if OS.get_name() == "HTML5" and OS.has_feature('JavaScript'):
+        JavaScript.eval('window.location.replace("' + url_endpoint + '")')
+    else:
+        OS.shell_open(url_endpoint)
+
+
 # Open a web page in browser redirecting to Google oAuth2 page for the current project
 # Once given user's authorization, a token will be generated.
 # NOTE** with this method, the authorization process will be copy-pasted
-
-func get_google_auth(redirect_uri : String = "urn:ietf:wg:oauth:2.0:oob", client_id : String = _config.clientId) -> void:
-    var url_endpoint : String = _google_auth_request_url
-    _google_auth_body.redirect_uri = redirect_uri
-
-
 func get_google_auth_manual() -> void:
-    var url_endpoint : String = _google_auth_request_url
-    _google_auth_body.redirect_uri = "urn:ietf:wg:oauth:2.0:oob"
-    for key in _google_auth_body.keys():
-        url_endpoint+=key+"="+_google_auth_body[key]+"&"
-    url_endpoint = url_endpoint.replace("[CLIENT_ID]&", _config.clientId)
-    OS.shell_open(url_endpoint)
-
-# Exchange the authorization oAuth2 code obtained from browser with a proper access id_token
-func exchange_google_token(google_token : String, redirect_uri : String = "urn:ietf:wg:oauth:2.0:oob") -> void:
-    if _is_ready():
-        is_busy = true
-        _google_token_body.code = google_token
-        _google_token_body.client_id = _config.clientId
-        _google_token_body.client_secret = _config.clientSecret
-        _google_token_body.redirect_uri = redirect_uri
-        requesting = Requests.EXCHANGE_TOKEN
-        request(_google_token_request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_google_token_body))
-
-
-func get_google_auth_redirect(redirect_uri : String, listen_to_port : int) -> void:
-    var url_endpoint : String = _google_auth_request_url
-    _google_auth_body.redirect_uri = redirect_uri
-    for key in _google_auth_body.keys():
-        url_endpoint+=key+"="+_google_auth_body[key]+"&"
-    url_endpoint = url_endpoint.replace("[CLIENT_ID]&", _config.clientId)
-    OS.shell_open(url_endpoint)
-    yield(get_tree().create_timer(1),"timeout")
-    add_child(tcp_timer)
-    tcp_timer.start()
-    tcp_server.listen(listen_to_port, "::")
-
+    get_auth_with_redirect("urn:ietf:wg:oauth:2.0:oob")
 
 # Open a web page in browser redirecting to Google oAuth2 page for the current project
 # Once given user's authorization, a token will be generated.
 # NOTE** the generated token will be automatically captured and a login request will be made if the token is correct
-func get_google_auth_localhost(port : int = 49152):
-    get_google_auth_redirect("http://localhost:%s/" % port, port)
+func get_google_auth_localhost(localhost : String = _local_uri, port : int = _local_port):
+    if OS.get_name() == "HTML5":
+        localhost += "tmp_js_export.html"
+    get_auth_with_redirect(localhost)
+    yield(get_tree().create_timer(0.1),"timeout")
+    add_child(tcp_timer)
+    tcp_timer.start()
+    tcp_server.listen(port, "*")
 
 
 # A timer used to listen through TCP on the redirect uri of the request
@@ -305,20 +292,27 @@ func _tcp_stream_timer() -> void:
     if peer != null:
         var raw_result : String = peer.get_utf8_string(100)
         if raw_result != "" and raw_result.begins_with("GET"):
-            var token : String = raw_result.rsplit("=")[1].rstrip("&scope")
-            tcp_server.stop()
-            peer.disconnect_from_host()
+            var token : String = raw_result.split("&")[0].split("=")[1]
             tcp_timer.stop()
             remove_child(tcp_timer)
+            var data : PoolByteArray = '<p style="text-align:center">You can close this window now.</p>'.to_ascii()
+            peer.put_data(("HTTP/1.1 200 OK\n").to_ascii())
+            peer.put_data(("Server: Godot Firebase SDK\n").to_ascii())
+            peer.put_data(("Content-Length: %d\n" % data.size()).to_ascii())
+            peer.put_data("Connection: close\n".to_ascii())
+            peer.put_data(("Content-Type: text/html; charset=UTF-8\n\n").to_ascii())
+            peer.put_data(data)
+            peer.disconnect_from_host()
+            tcp_server.stop()
             login_with_oauth(token, _google_auth_body.redirect_uri)
 
 
 # Login with Google oAuth2.
 # A token is automatically obtained using an authorization code using @get_google_auth()
 # @provider_id and @request_uri can be changed
-func login_with_oauth(_google_token: String, request_uri : String = "urn:ietf:wg:oauth:2.0:oob", provider_id : String = "google.com") -> void:
+func login_with_oauth(_google_token: String, request_uri : String = _local_uri, provider_id : String = "google.com") -> void:
     var google_token : String = _google_token.percent_decode()
-    _exchange_google_token(google_token, request_uri)
+    exchange_google_token(google_token, request_uri)
     var is_successful : bool = yield(self, "token_exchanged")
     if is_successful and _is_ready():
         is_busy = true
@@ -328,15 +322,14 @@ func login_with_oauth(_google_token: String, request_uri : String = "urn:ietf:wg
         auth_request_type = Auth_Type.LOGIN_OAUTH
         request(_base_url + _signin_with_oauth_request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_oauth_login_request_body))
 
-
 # Exchange the authorization oAuth2 code obtained from browser with a proper access id_token
-func _exchange_google_token(google_token : String, redirect_uri : String = "urn:ietf:wg:oauth:2.0:oob") -> void:
+func exchange_google_token(google_token : String, redirect_uri : String) -> void:
     if _is_ready():
         is_busy = true
         _google_token_body.code = google_token
-        _google_token_body.redirect_uri = redirect_uri
         _google_token_body.client_id = _config.clientId
         _google_token_body.client_secret = _config.clientSecret
+        _google_token_body.redirect_uri = redirect_uri
         requesting = Requests.EXCHANGE_TOKEN
         request(_google_token_request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_google_token_body))
 
@@ -435,7 +428,6 @@ func save_auth(auth : Dictionary) -> void:
 # Function used to load the auth data file that has been stored locally
 # Note this does not work in HTML5 or UWP
 func load_auth() -> void:
-
     var encrypted_file = File.new()
     var err = encrypted_file.open_encrypted_with_pass("user://user.auth", File.READ, _config.apiKey)
     if err != OK:
@@ -552,6 +544,22 @@ func begin_refresh_countdown() -> void:
     _refresh_request_body.refresh_token = refresh_token
     request(_refresh_request_base_url + _refresh_request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_refresh_request_body))
 
+
+func get_token_from_url():
+    if OS.has_feature('JavaScript'):
+        var token = JavaScript.eval(""" 
+            var url_string = window.location.href;
+            var url = new URL(url_string);
+            url.searchParams.get("code");
+        """)
+        JavaScript.eval("""window.history.pushState({}, null, location.href.split('?')[0]);""")
+        return token
+    return null
+
+
+func set_redirect_uri(redirect_uri : String) -> void:
+    self._local_uri = redirect_uri
+    
 
 # This function is used to make all keys lowercase
 # This is only used to cut down on processing errors from Firebase
