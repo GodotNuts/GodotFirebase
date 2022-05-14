@@ -1,5 +1,5 @@
 ## @meta-authors Nicolò 'fenix' Santilio, Kyle 'backat50ft' Szklenski
-## @meta-version 1.3
+## @meta-version 1.4
 ##
 ## A [code]FirestoreTask[/code] is an independent node inheriting [code]HTTPRequest[/code] that processes a [code]Firestore[/code] request.
 ## Once the Task is completed (both if successfully or not) it will emit the relative signal (or a general purpose signal [code]task_finished()[/code]) and will destroy automatically.
@@ -44,9 +44,7 @@ signal listed_documents(documents)
 signal result_query(result)
 ## Emitted when a request is [b]not[/b] successfully completed.
 ## @arg-types Dictionary
-signal task_error(code, status, message)
-signal task_query_error(code, status, message)
-signal task_list_error(code, status, message)
+signal task_error(code, status, message, task)
 
 enum Task {
     TASK_GET,       ## A GET Request Task, processing a get() request
@@ -153,28 +151,23 @@ func _on_request_completed(result : int, response_code : int, headers : PoolStri
                         data.append(bod.nextPageToken)
                 emit_signal("listed_documents", data)
     else:
-        match action:
-            Task.TASK_LIST:
-                if bod and bod.keys().size() > 0:
-                    error = bod[0].error
-                    emit_signal("task_list_error", error.code, error.status, error.message)
-                else:
-                    emit_signal("task_list_error", 1, 0, "Unknown error when returning from list")
-            Task.TASK_QUERY:
-                if bod and bod.keys().size() > 0:
-                    error = bod[0].error
-                    emit_signal("task_query_error", error.code, error.status, error.message)
-                else:
-                    emit_signal("task_query_error", 1, 0, "Unknown error when returning from query")
-            _:
-                if bod:
-                    error = bod.error
-                    emit_signal("task_error", error.code, error.status, error.message)
-                else:
-                    emit_signal("task_error", 1, 0, "Unknown error when returning from task")
+        Firebase._printerr("Action in error was: " + str(action))
+        emit_error("task_error", bod, action)
 
     emit_signal("task_finished", self)
 
+func emit_error(signal_name : String, bod, task) -> void:
+    if bod:
+        if bod is Array and bod.size() > 0 and bod[0].has("error"):
+            error = bod[0].error
+        elif bod is Dictionary and bod.keys().size() > 0 and bod.has("error"):
+            error = bod.error
+
+        emit_signal(signal_name, error.code, error.status, error.message, task)
+
+        return
+
+    emit_signal(signal_name, 1, 0, "Unknown error", task)
 
 func set_action(value : int) -> void:
     action = value

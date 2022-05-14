@@ -439,7 +439,7 @@ func load_auth() -> void:
     var encrypted_file = File.new()
     var err = encrypted_file.open_encrypted_with_pass("user://user.auth", File.READ, _config.apiKey)
     if err != OK:
-        Firebase._printerr("Error Opening Firebase Auth File. Error Code: " + err)
+        Firebase._printerr("Error Opening Firebase Auth File. Error Code: " + str(err))
         emit_signal("auth_request", err, "Error Opening Firebase Auth File.")
     else:
         var encrypted_file_data = parse_json(encrypted_file.get_line())
