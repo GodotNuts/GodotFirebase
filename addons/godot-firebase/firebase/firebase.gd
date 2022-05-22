@@ -13,6 +13,7 @@ extends Node
 
 const _ENVIRONMENT_VARIABLES : String = "firebase/environment_variables"
 const _EMULATORS_PORTS : String = "firebase/emulators/ports"
+const _AUTH_PROVIDERS : String = "firebase/auth_providers"
 
 ## @type FirebaseAuth
 ## The Firebase Authentication API.
@@ -69,6 +70,13 @@ var _config : Dictionary = {
     },
     "workarounds":{
         "database_connection_closed_issue": false, # fixes https://github.com/firebase/firebase-tools/issues/3329
+    },
+    "auth_providers": {
+        "facebook_id":"",
+        "github_id":"",
+        "github_secret":"",
+        "twitter_id":"",
+        "twitter_secret":""
     }
 }
 
@@ -98,6 +106,9 @@ func _load_config() -> void:
                 if key == "emulators":
                     for port in _config[key]["ports"].keys():
                         _config[key]["ports"][port] = env.get_value(_EMULATORS_PORTS, port, "")
+                if key == "auth_providers":
+                    for provider in _config[key].keys():
+                        _config[key][provider] = env.get_value(_AUTH_PROVIDERS, provider)
                 else:
                     var value : String = env.get_value(_ENVIRONMENT_VARIABLES, key, "")
                     if value == "":
