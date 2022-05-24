@@ -85,7 +85,7 @@ var _login_request_body : Dictionary = {
 var _oauth_login_request_body : Dictionary = {
     "postBody":"",
     "requestUri":"",
-    "returnIdpCredential":true,
+    "returnIdpCredential":false,
     "returnSecureToken":true
 }
 
@@ -144,6 +144,9 @@ var _local_provider : AuthProvider = AuthProvider.new()
 func _ready() -> void:
     tcp_timer.wait_time = tcp_timeout
     tcp_timer.connect("timeout", self, "_tcp_stream_timer")
+    
+    if OS.get_name() == "HTML5":
+        _local_uri += "tmp_js_export.html"
 
 
 # Sets the configuration needed for the plugin to talk to Firebase
@@ -236,8 +239,19 @@ func login_with_custom_token(token : String) -> void:
         request(_base_url + _signin_custom_token_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_custom_token_body))
 
 
+# Open a web page in browser redirecting to Google oAuth2 page for the current project
+# Once given user's authorization, a token will be generated.
+# NOTE** the generated token will be automatically captured and a login request will be made if the token is correct
+func get_auth_localhost(provider: AuthProvider = get_GoogleProvider(), port : int = _local_port):
+    get_auth_with_redirect(provider)
+    yield(get_tree().create_timer(0.5),"timeout")
+    add_child(tcp_timer)
+    tcp_timer.start()
+    tcp_server.listen(port, "*")
+
+
 func get_auth_with_redirect(provider: AuthProvider) -> void:
-    var url_endpoint: String = provider.endpoint
+    var url_endpoint: String = provider.redirect_uri
     for key in provider.params.keys():
         url_endpoint+=key+"="+provider.params[key]+"&"
     url_endpoint += provider.params.redirect_type+"="+_local_uri
@@ -246,6 +260,7 @@ func get_auth_with_redirect(provider: AuthProvider) -> void:
     else:
         set_local_provider(provider)
         OS.shell_open(url_endpoint)
+        print(url_endpoint)
 
 
 # Login with Google oAuth2.
@@ -253,16 +268,15 @@ func get_auth_with_redirect(provider: AuthProvider) -> void:
 # @provider_id and @request_uri can be changed
 func login_with_oauth(_token: String, provider: AuthProvider) -> void:
     var token : String = _token.percent_decode()
+    print(token)
     var is_successful: bool = true
     if provider.should_exchange:
-        var client_id: String = provider.get_client_id()
-        var client_secret: String = provider.get_client_secret()
-        exchange_token(token, _local_uri, provider.access_token_uri, client_id, client_secret)
+        exchange_token(token, _local_uri, provider.access_token_uri, provider.get_client_id(), provider.get_client_secret())
         is_successful = yield(self, "token_exchanged")
-        token = auth.idtoken
+        token = auth.accesstoken
     if is_successful and _is_ready():
         is_busy = true
-        _oauth_login_request_body.postBody = provider._body_token+"="+token+"&providerId="+provider.provider_id
+        _oauth_login_request_body.postBody = "access_token="+token+"&providerId="+provider.provider_id
         _oauth_login_request_body.requestUri = _local_uri
         requesting = Requests.LOGIN_WITH_OAUTH
         auth_request_type = Auth_Type.LOGIN_OAUTH
@@ -282,7 +296,8 @@ func exchange_token(code : String, redirect_uri : String, request_url: String, _
             grant_type = "authorization_code",
         }
         requesting = Requests.EXCHANGE_TOKEN
-        request(request_url, _headers, false, HTTPClient.METHOD_POST, JSON.print(exchange_token_body))
+        request(request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(exchange_token_body))
+            
 
 
 # Open a web page in browser redirecting to Google oAuth2 page for the current project
@@ -292,39 +307,37 @@ func get_google_auth_manual(provider: AuthProvider = _local_provider) -> void:
     provider.params.redirect_uri = "urn:ietf:wg:oauth:2.0:oob"
     get_auth_with_redirect(provider)
 
-# Open a web page in browser redirecting to Google oAuth2 page for the current project
-# Once given user's authorization, a token will be generated.
-# NOTE** the generated token will be automatically captured and a login request will be made if the token is correct
-func get_auth_localhost(provider: AuthProvider = get_GoogleProvider(), port : int = _local_port):
-    var localhost : String = "http://localhost:%s/" % _local_port
-    if OS.get_name() == "HTML5":
-        localhost += "tmp_js_export.html"
-    get_auth_with_redirect(provider)
-    yield(get_tree().create_timer(0.1),"timeout")
-    add_child(tcp_timer)
-    tcp_timer.start()
-    tcp_server.listen(port, "*")
-
 
 # A timer used to listen through TCP on the redirect uri of the request
 func _tcp_stream_timer() -> void:
     var peer : StreamPeer = tcp_server.take_connection()
     if peer != null:
-        var raw_result : String = peer.get_utf8_string(100)
+        var raw_result : String = peer.get_utf8_string(400)
         if raw_result != "" and raw_result.begins_with("GET"):
-            var token : String = raw_result.split("&")[0].split("=")[1]
             tcp_timer.stop()
             remove_child(tcp_timer)
-            var data : PoolByteArray = '<p style="text-align:center">You can close this window now.</p>'.to_ascii()
+            var token : String = ""
+            for value in raw_result.split(" ")[1].lstrip("/?").split("&"):
+                var splitted: PoolStringArray = value.split("=")
+                if _local_provider.params.response_type in splitted[0]:
+                    token = splitted[1]
+                    break
+            if token == "":
+                emit_signal("login_failed")
+                peer.disconnect_from_host()
+                tcp_server.stop()
+            var data : PoolByteArray = '<p style="text-align:center">&#128293; You can close this window now. &#128293;</p>'.to_ascii()
             peer.put_data(("HTTP/1.1 200 OK\n").to_ascii())
             peer.put_data(("Server: Godot Firebase SDK\n").to_ascii())
             peer.put_data(("Content-Length: %d\n" % data.size()).to_ascii())
             peer.put_data("Connection: close\n".to_ascii())
             peer.put_data(("Content-Type: text/html; charset=UTF-8\n\n").to_ascii())
             peer.put_data(data)
+            login_with_oauth(token, _local_provider)
+            yield(self, "login_succeeded")
             peer.disconnect_from_host()
             tcp_server.stop()
-            login_with_oauth(token, _local_provider)
+            
 
 
 
@@ -352,6 +365,7 @@ func manual_token_refresh(auth_data):
 # This function is called whenever there is an authentication request to Firebase
 # On an error, this function with emit the signal 'login_failed' and print the error to the console
 func _on_FirebaseAuth_request_completed(result : int, response_code : int, headers : PoolStringArray, body : PoolByteArray) -> void:
+    print_debug(JSON.parse(body.get_string_from_utf8()).result)
     is_busy = false
     var res
     if response_code == 0:
@@ -540,11 +554,12 @@ func begin_refresh_countdown() -> void:
 
 
 func get_token_from_url(provider: AuthProvider):
+    var token_type: String = provider.params.response_type if provider.params.response_type == "code" else "access_token"
     if OS.has_feature('JavaScript'):
         var token = JavaScript.eval(""" 
             var url_string = window.location.href.replaceAll("?#", "?");
             var url = new URL(url_string);
-            url.searchParams.get('"""+provider.params.response_type+"""');
+            url.searchParams.get('"""+token_type+"""');
         """)
         JavaScript.eval("""window.history.pushState({}, null, location.href.split('?')[0]);""")
         return token
@@ -574,7 +589,7 @@ func get_GoogleProvider() -> GoogleProvider:
     return GoogleProvider.new(_config.clientId, _config.clientSecret)
 
 func get_FacebookProvider() -> FacebookProvider:
-    return FacebookProvider.new(_config.auth_providers.facebook_id)
+    return FacebookProvider.new(_config.auth_providers.facebook_id, _config.auth_providers.facebook_secret)
 
 func get_GitHubProvider() -> GitHubProvider:
     return GitHubProvider.new(_config.auth_providers.github_id, _config.auth_providers.github_secret)

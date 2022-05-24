@@ -73,6 +73,7 @@ var _config : Dictionary = {
     },
     "auth_providers": {
         "facebook_id":"",
+        "facebook_secret":"",
         "github_id":"",
         "github_secret":"",
         "twitter_id":"",

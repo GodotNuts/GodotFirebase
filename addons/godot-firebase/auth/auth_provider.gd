@@ -2,10 +2,8 @@ tool
 class_name AuthProvider
 extends Reference
 
-var _token_type: String = ""
-var _body_token: String = ""
-
-var endpoint: String = ""
+var redirect_uri: String = ""
+var access_token_uri: String = ""
 var provider_id: String = ""
 var params: Dictionary = {
     client_id = "",
@@ -16,7 +14,7 @@ var params: Dictionary = {
 }
 var client_secret: String = ""
 var should_exchange: bool = false
-var access_token_uri: String
+
 
 func set_client_id(client_id: String) -> void:
     self.params.client_id = client_id
@@ -29,3 +27,6 @@ func get_client_id() -> String:
 
 func get_client_secret() -> String:
     return self.client_secret
+
+func get_oauth_params() -> String:
+    return ""
