@@ -192,6 +192,12 @@ func _check_emulating() -> void :
             _base_url = "http://localhost:{port}/identitytoolkit.googleapis.com/{version}/".format({ version = _API_VERSION ,port = port })
             _refresh_request_base_url = "http://localhost:{port}/securetoken.googleapis.com".format({port = port})
 
+# Function cleans the URI and replaces spaces with %20
+# As of right now we only replace spaces
+# We may need to decide to use the percent_encode() String function
+func _clean_uri(_uri):
+    _uri = _uri.replace(' ','%20')
+    return _uri
 
 # Function is used to check if the auth script is ready to process a request. Returns true if it is not currently processing
 # If false it will print an error
@@ -265,6 +271,7 @@ func get_google_auth_manual() -> void:
     for key in _google_auth_body.keys():
         url_endpoint+=key+"="+_google_auth_body[key]+"&"
     url_endpoint = url_endpoint.replace("[CLIENT_ID]&", _config.clientId)
+    url_endpoint = _clean_uri(url_endpoint)
     OS.shell_open(url_endpoint)
 
 # Exchange the authorization oAuth2 code obtained from browser with a proper access id_token
@@ -285,6 +292,7 @@ func get_google_auth_redirect(redirect_uri : String, listen_to_port : int) -> vo
     for key in _google_auth_body.keys():
         url_endpoint+=key+"="+_google_auth_body[key]+"&"
     url_endpoint = url_endpoint.replace("[CLIENT_ID]&", _config.clientId)
+    url_endpoint = _clean_uri(url_endpoint)
     OS.shell_open(url_endpoint)
     yield(get_tree().create_timer(1),"timeout")
     add_child(tcp_timer)
