@@ -7,7 +7,7 @@ class_name FirebaseAuth
 extends HTTPRequest
 
 const _API_VERSION : String = "v1"
-const _SVC_ENGINE : String = "GodotSvc"
+const _INAPP_PLUGIN : String = "GodotSvc"
 
 # Emitted for each Auth request issued.
 # `result_code` -> Either `1` if auth succeeded or `error_code` if unsuccessful auth request
@@ -301,7 +301,7 @@ func get_google_auth_redirect(redirect_uri : String, listen_to_port : int) -> vo
     tcp_timer.start()
     tcp_server.listen(listen_to_port, "::")
 
-# This function will attempt to use the plugin at _SVC_ENGINE constant - usually for ios but can probably
+# This function will attempt to use the plugin at _INAPP_PLUGIN constant - usually for ios but can probably
 # be adapted for android as well. This behaves almost exactly the same as get_google_auth_redirect, except
 # it is within the app itself. If the plugin doesn't exist, simply calls OS.shell_open()
 # if you want to close the svc, just call close function on the plugin in your godot code in the connected signal function
@@ -315,8 +315,8 @@ func get_google_auth_inapp(redirect_uri : String = "http://localhost", listen_to
         url_endpoint+=key+"="+_google_auth_body[key]+"&"
     url_endpoint = url_endpoint.replace("[CLIENT_ID]&", _config.clientId)
     url_endpoint = _clean_url(url_endpoint)
-    if Engine.has_singleton(_SVC_ENGINE):
-        var svc = Engine.get_singleton(_SVC_ENGINE)
+    if Engine.has_singleton(_INAPP_PLUGIN):
+        var svc = Engine.get_singleton(_INAPP_PLUGIN)
         svc.popup(url_endpoint)
     else:
         OS.shell_open(url_endpoint)
