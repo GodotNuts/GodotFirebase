@@ -303,31 +303,31 @@ func get_google_auth_redirect(redirect_uri : String, listen_to_port : int) -> vo
 
 # This function will attempt to use the plugin at _SVC_ENGINE constant - usually for ios but can probably
 # be adapted for android as well. This behaves almost exactly the same as get_google_auth_redirect, except
-# it is within the app itself. If the plugin doesn't exist, simply calls get_google_auth_redirect
+# it is within the app itself. If the plugin doesn't exist, simply calls OS.shell_open()
 # if you want to close the svc, just call close function on the plugin in your godot code in the connected signal function
 # You could also add a check here to see if the OS is iOS or andriod
 func get_google_auth_inapp(redirect_uri : String = "http://localhost", listen_to_port : int = 49152) -> void:
     if redirect_uri == "http://localhost":
         redirect_uri = redirect_uri + ":"+str(listen_to_port)
+    var url_endpoint : String = _google_auth_request_url
+    _google_auth_body.redirect_uri = redirect_uri
+    for key in _google_auth_body.keys():
+        url_endpoint+=key+"="+_google_auth_body[key]+"&"
+    url_endpoint = url_endpoint.replace("[CLIENT_ID]&", _config.clientId)
+    url_endpoint = _clean_uri(url_endpoint)
     if Engine.has_singleton(_SVC_ENGINE):
-        var url_endpoint : String = _google_auth_request_url
-        _google_auth_body.redirect_uri = redirect_uri
-        for key in _google_auth_body.keys():
-            url_endpoint+=key+"="+_google_auth_body[key]+"&"
-        url_endpoint = url_endpoint.replace("[CLIENT_ID]&", _config.clientId)
-        url_endpoint = _clean_uri(url_endpoint)
         var svc = Engine.get_singleton(_SVC_ENGINE)
         svc.popup(url_endpoint)
+    else:
+        OS.shell_open(url_endpoint)
+    #checks to see if we already have a timer so we don't try to add it again
+    #this can happen if a user cancels out of the svc
+    if has_timer == false:
+        add_child(tcp_timer)
+        has_timer = true
         yield(get_tree().create_timer(1),"timeout")
-        #checks to see if we already have a timer so we don't try to add it again
-        #this can happen if a user cancels out of the svc
-        if has_timer == false:
-            add_child(tcp_timer)
-            has_timer = true
         tcp_timer.start()
         tcp_server.listen(listen_to_port, "::")
-    else:
-        get_google_auth_redirect(redirect_uri,listen_to_port)
 
 # Open a web page in browser redirecting to Google oAuth2 page for the current project
 # Once given user's authorization, a token will be generated.
