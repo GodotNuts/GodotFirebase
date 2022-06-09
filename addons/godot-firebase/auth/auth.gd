@@ -314,7 +314,7 @@ func get_google_auth_inapp(redirect_uri : String = "http://localhost", listen_to
     for key in _google_auth_body.keys():
         url_endpoint+=key+"="+_google_auth_body[key]+"&"
     url_endpoint = url_endpoint.replace("[CLIENT_ID]&", _config.clientId)
-    url_endpoint = _clean_uri(url_endpoint)
+    url_endpoint = _clean_url(url_endpoint)
     if Engine.has_singleton(_SVC_ENGINE):
         var svc = Engine.get_singleton(_SVC_ENGINE)
         svc.popup(url_endpoint)
