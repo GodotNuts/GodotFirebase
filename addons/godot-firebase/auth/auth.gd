@@ -7,6 +7,7 @@ class_name FirebaseAuth
 extends HTTPRequest
 
 const _API_VERSION : String = "v1"
+const _INAPP_PLUGIN : String = "GodotSvc"
 
 # Emitted for each Auth request issued.
 # `result_code` -> Either `1` if auth succeeded or `error_code` if unsuccessful auth request
@@ -46,6 +47,7 @@ var _config : Dictionary = {}
 var auth : Dictionary = {}
 var _needs_refresh : bool = false
 var is_busy : bool = false
+var has_child : bool = false
 
 
 var tcp_server : TCP_Server = TCP_Server.new()
@@ -190,6 +192,12 @@ func _is_ready() -> bool:
     else:
         return true
 
+# Function cleans the URI and replaces spaces with %20
+# As of right now we only replace spaces
+# We may need to decide to use the percent_encode() String function
+func _clean_url(_url):
+    _url = _url.replace(' ','%20')
+    return _url
 
 # Synchronous call to check if any user is already logged in.
 func is_logged_in() -> bool:
@@ -245,9 +253,11 @@ func login_with_custom_token(token : String) -> void:
 func get_auth_localhost(provider: AuthProvider = get_GoogleProvider(), port : int = _local_port):
     get_auth_with_redirect(provider)
     yield(get_tree().create_timer(0.5),"timeout")
-    add_child(tcp_timer)
-    tcp_timer.start()
-    tcp_server.listen(port, "*")
+    if has_child == false:
+        add_child(tcp_timer)
+        has_child = true
+        tcp_timer.start()
+        tcp_server.listen(port, "*")
 
 
 func get_auth_with_redirect(provider: AuthProvider) -> void:
@@ -255,8 +265,13 @@ func get_auth_with_redirect(provider: AuthProvider) -> void:
     for key in provider.params.keys():
         url_endpoint+=key+"="+provider.params[key]+"&"
     url_endpoint += provider.params.redirect_type+"="+_local_uri
+    url_endpoint = _clean_url(url_endpoint)
     if OS.get_name() == "HTML5" and OS.has_feature("JavaScript"):
         JavaScript.eval('window.location.replace("' + url_endpoint + '")')
+    elif Engine.has_singleton(_INAPP_PLUGIN) and OS.get_name() == "iOS":
+        #in app for ios if the iOS plugin exists
+        set_local_provider(provider)
+        Engine.get_singleton(_INAPP_PLUGIN).popup(url_endpoint)
     else:
         set_local_provider(provider)
         OS.shell_open(url_endpoint)
@@ -316,6 +331,7 @@ func _tcp_stream_timer() -> void:
         if raw_result != "" and raw_result.begins_with("GET"):
             tcp_timer.stop()
             remove_child(tcp_timer)
+            has_child = false
             var token : String = ""
             for value in raw_result.split(" ")[1].lstrip("/?").split("&"):
                 var splitted: PoolStringArray = value.split("=")
@@ -557,7 +573,7 @@ func get_token_from_url(provider: AuthProvider):
     var token_type: String = provider.params.response_type if provider.params.response_type == "code" else "access_token"
     if OS.has_feature('JavaScript'):
         var token = JavaScript.eval(""" 
-            var url_string = window.location.href.replaceAll("?#", "?");
+            var url_string = window.location.href.replaceAll('?#', '?');
             var url = new URL(url_string);
             url.searchParams.get('"""+token_type+"""');
         """)
