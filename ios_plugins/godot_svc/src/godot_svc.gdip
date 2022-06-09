@@ -1,0 +1,17 @@
+[config]
+name="GodotSVC"
+binary="godot_svc.xcframework"
+
+initialization="register_godot_svc_plugin"
+deinitialization="unregister_godot_svc_plugin"
+
+[dependencies]
+linked=[]
+embedded=[]
+system=[]
+
+capabilities=[]
+
+files=[]
+
+[plist]

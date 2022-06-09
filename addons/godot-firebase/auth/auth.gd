@@ -7,6 +7,7 @@ class_name FirebaseAuth
 extends HTTPRequest
 
 const _API_VERSION : String = "v1"
+const _SVC_ENGINE : String = "GodotSvc"
 
 # Emitted for each Auth request issued.
 # `result_code` -> Either `1` if auth succeeded or `error_code` if unsuccessful auth request
@@ -47,6 +48,7 @@ var _config : Dictionary = {}
 var auth : Dictionary = {}
 var _needs_refresh : bool = false
 var is_busy : bool = false
+var has_timer : bool = false
 
 
 var tcp_server : TCP_Server = TCP_Server.new()
@@ -299,6 +301,33 @@ func get_google_auth_redirect(redirect_uri : String, listen_to_port : int) -> vo
     tcp_timer.start()
     tcp_server.listen(listen_to_port, "::")
 
+# This function will attempt to use the plugin at _SVC_ENGINE constant - usually for ios but can probably
+# be adapted for android as well. This behaves almost exactly the same as get_google_auth_redirect, except
+# it is within the app itself. If the plugin doesn't exist, simply calls get_google_auth_redirect
+# if you want to close the svc, just call close function on the plugin in your godot code in the connected signal function
+# You could also add a check here to see if the OS is iOS or andriod
+func get_google_auth_inapp(redirect_uri : String = "http://localhost", listen_to_port : int = 49152) -> void:
+    if redirect_uri == "http://localhost":
+        redirect_uri = redirect_uri + ":"+str(listen_to_port)
+    if Engine.has_singleton(_SVC_ENGINE):
+        var url_endpoint : String = _google_auth_request_url
+        _google_auth_body.redirect_uri = redirect_uri
+        for key in _google_auth_body.keys():
+            url_endpoint+=key+"="+_google_auth_body[key]+"&"
+        url_endpoint = url_endpoint.replace("[CLIENT_ID]&", _config.clientId)
+        url_endpoint = _clean_uri(url_endpoint)
+        var svc = Engine.get_singleton(_SVC_ENGINE)
+        svc.popup(url_endpoint)
+        yield(get_tree().create_timer(1),"timeout")
+        #checks to see if we already have a timer so we don't try to add it again
+        #this can happen if a user cancels out of the svc
+        if has_timer == false:
+            add_child(tcp_timer)
+            has_timer = true
+        tcp_timer.start()
+        tcp_server.listen(listen_to_port, "::")
+    else:
+        get_google_auth_redirect(redirect_uri,listen_to_port)
 
 # Open a web page in browser redirecting to Google oAuth2 page for the current project
 # Once given user's authorization, a token will be generated.
@@ -318,6 +347,7 @@ func _tcp_stream_timer() -> void:
             peer.disconnect_from_host()
             tcp_timer.stop()
             remove_child(tcp_timer)
+            has_timer=false
             login_with_oauth(token, _google_auth_body.redirect_uri)
 
 
