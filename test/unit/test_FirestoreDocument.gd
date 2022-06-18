@@ -4,7 +4,7 @@ const FirestoreDocument = preload("res://addons/godot-firebase/firestore/firesto
 
 class TestDeserialization:
     extends "res://addons/gut/test.gd"
-    
+
     func test_deserialize_array_of_dicts():
         var doc_infos : Dictionary = {
             "name":"projects/godot-firebase/databases/(default)/documents/rooms/EUZT",
@@ -45,19 +45,19 @@ class TestDeserialization:
             ]
         }
         var firestore_document : FirestoreDocument = FirestoreDocument.new(doc_infos)
-        
+
         assert_eq_deep(firestore_document.doc_fields, expected_doc_fields)
-        
+
 
 
     func test_deserialize_array_of_strings():
-        
+
         var doc_infos : Dictionary = {
             "name":"projects/godot-firebase/databases/(default)/documents/rooms/EUZT",
             "fields": {
                 "code": {
                     "stringValue":"EUZT"
-                }, 
+                },
                 "things": {
                     "arrayValue": {
                         "values": [{
@@ -76,6 +76,6 @@ class TestDeserialization:
             "things": ["first", "second"]
         }
         var firestore_document : FirestoreDocument = FirestoreDocument.new(doc_infos)
-        
+
         assert_eq_deep(firestore_document.doc_fields, expected_doc_fields)
 

@@ -12,7 +12,7 @@ class Order:
 class Cursor:
     var values : Array
     var before : bool
-    
+
     func _init(v : Array, b : bool):
         values = v
         before = b
@@ -45,13 +45,13 @@ enum OPERATOR {
     ARRAY_CONTAINS_ANY,
     IN,
     NOT_IN,
-    
+
     # Unary operators
     IS_NAN,
     IS_NULL,
     IS_NOT_NAN,
     IS_NOT_NULL,
-    
+
     # Complex operators
     AND,
     OR
@@ -79,7 +79,7 @@ func select(fields) -> FirestoreQuery:
                 field = ({ fieldPath = field })
             query["select"] = { fields = fields }
         _:
-            print("Type of 'fields' is not accepted.")        
+            print("Type of 'fields' is not accepted.")
     return self
 
 
@@ -209,22 +209,22 @@ static func _order_object(field : String, direction : int) -> Order:
 
 
 func create_field_filter(field : String, operator : int, value) -> Dictionary:
-    return { 
+    return {
         fieldFilter = {
-            field = { fieldPath = field },  
+            field = { fieldPath = field },
             op = OPERATOR.keys()[operator],
             value = FirestoreDocument.dict2fields({value = value}).fields.value
         } }
 
 func create_unary_filter(field : String, operator : int) -> Dictionary:
-    return { 
+    return {
         unaryFilter = {
-            field = { fieldPath = field },  
+            field = { fieldPath = field },
             op = OPERATOR.keys()[operator],
-        } }    
+        } }
 
 func create_composite_filter(operator : int, filters : Array) -> Dictionary:
-    return { 
+    return {
         compositeFilter = {
             op = OPERATOR.keys()[operator],
             filters = filters

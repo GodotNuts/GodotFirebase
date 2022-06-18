@@ -24,8 +24,8 @@ func _init(doc : Dictionary = {}, _doc_name : String = "", _doc_fields : Diction
     self.doc_fields = fields2dict(self.document)
     self.create_time = doc.createTime
 
-# Pass a dictionary { 'key' : 'value' } to format it in a APIs usable .fields 
-# Field Path using the "dot" (`.`) notation are supported: 
+# Pass a dictionary { 'key' : 'value' } to format it in a APIs usable .fields
+# Field Path using the "dot" (`.`) notation are supported:
 # ex. { "PATH.TO.SUBKEY" : "VALUE" } ==> { "PATH" : { "TO" : { "SUBKEY" : "VALUE" } } }
 static func dict2fields(dict : Dictionary) -> Dictionary:
     var fields : Dictionary = {}
@@ -54,7 +54,7 @@ static func dict2fields(dict : Dictionary) -> Dictionary:
             TYPE_ARRAY:
                 var_type = "arrayValue"
                 field_value = {"values": array2fields(field_value)}
-                
+
         if fields.has(field) and fields[field].has("mapValue") and field_value.has("fields"):
             for key in field_value["fields"].keys():
                 fields[field]["mapValue"]["fields"][key] = field_value["fields"][key]
@@ -104,7 +104,7 @@ static func array2fields(array : Array) -> Array:
             TYPE_REAL: var_type = "doubleValue"
             TYPE_STRING: var_type = "stringValue"
             TYPE_ARRAY: var_type = "arrayValue"
-                
+
         fields.append({ var_type : field })
     return fields
 
@@ -156,6 +156,6 @@ static func is_field_timestamp(field : Dictionary) -> bool:
 # Call print(document) to return directly this document formatted
 func _to_string() -> String:
     return ("doc_name: {doc_name}, \ndoc_fields: {doc_fields}, \ncreate_time: {create_time}\n").format(
-        {doc_name = self.doc_name, 
-        doc_fields = self.doc_fields, 
+        {doc_name = self.doc_name,
+        doc_fields = self.doc_fields,
         create_time = self.create_time})

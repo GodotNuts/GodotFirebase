@@ -2,8 +2,8 @@
 ## @meta-version 2.2
 ## The Storage API for Firebase.
 ## This object handles all firebase storage tasks, variables and references. To use this API, you must first create a [StorageReference] with [method ref]. With the reference, you can then query and manipulate the file or folder in the cloud storage.
-## 
-## [i]Note: In HTML builds, you must configure [url=https://firebase.google.com/docs/storage/web/download-files#cors_configuration]CORS[/url] in your storage bucket.[i] 
+##
+## [i]Note: In HTML builds, you must configure [url=https://firebase.google.com/docs/storage/web/download-files#cors_configuration]CORS[/url] in your storage bucket.[i]
 tool
 class_name FirebaseStorage
 extends Node
@@ -54,36 +54,36 @@ func _internal_process(_delta : float) -> void:
     if not requesting:
         set_process_internal(false)
         return
-    
+
     var task = _current_task
-    
+
     match _http_client.get_status():
         HTTPClient.STATUS_DISCONNECTED:
             _http_client.connect_to_host(_base_url, 443, true)
-        
+
         HTTPClient.STATUS_RESOLVING, \
         HTTPClient.STATUS_REQUESTING, \
         HTTPClient.STATUS_CONNECTING:
             _http_client.poll()
-        
+
         HTTPClient.STATUS_CONNECTED:
             var err := _http_client.request_raw(task._method, task._url, task._headers, task.data)
             if err:
                 _finish_request(HTTPRequest.RESULT_CONNECTION_ERROR)
-        
+
         HTTPClient.STATUS_BODY:
             if _http_client.has_response() or _reading_body:
                 _reading_body = true
-                
+
                 # If there is a response...
                 if _response_headers.empty():
                     _response_headers = _http_client.get_response_headers() # Get response headers.
                     _response_code = _http_client.get_response_code()
-                    
+
                     for header in _response_headers:
                         if "Content-Length" in header:
                             _content_length = header.trim_prefix("Content-Length: ").to_int()
-                
+
                 _http_client.poll()
                 var chunk = _http_client.read_response_body_chunk() # Get a chunk.
                 if chunk.size() == 0:
@@ -93,14 +93,14 @@ func _internal_process(_delta : float) -> void:
                     _response_data += chunk # Append to read buffer.
                     if _content_length != 0:
                         task.progress = float(_response_data.size()) / _content_length
-                
+
                 if _http_client.get_status() != HTTPClient.STATUS_BODY:
                     task.progress = 1.0
                     _finish_request(HTTPRequest.RESULT_SUCCESS)
             else:
                 task.progress = 1.0
                 _finish_request(HTTPRequest.RESULT_SUCCESS)
-        
+
         HTTPClient.STATUS_CANT_CONNECT:
             _finish_request(HTTPRequest.RESULT_CANT_CONNECT)
         HTTPClient.STATUS_CANT_RESOLVE:
@@ -117,12 +117,12 @@ func _internal_process(_delta : float) -> void:
 func ref(path := "") -> StorageReference:
     if not _config:
         return null
-    
+
     # Create a root storage reference if there's none
     # and we're not making one.
     if path != "" and not _root_ref:
         _root_ref = ref()
-    
+
     path = _simplify_path(path)
     if not _references.has(path):
         var ref := StorageReference.new()
@@ -161,7 +161,7 @@ func _check_emulating() -> void :
 func _upload(data : PoolByteArray, headers : PoolStringArray, ref : StorageReference, meta_only : bool) -> StorageTask:
     if not (_config and _auth):
         return null
-    
+
     var task := StorageTask.new()
     task.ref = ref
     task._url = _get_file_url(ref)
@@ -174,22 +174,22 @@ func _upload(data : PoolByteArray, headers : PoolStringArray, ref : StorageRefer
 func _download(ref : StorageReference, meta_only : bool, url_only : bool) -> StorageTask:
     if not (_config and _auth):
         return null
-    
+
     var info_task := StorageTask.new()
     info_task.ref = ref
     info_task._url = _get_file_url(ref)
     info_task.action = StorageTask.Task.TASK_DOWNLOAD_URL if url_only else StorageTask.Task.TASK_DOWNLOAD_META
     _process_request(info_task)
-    
+
     if url_only or meta_only:
         return info_task
-    
+
     var task := StorageTask.new()
     task.ref = ref
     task._url = _get_file_url(ref) + "?alt=media&token="
     task.action = StorageTask.Task.TASK_DOWNLOAD
     _pending_tasks.append(task)
-    
+
     yield(info_task, "task_finished")
     if info_task.data and not info_task.data.has("error"):
         task._url += info_task.data.downloadTokens
@@ -202,13 +202,13 @@ func _download(ref : StorageReference, meta_only : bool, url_only : bool) -> Sto
         task.emit_signal("task_finished")
         emit_signal("task_failed", task.result, task.response_code, task.data)
         _pending_tasks.erase(task)
-    
+
     return task
 
 func _list(ref : StorageReference, list_all : bool) -> StorageTask:
     if not (_config and _auth):
         return null
-    
+
     var task := StorageTask.new()
     task.ref = ref
     task._url = _get_file_url(_root_ref).trim_suffix("/")
@@ -219,7 +219,7 @@ func _list(ref : StorageReference, list_all : bool) -> StorageTask:
 func _delete(ref : StorageReference) -> StorageTask:
     if not (_config and _auth):
         return null
-    
+
     var task := StorageTask.new()
     task.ref = ref
     task._url = _get_file_url(ref)
@@ -232,18 +232,18 @@ func _process_request(task : StorageTask) -> void:
         _pending_tasks.append(task)
         return
     requesting = true
-    
+
     var headers = Array(task._headers)
     headers.append("Authorization: Bearer " + _auth.idtoken)
     task._headers = PoolStringArray(headers)
-    
+
     _current_task = task
     _response_code = 0
     _response_headers = PoolStringArray()
     _response_data = PoolByteArray()
     _content_length = 0
     _reading_body = false
-    
+
     if not _http_client.get_status() in [HTTPClient.STATUS_CONNECTED, HTTPClient.STATUS_DISCONNECTED]:
         _http_client.close()
     set_process_internal(true)
@@ -251,28 +251,28 @@ func _process_request(task : StorageTask) -> void:
 func _finish_request(result : int) -> void:
     var task := _current_task
     requesting = false
-    
+
     task.result = result
     task.response_code = _response_code
     task.response_headers = _response_headers
-    
+
     match task.action:
         StorageTask.Task.TASK_DOWNLOAD:
             task.data = _response_data
-        
+
         StorageTask.Task.TASK_DELETE:
             _references.erase(task.ref.full_path)
             task.ref.valid = false
             if typeof(task.data) == TYPE_RAW_ARRAY:
                 task.data = null
-        
+
         StorageTask.Task.TASK_DOWNLOAD_URL:
             var json : Dictionary = JSON.parse(_response_data.get_string_from_utf8()).result
             if json and json.has("downloadTokens"):
                 task.data = _base_url + _get_file_url(task.ref) + "?alt=media&token=" + json.downloadTokens
             else:
                 task.data = ""
-        
+
         StorageTask.Task.TASK_LIST, StorageTask.Task.TASK_LIST_ALL:
             var json : Dictionary = JSON.parse(_response_data.get_string_from_utf8()).result
             var items := []
@@ -293,24 +293,24 @@ func _finish_request(result : int) -> void:
                                 item_name += "/"
                         if item_name in items:
                             continue
-                    
+
                     items.append(item_name)
             task.data = items
-        
+
         _:
             task.data = JSON.parse(_response_data.get_string_from_utf8()).result
-    
+
     var next_task : StorageTask
     if not _pending_tasks.empty():
         next_task = _pending_tasks.pop_front()
-    
+
     task.finished = true
     task.emit_signal("task_finished")
     if typeof(task.data) == TYPE_DICTIONARY and task.data.has("error"):
         emit_signal("task_failed", task.result, task.response_code, task.data)
     else:
         emit_signal("task_successful", task.result, task.response_code, task.data)
-    
+
     while true:
         if next_task and not next_task.finished:
             _process_request(next_task)
@@ -337,7 +337,7 @@ func _simplify_path(path : String) -> String:
             pass
         else:
             new_dirs.push_back(dir)
-    
+
     var new_path := PoolStringArray(new_dirs).join("/")
     new_path = new_path.replace("//", "/")
     new_path = new_path.replace("\\", "/")

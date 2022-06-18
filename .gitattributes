@@ -1,7 +1,7 @@
 #
 # Auto detect text files and perform LF normalization.
 #
-* text=auto
+* text=auto eol=lf
 
 #
 # Exclude parts of the project that are not required for runtime and/or simply clutter up the final
