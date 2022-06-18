@@ -7,7 +7,7 @@
 ## [code]var result : Array = yield(task, "result_query")[/code]
 ## [code]var result : Array = yield(Firebase.Firestore, "task_finished")[/code]
 ## [code]var result : Array = yield(Firebase.Firestore, "result_query")[/code]
-## 
+##
 ## @tutorial https://github.com/GodotNuts/GodotFirebase/wiki/Firestore#FirestoreTask
 
 tool
@@ -47,7 +47,7 @@ func _on_request_completed(result : int, response_code : int, headers : PoolStri
         bod = JSON.parse(body.get_string_from_utf8()).result
     else:
         bod = {content = body.get_string_from_utf8()}
-    
+
     var offline: bool = typeof(bod) == TYPE_NIL
     from_cache = offline
 
@@ -57,7 +57,7 @@ func _on_request_completed(result : int, response_code : int, headers : PoolStri
     else:
         error = {result=result, response_code=response_code, data=data}
         emit_signal("task_error", result, response_code, str(data))
-    
+
     emit_signal("task_finished", data)
 
 #

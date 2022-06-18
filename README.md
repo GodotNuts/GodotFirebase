@@ -41,7 +41,7 @@ Please make sure to read [these guidelines](https://github.com/GodotNuts/GodotFi
 
 ## :computer: Making Contributions
 
-Contributions are always welcome. Please feel free to fork this repo and follow [these guidelines](https://github.com/GodotNuts/GodotFirebase/wiki/Contributing) 
+Contributions are always welcome. Please feel free to fork this repo and follow [these guidelines](https://github.com/GodotNuts/GodotFirebase/wiki/Contributing)
 
 ## :memo:  License
 

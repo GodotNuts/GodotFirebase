@@ -6,7 +6,7 @@
 ## 	- [code]Database[/code]: A NonSQL realtime database for managing data in JSON structures.
 ## 	- [code]Firestore[/code]: Similar to Database, but stores data in collections and documents, among other things.
 ## 	- [code]Storage[/code]: Gives access to Cloud Storage; perfect for storing files like images and other assets.
-## 
+##
 ## @tutorial https://github.com/GodotNuts/GodotFirebase/wiki
 tool
 extends Node
@@ -90,11 +90,11 @@ func _check_emulating() -> void:
 func _load_config() -> void:
     if _config.apiKey != "" and _config.authDomain != "":
         pass
-    else:    
+    else:
         var env = ConfigFile.new()
         var err = env.load("res://addons/godot-firebase/.env")
         if err == OK:
-            for key in _config.keys(): 
+            for key in _config.keys():
                 if key == "emulators":
                     for port in _config[key]["ports"].keys():
                         _config[key]["ports"][port] = env.get_value(_EMULATORS_PORTS, port, "")
@@ -106,7 +106,7 @@ func _load_config() -> void:
                         _config[key] = value
         else:
             _printerr("Unable to read .env file at path 'res://addons/godot-firebase/.env'")
-    
+
     _setup_modules()
 
 func _setup_modules() -> void:
@@ -118,7 +118,7 @@ func _setup_modules() -> void:
         Auth.connect("signup_succeeded", module, "_on_FirebaseAuth_login_succeeded")
         Auth.connect("token_refresh_succeeded", module, "_on_FirebaseAuth_token_refresh_succeeded")
         Auth.connect("logged_out", module, "_on_FirebaseAuth_logout")
-    
+
 
 # -------------
 

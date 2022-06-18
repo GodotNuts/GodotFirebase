@@ -132,7 +132,7 @@ var _account_verification_body : Dictionary = {
     "idToken":"",
 }
 
-        
+
 var _update_profile_body : Dictionary = {
     "idToken":"",
     "displayName":"",
@@ -174,7 +174,7 @@ func _set_config(config_json : Dictionary) -> void:
     _oobcode_request_url %= _config.apiKey
     _delete_account_request_url %= _config.apiKey
     _update_account_request_url %= _config.apiKey
-        
+
     connect("request_completed", self, "_on_FirebaseAuth_request_completed")
     _check_emulating()
 
@@ -220,7 +220,7 @@ func signup_with_email_and_password(email : String, password : String) -> void:
 
 
 # Called with Firebase.Auth.anonymous_login()
-# A successful request is indicated by a 200 OK HTTP status code. 
+# A successful request is indicated by a 200 OK HTTP status code.
 # The response contains the Firebase ID token and refresh token associated with the anonymous user.
 # The 'mail' field will be empty since no email is linked to an anonymous user
 func login_anonymous() -> void:
@@ -485,7 +485,7 @@ func change_user_password(password : String) -> void:
         request(_base_url + _update_account_request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_change_password_body))
 
 
-# User Profile handlers 
+# User Profile handlers
 func update_account(idToken : String, displayName : String, photoUrl : String, deleteAttribute : PoolStringArray, returnSecureToken : bool) -> void:
     if _is_ready():
         is_busy = true
@@ -522,7 +522,7 @@ func get_user_data() -> void:
             print_debug("Not logged in")
             is_busy = false
             return
-                        
+
         request(_base_url + _userdata_request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print({"idToken":auth.idtoken}))
 
 

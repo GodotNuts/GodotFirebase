@@ -85,11 +85,11 @@ func put_data(data : PoolByteArray, metadata := {}) -> StorageTask:
         return null
     if not "Content-Length" in metadata and OS.get_name() != "HTML5":
         metadata["Content-Length"] = data.size()
-    
+
     var headers := []
     for key in metadata:
         headers.append("%s: %s" % [key, metadata[key]])
-    
+
     return storage._upload(data, headers, self, false)
 
 ## @args data, metadata
@@ -106,10 +106,10 @@ func put_file(file_path : String, metadata := {}) -> StorageTask:
     file.open(file_path, File.READ)
     var data := file.get_buffer(file.get_len())
     file.close()
-    
+
     if "Content-Type" in metadata:
         metadata["Content-Type"] = MIME_TYPES.get(file_path.get_extension(), DEFAULT_MIME_TYPE)
-    
+
     return put_data(data, metadata)
 
 ## @return StorageTask

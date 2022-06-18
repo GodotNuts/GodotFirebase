@@ -52,7 +52,7 @@ var _offline: bool = false setget _set_offline
 
 func _ready() -> void:
     pass
-    
+
 func _process(delta : float) -> void:
     for i in range(_http_request_pool.size() - 1, -1, -1):
         var request = _http_request_pool[i]
@@ -64,28 +64,28 @@ func _process(delta : float) -> void:
             request.set_meta("lifetime", lifetime)
 
 
-## @args 
+## @args
 ## @return FunctionTask
 func execute(function: String, method: int, params: Dictionary = {}, body: Dictionary = {}) -> FunctionTask:
     var function_task : FunctionTask = FunctionTask.new()
     function_task.connect("task_error", self, "_on_task_error")
     function_task.connect("task_finished", self, "_on_task_finished")
     function_task.connect("function_executed", self, "_on_function_executed")
-    
+
     function_task._method = method
-    
+
     var url : String = _base_url + ("/" if not _base_url.ends_with("/") else "") + function
     function_task._url = url
-    
+
     if not params.empty():
         url += "?"
         for key in params.keys():
             url += key + "=" + params[key] + "&"
-    
-    if not body.empty(): 
+
+    if not body.empty():
         function_task._headers = PoolStringArray(["Content-Type: application/json"])
         function_task._fields = to_json(body)
-    
+
     _pooled_request(function_task)
     return function_task
 
@@ -115,18 +115,18 @@ func disable_networking() -> void:
 func _set_offline(value: bool) -> void:
     if value == _offline:
         return
-    
+
     _offline = value
     if not persistence_enabled:
         return
-    
+
     return
 
 
 func _set_config(config_json : Dictionary) -> void:
     _config = config_json
     _cache_loc = _config["cacheLocation"]
-    
+
     if _encrypt_key == "": _encrypt_key = _config.apiKey
     _check_emulating()
 
@@ -140,14 +140,14 @@ func _check_emulating() -> void :
         if port == "":
             Firebase._printerr("You are in 'emulated' mode, but the port for Cloud Functions has not been configured.")
         else:
-            _base_url = "http://localhost:{port}/{projectId}/{zone}/".format({ port = port, zone = _config.functionsGeoZone, projectId = _config.projectId })    
+            _base_url = "http://localhost:{port}/{projectId}/{zone}/".format({ port = port, zone = _config.functionsGeoZone, projectId = _config.projectId })
 
 
 func _pooled_request(task : FunctionTask) -> void:
     if _offline:
         task._on_request_completed(HTTPRequest.RESULT_CANT_CONNECT, 404, PoolStringArray(), PoolByteArray())
         return
-    
+
     if not auth:
         Firebase._print("Unauthenticated request issued...")
         Firebase.Auth.login_anonymous()
@@ -155,22 +155,22 @@ func _pooled_request(task : FunctionTask) -> void:
         if result[0] != 1:
             _check_auth_error(result[0], result[1])
         Firebase._print("Client connected as Anonymous")
-        
-    
+
+
     task._headers = Array(task._headers) + [_AUTHORIZATION_HEADER + auth.idtoken]
-    
+
     var http_request : HTTPRequest
     for request in _http_request_pool:
         if not request.get_meta("requesting"):
             http_request = request
             break
-    
+
     if not http_request:
         http_request = HTTPRequest.new()
         _http_request_pool.append(http_request)
         add_child(http_request)
         http_request.connect("request_completed", self, "_on_pooled_request_completed", [http_request])
-    
+
     http_request.set_meta("requesting", true)
     http_request.set_meta("lifetime", 0.0)
     http_request.set_meta("task", task)
