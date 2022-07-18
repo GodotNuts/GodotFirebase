@@ -1,8 +1,8 @@
 tool
 extends EditorPlugin
 
-func _enter_tree() -> void:
-    add_autoload_singleton("Firebase", "res://addons/godot-firebase/firebase/firebase.tscn")
-
-func _exit_tree() -> void:
+func disable_plugin() -> void:
     remove_autoload_singleton("Firebase")
+
+func enable_plugin() -> void:
+    add_autoload_singleton("Firebase", "res://addons/godot-firebase/firebase/firebase.tscn")
