@@ -3,6 +3,7 @@ scn/
 icon.png.import
 default_env.tres
 .env
+*.bak
 
 #
 # Godot-specific ignores
