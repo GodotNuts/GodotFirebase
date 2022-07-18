@@ -138,6 +138,8 @@ func _on_request_completed(result : int, response_code : int, headers : PoolStri
                 emit_signal("update_document", document)
             Task.TASK_DELETE:
                 emit_signal("delete_document")
+            Task.TASK_TRANSACTION:
+                emit_signal("commit_transaction")
             Task.TASK_QUERY:
                 data = []
                 for doc in bod:
@@ -176,7 +178,7 @@ func set_action(value : int) -> void:
     match action:
         Task.TASK_GET, Task.TASK_LIST:
             _method = HTTPClient.METHOD_GET
-        Task.TASK_POST, Task.TASK_QUERY:
+        Task.TASK_POST, Task.TASK_QUERY, Task.TASK_TRANSACTION:
             _method = HTTPClient.METHOD_POST
         Task.TASK_PATCH:
             _method = HTTPClient.METHOD_PATCH
