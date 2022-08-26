@@ -75,12 +75,13 @@ func execute(function: String, method: int, params: Dictionary = {}, body: Dicti
     function_task._method = method
 
     var url : String = _base_url + ("/" if not _base_url.ends_with("/") else "") + function
-    function_task._url = url
 
     if not params.empty():
         url += "?"
         for key in params.keys():
             url += key + "=" + params[key] + "&"
+    
+    function_task._url = url
 
     if not body.empty():
         function_task._headers = PoolStringArray(["Content-Type: application/json"])
