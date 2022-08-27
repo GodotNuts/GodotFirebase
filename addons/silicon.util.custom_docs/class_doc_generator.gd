@@ -1,6 +1,7 @@
 tool
 extends Reference
 
+
 var _pending_docs := {}
 var _docs_queue := []
 
@@ -282,6 +283,7 @@ func _generate(doc: ClassDocItem) -> String:
 			comment_block = ""
 			annotations.clear()
 	return ""
+
 
 func _create_method_doc(name: String, script: Script = null, method := {}) -> MethodDocItem:
 	if method.empty():

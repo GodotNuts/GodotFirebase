@@ -1,9 +1,11 @@
 extends Node2D
 
+
 var offset := 0
 
 export var email := ""
 export var password := ""
+
 
 func _ready() -> void:
     Firebase.Auth.login_with_email_and_password(email, password)

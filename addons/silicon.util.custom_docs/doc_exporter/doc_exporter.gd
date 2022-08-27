@@ -1,8 +1,9 @@
 ## The base class for every document exporter.
 ## @contribute https://placeholder_contribute.com
 tool
-extends Reference
 class_name DocExporter
+extends Reference
+
 
 ## @virtual
 ## @args doc

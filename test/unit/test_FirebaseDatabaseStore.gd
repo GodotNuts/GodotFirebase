@@ -1,5 +1,6 @@
 extends "res://addons/gut/test.gd"
 
+
 const FirebaseDatabaseStore = preload("res://addons/godot-firebase/database/database_store.gd")
 const TestKey = "-MPrgu_F8OXiL-VpRxjq"
 const TestObject = {
@@ -22,6 +23,7 @@ const TestValue = 12345.6789
 class TestPutOperations:
     extends "res://addons/gut/test.gd"
 
+
     func test_put_object():
         var store = TestUtils.instantiate(FirebaseDatabaseStore)
 
@@ -33,6 +35,7 @@ class TestPutOperations:
         assert_eq_deep(store_object, TestObject)
 
         store.queue_free()
+
 
     func test_put_nested_object():
         var store = TestUtils.instantiate(FirebaseDatabaseStore)
@@ -47,6 +50,7 @@ class TestPutOperations:
 
         store.queue_free()
 
+
     func test_put_array_value():
         var store = TestUtils.instantiate(FirebaseDatabaseStore)
 
@@ -59,6 +63,7 @@ class TestPutOperations:
         assert_eq_deep(store_object, TestArray)
 
         store.queue_free()
+
 
     func test_put_normal_value():
         var store = TestUtils.instantiate(FirebaseDatabaseStore)
@@ -73,10 +78,10 @@ class TestPutOperations:
 
         store.queue_free()
 
+
     func test_put_deleted_value():
         # NOTE: Firebase Realtime Database sets values to null to indicate that they have been
-        #  deleted.
-
+        # deleted.
         var store = TestUtils.instantiate(FirebaseDatabaseStore)
 
         store.put(TestKey, TestObject)
@@ -88,6 +93,7 @@ class TestPutOperations:
         assert_false(store_object.has("II"), "The value should have been deleted, but was not.")
 
         store.queue_free()
+
 
     func test_put_new_object():
         var store = TestUtils.instantiate(FirebaseDatabaseStore)
@@ -101,6 +107,7 @@ class TestPutOperations:
 
         store.queue_free()
 
+
     func test_put_new_nested_object():
         var store = TestUtils.instantiate(FirebaseDatabaseStore)
 
@@ -113,6 +120,7 @@ class TestPutOperations:
 
         store.queue_free()
 
+
     func test_put_new_array_value():
         var store = TestUtils.instantiate(FirebaseDatabaseStore)
 
@@ -124,6 +132,7 @@ class TestPutOperations:
         assert_eq_deep(store_object, TestArray)
 
         store.queue_free()
+
 
     func test_put_new_normal_value():
         var store = TestUtils.instantiate(FirebaseDatabaseStore)
@@ -140,6 +149,7 @@ class TestPutOperations:
 class TestPatchOperations:
     extends "res://addons/gut/test.gd"
 
+
     func test_patch_object():
         var store = TestUtils.instantiate(FirebaseDatabaseStore)
 
@@ -151,6 +161,7 @@ class TestPatchOperations:
         assert_eq_deep(store_object, TestObject)
 
         store.queue_free()
+
 
     func test_patch_nested_object():
         var store = TestUtils.instantiate(FirebaseDatabaseStore)
@@ -165,6 +176,7 @@ class TestPatchOperations:
 
         store.queue_free()
 
+
     func test_patch_array_value():
         var store = TestUtils.instantiate(FirebaseDatabaseStore)
 
@@ -177,6 +189,7 @@ class TestPatchOperations:
         assert_eq_deep(store_object, TestArray)
 
         store.queue_free()
+
 
     func test_patch_normal_value():
         var store = TestUtils.instantiate(FirebaseDatabaseStore)
@@ -191,10 +204,10 @@ class TestPatchOperations:
 
         store.queue_free()
 
+
     func test_patch_deleted_value():
         # NOTE: Firebase Realtime Database sets values to null to indicate that they have been
-        #  deleted.
-
+        # deleted.
         var store = TestUtils.instantiate(FirebaseDatabaseStore)
 
         store.put(TestKey, TestObject)

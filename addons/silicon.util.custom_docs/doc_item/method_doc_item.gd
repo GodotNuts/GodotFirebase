@@ -1,6 +1,7 @@
 tool
-extends DocItem
 class_name MethodDocItem
+extends DocItem
+
 
 ## @default ""
 ## A description of the method.

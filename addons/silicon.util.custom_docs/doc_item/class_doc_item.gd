@@ -1,8 +1,9 @@
 ## An object that contains documentation data about a class.
 ## @contribute https://placeholder_contribute.com
 tool
-extends DocItem
 class_name ClassDocItem
+extends DocItem
+
 
 var base := "" ## The base class this class extends from.
 var path := "" ## The file location of this class' script.
@@ -31,6 +32,7 @@ func _init(args := {}) -> void:
 	for arg in args:
 		set(arg, args[arg])
 
+
 ## @args name
 ## @return MethodDocItem
 ## Gets a method document called [code]name[/code].
@@ -39,6 +41,7 @@ func get_method_doc(name: String) -> MethodDocItem:
 		if doc.name == name:
 			return doc
 	return null
+
 
 ## @args name
 ## @return PropertyDocItem
@@ -49,6 +52,7 @@ func get_property_doc(name: String) -> PropertyDocItem:
 			return doc
 	return null
 
+
 ## @args name
 ## @return SignalDocItem
 ## Gets a signal document called [code]name[/code].
@@ -57,6 +61,7 @@ func get_signal_doc(name: String) -> SignalDocItem:
 		if doc.name == name:
 			return doc
 	return null
+
 
 ## @args name
 ## @return ConstantlDocItem

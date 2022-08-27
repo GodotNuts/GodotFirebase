@@ -1,6 +1,7 @@
 tool
 extends Node
 
+
 signal new_sse_event(headers, event, data)
 signal connected
 signal connection_error(error)
@@ -22,13 +23,15 @@ var connection_in_progress = false
 var is_requested = false
 var response_body = PoolByteArray()
 
-func connect_to_host(domain : String, url_after_domain : String, port : int = -1, use_ssl : bool = false, verify_host : bool = true):
+
+func connect_to_host(domain: String, url_after_domain: String, port: int = -1, use_ssl: bool = false, verify_host: bool = true):
     self.domain = domain
     self.url_after_domain = url_after_domain
     self.port = port
     self.use_ssl = use_ssl
     self.verify_host = verify_host
     told_to_connect = true
+
 
 func attempt_to_connect():
     var err = httpclient.connect_to_host(domain, port, use_ssl, verify_host)
@@ -37,6 +40,7 @@ func attempt_to_connect():
         is_connected = true
     else:
         emit_signal("connection_error", str(err))
+
 
 func attempt_to_request(httpclient_status):
     if httpclient_status == HTTPClient.STATUS_CONNECTING or httpclient_status == HTTPClient.STATUS_RESOLVING:
@@ -47,6 +51,7 @@ func attempt_to_request(httpclient_status):
         if err == OK:
             is_requested = true
 
+
 func _parse_response_body(headers):
     var body = response_body.get_string_from_utf8()
     if body:
@@ -56,23 +61,23 @@ func _parse_response_body(headers):
             if response_body.size() > 0 and result: # stop here if the value doesn't parse
                 response_body.resize(0)
                 emit_signal("new_sse_event", headers, event_data.event, result)
-        else:
-            if event_data.event != continue_internal:
-                response_body.resize(0)
+        elif event_data.event != continue_internal:
+            response_body.resize(0)
+
 
 func _process(delta):
-    if !told_to_connect:
+    if not told_to_connect:
         return
 
-    if !is_connected:
-        if !connection_in_progress:
+    if not is_connected:
+        if not connection_in_progress:
             attempt_to_connect()
             connection_in_progress = true
         return
 
     httpclient.poll()
     var httpclient_status = httpclient.get_status()
-    if !is_requested:
+    if not is_requested:
         attempt_to_request(httpclient_status)
         return
 
@@ -82,7 +87,7 @@ func _process(delta):
         if httpclient_status == HTTPClient.STATUS_BODY:
             httpclient.poll()
             var chunk = httpclient.read_response_body_chunk()
-            if(chunk.size() == 0):
+            if chunk.size() == 0:
                 return
             else:
                 response_body = response_body + chunk
@@ -100,7 +105,8 @@ func _process(delta):
             if response_body.size() > 0:
                 _parse_response_body(headers)
 
-func get_event_data(body : String) -> Dictionary:
+
+func get_event_data(body: String) -> Dictionary:
     var result = {}
     var event_idx = body.find(event_tag)
     if event_idx == -1:
@@ -119,6 +125,7 @@ func get_event_data(body : String) -> Dictionary:
     assert(data.length() > 0)
     result["data"] = data
     return result
+
 
 func _exit_tree():
     if httpclient:

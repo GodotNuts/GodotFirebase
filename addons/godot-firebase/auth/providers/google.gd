@@ -1,6 +1,7 @@
 class_name GoogleProvider
 extends AuthProvider
 
+
 func _init(client_id: String, client_secret: String) -> void:
     set_client_id(client_id)
     set_client_secret(client_secret)
