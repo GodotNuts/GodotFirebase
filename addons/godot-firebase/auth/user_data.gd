@@ -6,19 +6,21 @@ tool
 class_name FirebaseUserData
 extends Reference
 
-var local_id : String = ""           # The uid of the current user.
-var email : String = ""
-var email_verified := false          # Whether or not the account's email has been verified.
-var password_updated_at : float = 0  # The timestamp, in milliseconds, that the account password was last changed.
-var last_login_at : float = 0        # The timestamp, in milliseconds, that the account last logged in at.
-var created_at : float = 0           # The timestamp, in milliseconds, that the account was created at.
-var provider_user_info : Array = []
 
-var provider_id : String = ""
-var display_name : String = ""
-var photo_url : String = ""
+var local_id: String = "" # The uid of the current user.
+var email: String = ""
+var email_verified := false # Whether or not the account's email has been verified.
+var password_updated_at: float = 0 # The timestamp, in milliseconds, that the account password was last changed.
+var last_login_at: float = 0 # The timestamp, in milliseconds, that the account last logged in at.
+var created_at: float = 0 # The timestamp, in milliseconds, that the account was created at.
+var provider_user_info: Array = []
 
-func _init(p_userdata : Dictionary) ->  void:
+var provider_id: String = ""
+var display_name: String = ""
+var photo_url: String = ""
+
+
+func _init(p_userdata: Dictionary) -> void:
     local_id = p_userdata.get("localId", "")
     email = p_userdata.get("email", "")
     email_verified = p_userdata.get("emailVerified", false)
@@ -32,8 +34,10 @@ func _init(p_userdata : Dictionary) ->  void:
         photo_url = provider_user_info[0].get("photoUrl", "")
         display_name = provider_user_info[0].get("displayName", "")
 
+
 func as_text() -> String:
     return _to_string()
+
 
 func _to_string() -> String:
     var txt = "local_id : %s\n" % local_id

@@ -9,10 +9,10 @@
 ## [code]var result : Array = yield(Firebase.Firestore, "result_query")[/code]
 ##
 ## @tutorial https://github.com/GodotNuts/GodotFirebase/wiki/Firestore#FirestoreTask
-
 tool
 class_name FunctionTask
 extends Reference
+
 
 ## Emitted when a request is completed. The request can be successful or not successful: if not, an [code]error[/code] Dictionary will be passed as a result.
 ## @arg-types Variant
@@ -31,17 +31,18 @@ var data: Dictionary
 var error: Dictionary
 
 ## Whether the data came from cache.
-var from_cache : bool = false
+var from_cache: bool = false
 
-var _response_headers : PoolStringArray = PoolStringArray()
-var _response_code : int = 0
+var _response_headers: PoolStringArray = PoolStringArray()
+var _response_code: int = 0
 
-var _method : int = -1
-var _url : String = ""
-var _fields : String = ""
-var _headers : PoolStringArray = []
+var _method: int = -1
+var _url: String = ""
+var _fields: String = ""
+var _headers: PoolStringArray = []
 
-func _on_request_completed(result : int, response_code : int, headers : PoolStringArray, body : PoolByteArray) -> void:
+
+func _on_request_completed(result: int, response_code: int, headers: PoolStringArray, body: PoolByteArray) -> void:
     var bod
     if validate_json(body.get_string_from_utf8()).empty():
         bod = JSON.parse(body.get_string_from_utf8()).result
@@ -52,15 +53,15 @@ func _on_request_completed(result : int, response_code : int, headers : PoolStri
     from_cache = offline
 
     data = bod
-    if response_code == HTTPClient.RESPONSE_OK and data!=null:
+    if response_code == HTTPClient.RESPONSE_OK and data != null:
         emit_signal("function_executed", result, data)
     else:
-        error = {result=result, response_code=response_code, data=data}
+        error = {result = result, response_code = response_code, data = data}
         emit_signal("task_error", result, response_code, str(data))
 
     emit_signal("task_finished", data)
 
-#
+
 #func _handle_cache(offline : bool, data, encrypt_key : String, cache_path : String, body) -> Dictionary:
 #    if offline:
 #        Firebase._printerr("Offline queries are currently unsupported!")

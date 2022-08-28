@@ -1,5 +1,6 @@
-class_name GitHubProvider 
+class_name GitHubProvider
 extends AuthProvider
+
 
 func _init(client_id: String, client_secret: String) -> void:
     randomize()

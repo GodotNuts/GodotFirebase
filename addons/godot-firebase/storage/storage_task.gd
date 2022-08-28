@@ -5,6 +5,7 @@ tool
 class_name StorageTask
 extends Reference
 
+
 enum Task {
     TASK_UPLOAD,
     TASK_UPLOAD_META,
@@ -28,7 +29,7 @@ var ref # Storage Reference (Can't static type due to cyclic reference)
 ## @default -1
 ## @setter set_action
 ## The kind of operation this [StorageTask] is keeping track of.
-var action : int = -1 setget set_action
+var action: int = -1 setget set_action
 
 ## @default PoolByteArray()
 ## Data that the tracked task will/has returned.
@@ -36,16 +37,16 @@ var data = PoolByteArray() # data can be of any type.
 
 ## @default 0.0
 ## The percentage of data that has been received.
-var progress : float = 0.0
+var progress: float = 0.0
 
 ## @default -1
 ## @enum HTTPRequest.Result
 ## The resulting status of the task. Anyting other than [constant HTTPRequest.RESULT_SUCCESS] means an error has occured.
-var result : int = -1
+var result: int = -1
 
 ## @default false
 ## Whether the task is finished processing.
-var finished : bool = false
+var finished: bool = false
 
 ## @default PoolStringArray()
 ## The returned HTTP response headers.
@@ -54,13 +55,14 @@ var response_headers := PoolStringArray()
 ## @default 0
 ## @enum HTTPClient.ResponseCode
 ## The returned HTTP response code.
-var response_code : int = 0
+var response_code: int = 0
 
-var _method : int = -1
-var _url : String = ""
-var _headers : PoolStringArray = PoolStringArray()
+var _method: int = -1
+var _url: String = ""
+var _headers: PoolStringArray = PoolStringArray()
 
-func set_action(value : int) -> void:
+
+func set_action(value: int) -> void:
     action = value
     match action:
         Task.TASK_UPLOAD:

@@ -7,29 +7,31 @@ tool
 class_name FirebaseDynamicLinks
 extends Node
 
+
 signal dynamic_link_generated(link_result)
 signal generate_dynamic_link_error(error)
 
-const _AUTHORIZATION_HEADER : String = "Authorization: Bearer "
-const _API_VERSION : String = "v1"
+const _AUTHORIZATION_HEADER: String = "Authorization: Bearer "
+const _API_VERSION: String = "v1"
 
-var request : int = -1
+var request: int = -1
 
-var _base_url : String = ""
+var _base_url: String = ""
 
-var _config : Dictionary = {}
+var _config: Dictionary = {}
 
-var _auth : Dictionary
-var _request_list_node : HTTPRequest
+var _auth: Dictionary
+var _request_list_node: HTTPRequest
 
-var _headers : PoolStringArray = []
+var _headers: PoolStringArray = []
 
 enum Requests {
     NONE = -1,
     GENERATE
-   }
+}
 
-func _set_config(config_json : Dictionary) -> void:
+
+func _set_config(config_json: Dictionary) -> void:
     _config = config_json
     _request_list_node = HTTPRequest.new()
     _request_list_node.connect("request_completed", self, "_on_request_completed")
@@ -37,20 +39,20 @@ func _set_config(config_json : Dictionary) -> void:
     _check_emulating()
 
 
-func _check_emulating() -> void :
+func _check_emulating() -> void:
     ## Check emulating
     if not Firebase.emulating:
         _base_url = "https://firebasedynamiclinks.googleapis.com/v1/shortLinks?key=%s"
         _base_url %= _config.apiKey
     else:
-        var port : String = _config.emulators.ports.dynamicLinks
+        var port: String = _config.emulators.ports.dynamicLinks
         if port == "":
             Firebase._printerr("You are in 'emulated' mode, but the port for Dynamic Links has not been configured.")
         else:
-            _base_url = "http://localhost:{port}/{version}/".format({ version = _API_VERSION, port = port })
+            _base_url = "http://localhost:{port}/{version}/".format({version = _API_VERSION, port = port})
 
 
-var _link_request_body : Dictionary = {
+var _link_request_body: Dictionary = {
     "dynamicLinkInfo": {
         "domainUriPrefix": "",
         "link": "",
@@ -60,16 +62,17 @@ var _link_request_body : Dictionary = {
         "iosInfo": {
             "iosBundleId": ""
         }
-        },
+    },
     "suffix": {
         "option": ""
     }
-    }
+}
+
 
 ## @args log_link, APN, IBI, is_unguessable
 ## This function is used to generate a dynamic link using the Firebase REST API
 ## It will return a JSON with the shortened link
-func generate_dynamic_link(long_link : String, APN : String, IBI : String, is_unguessable : bool) -> void:
+func generate_dynamic_link(long_link: String, APN: String, IBI: String, is_unguessable: bool) -> void:
     if not _config.domainUriPrefix or _config.domainUriPrefix == "":
         emit_signal("generate_dynamic_link_error", "You're missing the domainUriPrefix in config file! Error!")
         Firebase._printerr("You're missing the domainUriPrefix in config file! Error!")
@@ -86,7 +89,8 @@ func generate_dynamic_link(long_link : String, APN : String, IBI : String, is_un
         _link_request_body.suffix.option = "SHORT"
     _request_list_node.request(_base_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_link_request_body))
 
-func _on_request_completed(result : int, response_code : int, headers : PoolStringArray, body : PoolByteArray) -> void:
+
+func _on_request_completed(result: int, response_code: int, headers: PoolStringArray, body: PoolByteArray) -> void:
     var result_body = JSON.parse(body.get_string_from_utf8())
     if result_body.error:
         emit_signal("generate_dynamic_link_error", result_body.error_string)
@@ -97,11 +101,14 @@ func _on_request_completed(result : int, response_code : int, headers : PoolStri
     emit_signal("dynamic_link_generated", result_body.shortLink)
     request = Requests.NONE
 
-func _on_FirebaseAuth_login_succeeded(auth_result : Dictionary) -> void:
+
+func _on_FirebaseAuth_login_succeeded(auth_result: Dictionary) -> void:
     _auth = auth_result
 
-func _on_FirebaseAuth_token_refresh_succeeded(auth_result : Dictionary) -> void:
+
+func _on_FirebaseAuth_token_refresh_succeeded(auth_result: Dictionary) -> void:
     _auth = auth_result
+
 
 func _on_FirebaseAuth_logout() -> void:
     _auth = {}

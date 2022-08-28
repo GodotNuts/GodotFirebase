@@ -8,7 +8,8 @@ tool
 class_name FirebaseStorage
 extends Node
 
-const _API_VERSION : String = "v0"
+
+const _API_VERSION: String = "v0"
 
 ## @arg-types int, int, PoolStringArray
 ## @arg-enums HTTPRequest.Result, HTTPClient.ResponseCode
@@ -21,36 +22,38 @@ signal task_successful(result, response_code, data)
 signal task_failed(result, response_code, data)
 
 ## The current storage bucket the Storage API is referencing.
-var bucket : String
+var bucket: String
 
 ## @default false
 ## Whether a task is currently being processed.
-var requesting : bool = false
+var requesting: bool = false
 
-var _auth : Dictionary
-var _config : Dictionary
+var _auth: Dictionary
+var _config: Dictionary
 
-var _references : Dictionary = {}
+var _references: Dictionary = {}
 
-var _base_url : String = ""
-var _extended_url : String = "/[API_VERSION]/b/[APP_ID]/o/[FILE_PATH]"
-var _root_ref : StorageReference
+var _base_url: String = ""
+var _extended_url: String = "/[API_VERSION]/b/[APP_ID]/o/[FILE_PATH]"
+var _root_ref: StorageReference
 
-var _http_client : HTTPClient = HTTPClient.new()
-var _pending_tasks : Array = []
+var _http_client: HTTPClient = HTTPClient.new()
+var _pending_tasks: Array = []
 
-var _current_task : StorageTask
-var _response_code : int
-var _response_headers : PoolStringArray
-var _response_data : PoolByteArray
-var _content_length : int
-var _reading_body : bool
+var _current_task: StorageTask
+var _response_code: int
+var _response_headers: PoolStringArray
+var _response_data: PoolByteArray
+var _content_length: int
+var _reading_body: bool
 
-func _notification(what : int) -> void:
+
+func _notification(what: int) -> void:
     if what == NOTIFICATION_INTERNAL_PROCESS:
         _internal_process(get_process_delta_time())
 
-func _internal_process(_delta : float) -> void:
+
+func _internal_process(_delta: float) -> void:
     if not requesting:
         set_process_internal(false)
         return
@@ -110,6 +113,7 @@ func _internal_process(_delta : float) -> void:
         HTTPClient.STATUS_SSL_HANDSHAKE_ERROR:
             _finish_request(HTTPRequest.RESULT_SSL_HANDSHAKE_ERROR)
 
+
 ## @args path
 ## @arg-defaults ""
 ## @return StorageReference
@@ -138,7 +142,8 @@ func ref(path := "") -> StorageReference:
     else:
         return _references[path]
 
-func _set_config(config_json : Dictionary) -> void:
+
+func _set_config(config_json: Dictionary) -> void:
     _config = config_json
     if bucket != _config.storageBucket:
         bucket = _config.storageBucket
@@ -146,19 +151,19 @@ func _set_config(config_json : Dictionary) -> void:
     _check_emulating()
 
 
-func _check_emulating() -> void :
+func _check_emulating() -> void:
     ## Check emulating
     if not Firebase.emulating:
         _base_url = "https://firebasestorage.googleapis.com"
     else:
-        var port : String = _config.emulators.ports.storage
+        var port: String = _config.emulators.ports.storage
         if port == "":
             Firebase._printerr("You are in 'emulated' mode, but the port for Storage has not been configured.")
         else:
-            _base_url = "http://localhost:{port}/{version}/".format({ version = _API_VERSION, port = port })
+            _base_url = "http://localhost:{port}/{version}/".format({version = _API_VERSION, port = port})
 
 
-func _upload(data : PoolByteArray, headers : PoolStringArray, ref : StorageReference, meta_only : bool) -> StorageTask:
+func _upload(data: PoolByteArray, headers: PoolStringArray, ref: StorageReference, meta_only: bool) -> StorageTask:
     if not (_config and _auth):
         return null
 
@@ -171,7 +176,8 @@ func _upload(data : PoolByteArray, headers : PoolStringArray, ref : StorageRefer
     _process_request(task)
     return task
 
-func _download(ref : StorageReference, meta_only : bool, url_only : bool) -> StorageTask:
+
+func _download(ref: StorageReference, meta_only: bool, url_only: bool) -> StorageTask:
     if not (_config and _auth):
         return null
 
@@ -205,7 +211,8 @@ func _download(ref : StorageReference, meta_only : bool, url_only : bool) -> Sto
 
     return task
 
-func _list(ref : StorageReference, list_all : bool) -> StorageTask:
+
+func _list(ref: StorageReference, list_all: bool) -> StorageTask:
     if not (_config and _auth):
         return null
 
@@ -216,7 +223,8 @@ func _list(ref : StorageReference, list_all : bool) -> StorageTask:
     _process_request(task)
     return task
 
-func _delete(ref : StorageReference) -> StorageTask:
+
+func _delete(ref: StorageReference) -> StorageTask:
     if not (_config and _auth):
         return null
 
@@ -227,7 +235,8 @@ func _delete(ref : StorageReference) -> StorageTask:
     _process_request(task)
     return task
 
-func _process_request(task : StorageTask) -> void:
+
+func _process_request(task: StorageTask) -> void:
     if requesting:
         _pending_tasks.append(task)
         return
@@ -248,7 +257,8 @@ func _process_request(task : StorageTask) -> void:
         _http_client.close()
     set_process_internal(true)
 
-func _finish_request(result : int) -> void:
+
+func _finish_request(result: int) -> void:
     var task := _current_task
     requesting = false
 
@@ -267,25 +277,25 @@ func _finish_request(result : int) -> void:
                 task.data = null
 
         StorageTask.Task.TASK_DOWNLOAD_URL:
-            var json : Dictionary = JSON.parse(_response_data.get_string_from_utf8()).result
+            var json: Dictionary = JSON.parse(_response_data.get_string_from_utf8()).result
             if json and json.has("downloadTokens"):
                 task.data = _base_url + _get_file_url(task.ref) + "?alt=media&token=" + json.downloadTokens
             else:
                 task.data = ""
 
         StorageTask.Task.TASK_LIST, StorageTask.Task.TASK_LIST_ALL:
-            var json : Dictionary = JSON.parse(_response_data.get_string_from_utf8()).result
+            var json: Dictionary = JSON.parse(_response_data.get_string_from_utf8()).result
             var items := []
             if json and json.has("items"):
                 for item in json.items:
-                    var item_name : String = item.name
+                    var item_name: String = item.name
                     if item.bucket != bucket:
                         continue
                     if not item_name.begins_with(task.ref.full_path):
                         continue
                     if task.action == StorageTask.Task.TASK_LIST:
-                        var dir_path : Array = item_name.split("/")
-                        var slash_count : int = task.ref.full_path.count("/")
+                        var dir_path: Array = item_name.split("/")
+                        var slash_count: int = task.ref.full_path.count("/")
                         item_name = ""
                         for i in slash_count + 1:
                             item_name += dir_path[i]
@@ -300,7 +310,7 @@ func _finish_request(result : int) -> void:
         _:
             task.data = JSON.parse(_response_data.get_string_from_utf8()).result
 
-    var next_task : StorageTask
+    var next_task: StorageTask
     if not _pending_tasks.empty():
         next_task = _pending_tasks.pop_front()
 
@@ -321,13 +331,14 @@ func _finish_request(result : int) -> void:
             break
 
 
-func _get_file_url(ref : StorageReference) -> String:
+func _get_file_url(ref: StorageReference) -> String:
     var url := _extended_url.replace("[APP_ID]", ref.bucket)
     url = url.replace("[API_VERSION]", _API_VERSION)
     return url.replace("[FILE_PATH]", ref.full_path.replace("/", "%2F"))
 
+
 # Removes any "../" or "./" in the file path.
-func _simplify_path(path : String) -> String:
+func _simplify_path(path: String) -> String:
     var dirs := path.split("/")
     var new_dirs := []
     for dir in dirs:
@@ -343,11 +354,14 @@ func _simplify_path(path : String) -> String:
     new_path = new_path.replace("\\", "/")
     return new_path
 
-func _on_FirebaseAuth_login_succeeded(auth_token : Dictionary) -> void:
+
+func _on_FirebaseAuth_login_succeeded(auth_token: Dictionary) -> void:
     _auth = auth_token
 
-func _on_FirebaseAuth_token_refresh_succeeded(auth_result : Dictionary) -> void:
+
+func _on_FirebaseAuth_token_refresh_succeeded(auth_result: Dictionary) -> void:
     _auth = auth_result
+
 
 func _on_FirebaseAuth_logout() -> void:
     _auth = {}
