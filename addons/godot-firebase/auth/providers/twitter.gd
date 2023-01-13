@@ -21,8 +21,8 @@ func _init(client_id: String, client_secret: String) -> void:
     set_client_secret(client_secret)
 
     self.oauth_header.oauth_consumer_key = client_id
-    self.oauth_header.oauth_nonce = OS.get_ticks_usec()
-    self.oauth_header.oauth_timestamp = OS.get_ticks_msec()
+    self.oauth_header.oauth_nonce = Time.get_ticks_usec()
+    self.oauth_header.oauth_timestamp = Time.get_ticks_msec()
 
     self.should_exchange = true
     self.redirect_uri = "https://twitter.com/i/oauth2/authorize?"
@@ -31,11 +31,11 @@ func _init(client_id: String, client_secret: String) -> void:
     self.params.redirect_type = "redirect_uri"
     self.params.response_type = "code"
     self.params.scope = "users.read"
-    self.params.state = str(rand_range(0, 1))
+    self.params.state = str(randf_range(0, 1))
 
 
 func get_oauth_params() -> String:
-    var params: PoolStringArray = []
+    var params: PackedStringArray = []
     for key in self.oauth.keys():
         params.append(key + "=" + self.oauth.get(key))
-    return params.join("&")
+    return "&".join(params)

@@ -11,7 +11,7 @@ func _init(client_id: String, client_secret: String) -> void:
     self.access_token_uri = "https://graph.facebook.com/v13.0/oauth/access_token"
     self.provider_id = "facebook.com"
     self.params.scope = "public_profile"
-    self.params.state = str(rand_range(0, 1))
+    self.params.state = str(randf_range(0, 1))
     if OS.get_name() == "HTML5":
         self.should_exchange = false
         self.params.response_type = "token"

@@ -2,8 +2,8 @@
 ## @meta-version 1.4
 ## A firestore query.
 ## Documentation TODO.
-tool
-extends Reference
+@tool
+extends RefCounted
 class_name FirestoreQuery
 
 class Order:
@@ -64,7 +64,8 @@ enum DIRECTION {
    }
 
 func _init():
-    return self
+    #return self
+    pass
 
 
 # Select which fields you want to return as a reflection from your query.
@@ -236,5 +237,5 @@ func clean() -> void:
 func _to_string() -> String:
     var pretty : String = "QUERY:\n"
     for key in query.keys():
-       pretty += "- {key} = {value}\n".format({key = key, value = query.get(key)})
+        pretty += "- {key} = {value}\n".format({key = key, value = query.get(key)})
     return pretty

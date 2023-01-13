@@ -2,7 +2,7 @@
 ## @meta-version 2.2
 ## The Realtime Database API for Firebase.
 ## Documentation TODO.
-tool
+@tool
 class_name FirebaseDatabase
 extends Node
 

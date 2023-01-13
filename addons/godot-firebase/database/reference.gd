@@ -2,7 +2,7 @@
 ## @meta-version 2.3
 ## A reference to a location in the Realtime Database.
 ## Documentation TODO.
-tool
+@tool
 class_name FirebaseDatabaseReference
 extends Node
 
@@ -49,7 +49,7 @@ const _escaped_quote: String = '"'
 const _equal_tag: String = "="
 const _key_filter_tag: String = "$key"
 
-var _headers: PoolStringArray = []
+var _headers: PackedStringArray = []
 
 
 func set_db_path(path: String, filter_query_dict: Dictionary) -> void:
@@ -66,14 +66,14 @@ func set_pusher(pusher_ref: HTTPRequest) -> void:
     if not _pusher:
         _pusher = pusher_ref
         add_child(_pusher)
-        _pusher.connect("request_completed", self, "on_push_request_complete")
+        _pusher.request_completed.connect(Callable(self, "on_push_request_complete"))
 
 
 func set_listener(listener_ref: Node) -> void:
     if not _listener:
         _listener = listener_ref
         add_child(_listener)
-        _listener.connect("new_sse_event", self, "on_new_sse_event")
+        _listener.new_sse_event.connect(Callable(self, "on_new_sse_event"))
         var base_url = _get_list_url(false).trim_suffix(_separator)
         var extended_url = _separator + _db_path + _get_remaining_path(false)
         var port = -1
@@ -112,7 +112,7 @@ func update(path: String, data: Dictionary) -> void:
     if path == _separator:
         path = ""
 
-    var to_update = JSON.print(data)
+    var to_update = JSON.stringify(data)
     var status = _pusher.get_http_client_status()
     if status == HTTPClient.STATUS_DISCONNECTED or status != HTTPClient.STATUS_REQUESTING:
         var resolved_path = _get_list_url() + _db_path + "/" + path + _get_remaining_path()
@@ -123,7 +123,7 @@ func update(path: String, data: Dictionary) -> void:
 
 
 func push(data: Dictionary) -> void:
-    var to_push = JSON.print(data)
+    var to_push = JSON.stringify(data)
     if _pusher.get_http_client_status() == HTTPClient.STATUS_DISCONNECTED:
         _pusher.request(_get_list_url() + _db_path + _get_remaining_path(), _headers, true, HTTPClient.METHOD_POST, to_push)
     else:
@@ -148,7 +148,7 @@ func get_data() -> Dictionary:
 
 func _get_remaining_path(is_push: bool = true) -> String:
     var remaining_path = ""
-    if not _filter_query or is_push:
+    if _filter_query == null or _filter_query.is_empty() or !is_push:
         remaining_path = _json_list_tag + _query_tag + _auth_tag + Firebase.Auth.auth.idtoken
     else:
         remaining_path = _json_list_tag + _query_tag + _get_filter() + _filter_tag + _auth_tag + Firebase.Auth.auth.idtoken
@@ -167,10 +167,10 @@ func _get_list_url(with_port: bool = true) -> String:
 
 
 func _get_filter():
-    if not _filter_query:
+    if _filter_query == null or _filter_query.is_empty():
         return ""
     # At the moment, this means you can't dynamically change your filter; I think it's okay to specify that in the rules.
-    if not _cached_filter:
+    if _cached_filter == null or _cached_filter == "":
         _cached_filter = ""
         if _filter_query.has(ORDER_BY):
             _cached_filter += ORDER_BY + _equal_tag + _escaped_quote + _filter_query[ORDER_BY] + _escaped_quote
@@ -194,7 +194,7 @@ func _route_data(command: String, path: String, data) -> void:
         _store.delete(path, data)
 
 
-func on_push_request_complete(result: int, response_code: int, headers: PoolStringArray, body: PoolByteArray) -> void:
+func on_push_request_complete(result: int, response_code: int, headers: PackedStringArray, body: PackedByteArray) -> void:
     if response_code == HTTPClient.RESPONSE_OK:
         emit_signal("push_successful")
     else:

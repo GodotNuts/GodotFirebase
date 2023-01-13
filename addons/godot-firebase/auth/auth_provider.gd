@@ -1,6 +1,6 @@
-tool
+@tool
 class_name AuthProvider
-extends Reference
+extends RefCounted
 
 
 var redirect_uri: String = ""

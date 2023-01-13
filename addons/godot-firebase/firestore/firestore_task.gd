@@ -17,9 +17,9 @@
 ##
 ## @tutorial https://github.com/GodotNuts/GodotFirebase/wiki/Firestore#FirestoreTask
 
-tool
+@tool
 class_name FirestoreTask
-extends Reference
+extends RefCounted
 
 ## Emitted when a request is completed. The request can be successful or not successful: if not, an [code]error[/code] Dictionary will be passed as a result.
 ## @arg-types Variant
@@ -58,7 +58,8 @@ enum Task {
 ## The code indicating the request Firestore is processing.
 ## See @[enum FirebaseFirestore.Requests] to get a full list of codes identifiers.
 ## @setter set_action
-var action : int = -1 setget set_action
+var action : int = -1 :
+    set(value) : set_action
 
 ## A variable, temporary holding the result of the request.
 var data
@@ -67,13 +68,13 @@ var document : FirestoreDocument
 ## Whether the data came from cache.
 var from_cache : bool = false
 
-var _response_headers : PoolStringArray = PoolStringArray()
+var _response_headers : PackedStringArray = PackedStringArray()
 var _response_code : int = 0
 
 var _method : int = -1
 var _url : String = ""
 var _fields : String = ""
-var _headers : PoolStringArray = []
+var _headers : PackedStringArray = []
 
 #func _ready() -> void:
 #    connect("request_completed", self, "_on_request_completed")
@@ -84,18 +85,16 @@ var _headers : PoolStringArray = []
 #    _fields = fields
 #    var temp_header : Array = []
 #    temp_header.append(headers)
-#    _headers = PoolStringArray(temp_header)
+#    _headers = PackedStringArray(temp_header)
 #
 #    if Firebase.Firestore._offline:
-#        call_deferred("_on_request_completed", -1, 404, PoolStringArray(), PoolByteArray())
+#        call_deferred("_on_request_completed", -1, 404, PackedStringArray(), PackedByteArray())
 #    else:
 #        request(_url, _headers, true, _method, _fields)
 
 
-func _on_request_completed(result : int, response_code : int, headers : PoolStringArray, body : PoolByteArray) -> void:
-    var bod
-    if validate_json(body.get_string_from_utf8()).empty():
-        bod = JSON.parse(body.get_string_from_utf8()).result
+func _on_request_completed(result : int, response_code : int, headers : PackedStringArray, body : PackedByteArray) -> void:
+    var bod = JSON.parse_string(body.get_string_from_utf8())
 
     var offline: bool = typeof(bod) == TYPE_NIL
     var failed: bool = bod is Dictionary and bod.has("error") and response_code != HTTPClient.RESPONSE_OK
@@ -104,7 +103,7 @@ func _on_request_completed(result : int, response_code : int, headers : PoolStri
     Firebase.Firestore._set_offline(offline)
 
     var cache_path : String = Firebase._config["cacheLocation"]
-    if not cache_path.empty() and not failed and Firebase.Firestore.persistence_enabled:
+    if not cache_path.is_empty() and not failed and Firebase.Firestore.persistence_enabled:
         var encrypt_key: String = Firebase.Firestore._encrypt_key
         var full_path : String
         var url_segment : String
@@ -113,10 +112,10 @@ func _on_request_completed(result : int, response_code : int, headers : PoolStri
                 url_segment = data[0]
                 full_path = cache_path
             Task.TASK_QUERY:
-                url_segment = JSON.print(data.query)
+                url_segment = JSON.stringify(data.query)
                 full_path = cache_path
             _:
-                url_segment = to_json(data)
+                url_segment = JSON.stringify(data)
                 full_path = _get_doc_file(cache_path, url_segment, encrypt_key)
         bod = _handle_cache(offline, data, encrypt_key, full_path, bod)
         if not bod.empty() and offline:
@@ -185,9 +184,9 @@ func set_action(value : int) -> void:
 func _handle_cache(offline : bool, data, encrypt_key : String, cache_path : String, body) -> Dictionary:
     var body_return := {}
 
-    var dir := Directory.new()
+    var dir := DirAccess.open(Firebase._config["cacheLocation"])
     dir.make_dir_recursive(cache_path)
-    var file := File.new()
+    var file : FileAccess
     match action:
         Task.TASK_POST:
             if offline:
@@ -195,16 +194,16 @@ func _handle_cache(offline : bool, data, encrypt_key : String, cache_path : Stri
                 if offline:
                     save = {
                         "name": "projects/%s/databases/(default)/documents/%s" % [Firebase._config["storageBucket"], data],
-                        "fields": JSON.parse(_fields).result["fields"],
+                        "fields": JSON.parse_string(_fields)["fields"],
                         "createTime": "from_cache_file",
                         "updateTime": "from_cache_file"
                     }
                 else:
                     save = body.duplicate()
-
-                if file.open_encrypted_with_pass(cache_path, File.READ, encrypt_key) == OK:
+                file = FileAccess.open_encrypted_with_pass(cache_path, FileAccess.READ, encrypt_key)
+                if file.get_error() == OK:
                     file.store_line(data)
-                    file.store_line(JSON.print(save))
+                    file.store_line(JSON.stringify(save))
                     body_return = save
                 else:
                     Firebase._printerr("Error saving cache file! Error code: %d" % file.get_error())
@@ -219,18 +218,19 @@ func _handle_cache(offline : bool, data, encrypt_key : String, cache_path : Stri
                     var mod: Dictionary
                     mod = {
                         "name": "projects/%s/databases/(default)/documents/%s" % [Firebase._config["storageBucket"], data],
-                        "fields": JSON.parse(_fields).result["fields"],
+                        "fields": JSON.parse_string(_fields).fields,
                         "createTime": "from_cache_file",
                         "updateTime": "from_cache_file"
                     }
 
-                    if file.file_exists(cache_path):
-                        if file.open_encrypted_with_pass(cache_path, File.READ, encrypt_key) == OK:
+                    if FileAccess.file_exists(cache_path):
+                        file = FileAccess.open_encrypted_with_pass(cache_path, FileAccess.READ, encrypt_key)
+                        if file.get_error() == OK:
                             if file.get_len():
                                 assert(data == file.get_line())
                                 var content := file.get_line()
                                 if content != "--deleted--":
-                                    save = JSON.parse(content).result
+                                    save = JSON.parse_string(content)
                         else:
                             Firebase._printerr("Error updating cache file! Error code: %d" % file.get_error())
                         file.close()
@@ -247,9 +247,10 @@ func _handle_cache(offline : bool, data, encrypt_key : String, cache_path : Stri
                     save = body.duplicate()
 
 
-                if file.open_encrypted_with_pass(cache_path, File.WRITE, encrypt_key) == OK:
+                file = FileAccess.open_encrypted_with_pass(cache_path, FileAccess.WRITE, encrypt_key)
+                if file.get_error() == OK:
                     file.store_line(data)
-                    file.store_line(JSON.print(save))
+                    file.store_line(JSON.stringify(save))
                     body_return = save
                 else:
                     Firebase._printerr("Error updating cache file! Error code: %d" % file.get_error())
@@ -257,18 +258,20 @@ func _handle_cache(offline : bool, data, encrypt_key : String, cache_path : Stri
 
         Task.TASK_GET:
             if offline and file.file_exists(cache_path):
-                if file.open_encrypted_with_pass(cache_path, File.READ, encrypt_key) == OK:
+                file = FileAccess.open_encrypted_with_pass(cache_path, FileAccess.READ, encrypt_key)
+                if file.get_error() == OK:
                     assert(data == file.get_line())
                     var content := file.get_line()
                     if content != "--deleted--":
-                        body_return = JSON.parse(content).result
+                        body_return = JSON.parse_string(content)
                 else:
                     Firebase._printerr("Error reading cache file! Error code: %d" % file.get_error())
                 file.close()
 
         Task.TASK_DELETE:
             if offline:
-                if file.open_encrypted_with_pass(cache_path, File.WRITE, encrypt_key) == OK:
+                file = FileAccess.open_encrypted_with_pass(cache_path, FileAccess.WRITE, encrypt_key)
+                if file.get_error() == OK:
                     file.store_line(data)
                     file.store_line("--deleted--")
                     body_return = {"deleted": true}
@@ -280,25 +283,26 @@ func _handle_cache(offline : bool, data, encrypt_key : String, cache_path : Stri
 
         Task.TASK_LIST:
             if offline:
-                var cache_dir := Directory.new()
+                var cache_dir := DirAccess.open(cache_path)
                 var cache_files := []
-                if cache_dir.open(cache_path) == OK:
-                    cache_dir.list_dir_begin(true)
+                if cache_dir.get_open_error() == OK:
+                    cache_dir.list_dir_begin()
                     var file_name = cache_dir.get_next()
                     while file_name != "":
                         if not cache_dir.current_is_dir() and file_name.ends_with(Firebase.Firestore._CACHE_EXTENSION):
-                            cache_files.append(cache_path.plus_file(file_name))
+                            cache_files.append(cache_path.path_join(file_name))
                         file_name = cache_dir.get_next()
                     cache_dir.list_dir_end()
-                cache_files.erase(cache_path.plus_file(Firebase.Firestore._CACHE_RECORD_FILE))
-                cache_dir.remove(cache_path.plus_file(Firebase.Firestore._CACHE_RECORD_FILE))
+                cache_files.erase(cache_path.path_join(Firebase.Firestore._CACHE_RECORD_FILE))
+                cache_dir.remove(cache_path.path_join(Firebase.Firestore._CACHE_RECORD_FILE))
                 print(cache_files)
 
                 body_return.documents = []
                 for cache in cache_files:
-                    if file.open_encrypted_with_pass(cache, File.READ, encrypt_key) == OK:
+                    file = FileAccess.open_encrypted_with_pass(cache, FileAccess.READ, encrypt_key)
+                    if file.get_error() == OK:
                         if file.get_line().begins_with(data[0]):
-                            body_return.documents.append(JSON.parse(file.get_line()).result)
+                            body_return.documents.append(JSON.parse_string(file.get_line()).result)
                     else:
                         Firebase._printerr("Error opening cache file for listing! Error code: %d" % file.get_error())
                     file.close()
@@ -340,7 +344,7 @@ func _merge_array(arr_a : Array, arr_b : Array, nullify := false) -> Array:
         var index : int = i - deletions
         var val = arr_b[index]
         if val == null and nullify:
-            ret.remove(index)
+            ret.remove_at(index)
             deletions += i
         elif val is Array:
             ret[index] = _merge_array(ret[index] if ret[index] else [], val)
@@ -352,14 +356,15 @@ func _merge_array(arr_a : Array, arr_b : Array, nullify := false) -> Array:
 
 
 static func _get_doc_file(cache_path : String, document_id : String, encrypt_key : String) -> String:
-    var file := File.new()
+    var file : FileAccess
     var path := ""
     var i = 0
     while i < 256:
-        path = cache_path.plus_file("%s-%d.fscache" % [str(document_id.hash()).pad_zeros(10), i])
-        if file.file_exists(path):
+        path = cache_path.path_join("%s-%d.fscache" % [str(document_id.hash()).pad_zeros(10), i])
+        if FileAccess.file_exists(path):
             var is_file := false
-            if file.open_encrypted_with_pass(path, File.READ, encrypt_key) == OK:
+            file = FileAccess.open_encrypted_with_pass(path, FileAccess.READ, encrypt_key)
+            if file.get_error() == OK:
                 is_file = file.get_line() == document_id
             file.close()
 

@@ -1,9 +1,9 @@
 ## @meta-authors SIsilicon
 ## @meta-version 2.2
 ## An object that keeps track of an operation performed by [StorageReference].
-tool
+@tool
 class_name StorageTask
-extends Reference
+extends RefCounted
 
 
 enum Task {
@@ -29,11 +29,12 @@ var ref # Storage Reference (Can't static type due to cyclic reference)
 ## @default -1
 ## @setter set_action
 ## The kind of operation this [StorageTask] is keeping track of.
-var action: int = -1 setget set_action
+var action: int = -1 :
+    set(value) : set_action
 
 ## @default PoolByteArray()
 ## Data that the tracked task will/has returned.
-var data = PoolByteArray() # data can be of any type.
+var data = PackedByteArray() # data can be of any type.
 
 ## @default 0.0
 ## The percentage of data that has been received.
@@ -50,7 +51,7 @@ var finished: bool = false
 
 ## @default PoolStringArray()
 ## The returned HTTP response headers.
-var response_headers := PoolStringArray()
+var response_headers := PackedStringArray()
 
 ## @default 0
 ## @enum HTTPClient.ResponseCode
@@ -59,7 +60,7 @@ var response_code: int = 0
 
 var _method: int = -1
 var _url: String = ""
-var _headers: PoolStringArray = PoolStringArray()
+var _headers: PackedStringArray = PackedStringArray()
 
 
 func set_action(value: int) -> void:

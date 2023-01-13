@@ -9,9 +9,9 @@
 ## [code]var result : Array = yield(Firebase.Firestore, "result_query")[/code]
 ##
 ## @tutorial https://github.com/GodotNuts/GodotFirebase/wiki/Firestore#FirestoreTask
-tool
+@tool
 class_name FunctionTask
-extends Reference
+extends RefCounted
 
 
 ## Emitted when a request is completed. The request can be successful or not successful: if not, an [code]error[/code] Dictionary will be passed as a result.
@@ -33,20 +33,18 @@ var error: Dictionary
 ## Whether the data came from cache.
 var from_cache: bool = false
 
-var _response_headers: PoolStringArray = PoolStringArray()
+var _response_headers: PackedStringArray = PackedStringArray()
 var _response_code: int = 0
 
 var _method: int = -1
 var _url: String = ""
 var _fields: String = ""
-var _headers: PoolStringArray = []
+var _headers: PackedStringArray = []
 
 
-func _on_request_completed(result: int, response_code: int, headers: PoolStringArray, body: PoolByteArray) -> void:
-    var bod
-    if validate_json(body.get_string_from_utf8()).empty():
-        bod = JSON.parse(body.get_string_from_utf8()).result
-    else:
+func _on_request_completed(result: int, response_code: int, headers: PackedStringArray, body: PackedByteArray) -> void:
+    var bod = JSON.parse_string(body.get_string_from_utf8())
+    if bod == null:
         bod = {content = body.get_string_from_utf8()}
 
     var offline: bool = typeof(bod) == TYPE_NIL
