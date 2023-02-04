@@ -9,7 +9,7 @@
 [ext_resource path="res://addons/godot-firebase/functions/functions.gd" type="Script" id=7]
 
 [node name="Firebase" type="Node"]
-pause_mode = 2
+process_mode = 2
 script = ExtResource( 3 )
 
 [node name="Auth" type="HTTPRequest" parent="."]

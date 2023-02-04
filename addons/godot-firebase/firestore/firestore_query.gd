@@ -2,8 +2,8 @@
 ## @meta-version 1.4
 ## A firestore query.
 ## Documentation TODO.
-tool
-extends Reference
+@tool
+extends RefCounted
 class_name FirestoreQuery
 
 class Order:
@@ -13,7 +13,7 @@ class Cursor:
     var values : Array
     var before : bool
 
-    func _init(v : Array, b : bool):
+    func _init(v : Array,b : bool):
         values = v
         before = b
 
@@ -63,9 +63,6 @@ enum DIRECTION {
     DESCENDING
    }
 
-func _init():
-    return self
-
 
 # Select which fields you want to return as a reflection from your query.
 # Fields must be added inside a list. Only a field is accepted inside the list
@@ -107,7 +104,7 @@ func from_many(collections_array : Array) -> FirestoreQuery:
 # @operator : from FirestoreQuery.OPERATOR
 # @value : can be any type - String, int, bool, float
 # @chain : from FirestoreQuery.OPERATOR.[OR/AND], use it only if you want to chain "AND" or "OR" logic with futher where() calls
-# eg. .where("name", OPERATOR.EQUAL, "Matt", OPERATOR.AND).where("age", OPERATOR.LESS_THAN, 20)
+# eg. super.where("name", OPERATOR.EQUAL, "Matt", OPERATOR.AND).where("age", OPERATOR.LESS_THAN, 20)
 func where(field : String, operator : int, value = null, chain : int = -1):
     if operator in [OPERATOR.IS_NAN, OPERATOR.IS_NULL, OPERATOR.IS_NOT_NAN, OPERATOR.IS_NOT_NULL]:
         if (chain in [OPERATOR.AND, OPERATOR.OR]) or (query.has("where") and query.where.has("compositeFilter")):

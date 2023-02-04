@@ -1,6 +1,5 @@
-tool
+@tool
 extends Node
-
 
 signal new_sse_event(headers, event, data)
 signal connected
@@ -16,31 +15,29 @@ var is_connected = false
 var domain
 var url_after_domain
 var port
-var use_ssl
-var verify_host
+var trusted_chain
+var common_name_override
 var told_to_connect = false
 var connection_in_progress = false
 var is_requested = false
-var response_body = PoolByteArray()
+var response_body = PackedByteArray()
 
-
-func connect_to_host(domain: String, url_after_domain: String, port: int = -1, use_ssl: bool = false, verify_host: bool = true):
+func connect_to_host(domain : String, url_after_domain : String, port : int = -1, trusted_chain : X509Certificate = null, common_name_override : String = ""):
     self.domain = domain
     self.url_after_domain = url_after_domain
     self.port = port
-    self.use_ssl = use_ssl
-    self.verify_host = verify_host
+    self.trusted_chain = trusted_chain
+    self.common_name_override = common_name_override
     told_to_connect = true
 
-
 func attempt_to_connect():
-    var err = httpclient.connect_to_host(domain, port, use_ssl, verify_host)
+    var tls_options = TLSOptions.client(trusted_chain, common_name_override)
+    var err = httpclient.connect_to_host(domain, port, tls_options)
     if err == OK:
-        emit_signal("connected")
+        connected.emit()
         is_connected = true
     else:
-        emit_signal("connection_error", str(err))
-
+        connection_error.emit(str(err))
 
 func attempt_to_request(httpclient_status):
     if httpclient_status == HTTPClient.STATUS_CONNECTING or httpclient_status == HTTPClient.STATUS_RESOLVING:
@@ -51,33 +48,34 @@ func attempt_to_request(httpclient_status):
         if err == OK:
             is_requested = true
 
-
 func _parse_response_body(headers):
     var body = response_body.get_string_from_utf8()
     if body:
         var event_data = get_event_data(body)
         if event_data.event != "keep-alive" and event_data.event != continue_internal:
-            var result = JSON.parse(event_data.data).result
-            if response_body.size() > 0 and result: # stop here if the value doesn't parse
+            var result = Utilities.get_json_data(event_data.data)
+            if result != null:
+                var parsed_text = result
+                if response_body.size() > 0: # stop here if the value doesn't parse
+                    response_body.resize(0)
+                    new_sse_event.emit(headers, event_data.event, result)
+        else:
+            if event_data.event != continue_internal:
                 response_body.resize(0)
-                emit_signal("new_sse_event", headers, event_data.event, result)
-        elif event_data.event != continue_internal:
-            response_body.resize(0)
-
 
 func _process(delta):
-    if not told_to_connect:
+    if !told_to_connect:
         return
 
-    if not is_connected:
-        if not connection_in_progress:
+    if !is_connected:
+        if !connection_in_progress:
             attempt_to_connect()
             connection_in_progress = true
         return
 
     httpclient.poll()
     var httpclient_status = httpclient.get_status()
-    if not is_requested:
+    if !is_requested:
         attempt_to_request(httpclient_status)
         return
 
@@ -87,7 +85,7 @@ func _process(delta):
         if httpclient_status == HTTPClient.STATUS_BODY:
             httpclient.poll()
             var chunk = httpclient.read_response_body_chunk()
-            if chunk.size() == 0:
+            if(chunk.size() == 0):
                 return
             else:
                 response_body = response_body + chunk
@@ -105,8 +103,7 @@ func _process(delta):
             if response_body.size() > 0:
                 _parse_response_body(headers)
 
-
-func get_event_data(body: String) -> Dictionary:
+func get_event_data(body : String) -> Dictionary:
     var result = {}
     var event_idx = body.find(event_tag)
     if event_idx == -1:
@@ -125,7 +122,6 @@ func get_event_data(body: String) -> Dictionary:
     assert(data.length() > 0)
     result["data"] = data
     return result
-
 
 func _exit_tree():
     if httpclient:

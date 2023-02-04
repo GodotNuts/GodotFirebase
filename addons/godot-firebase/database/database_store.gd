@@ -1,8 +1,8 @@
 ## @meta-authors TODO
 ## @meta-version 2.2
 ## Data structure that holds the currently-known data at a given path (a.k.a. reference) in a Firebase Realtime Database.
-## Can process both puts and patches into the data based on realtime events received from the service.
-tool
+## Can process both puts and patches into the data based checked realtime events received from the service.
+@tool
 class_name FirebaseDatabaseStore
 extends Node
 
@@ -54,14 +54,14 @@ func _update_data(path: String, payload, patch: bool) -> void:
         # Traverse the path.
         #
     var dict = _data
-    var keys = PoolStringArray([_ROOT])
+    var keys = PackedStringArray([_ROOT])
 
     keys.append_array(path.split(_DELIMITER, false))
 
     var final_key_idx = (keys.size() - 1)
     var final_key = (keys[final_key_idx])
 
-    keys.remove(final_key_idx)
+    keys.remove_at(final_key_idx)
 
     for key in keys:
         if !dict.has(key):

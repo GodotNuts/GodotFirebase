@@ -4,7 +4,7 @@
 ## (source: [url=https://firebase.google.com/docs/functions]Functions[/url])
 ##
 ## @tutorial https://github.com/GodotNuts/GodotFirebase/wiki/Functions
-tool
+@tool
 class_name FirebaseFunctions
 extends Node
 
@@ -34,7 +34,7 @@ var persistence_enabled : bool = true
 
 ## Whether an internet connection can be used.
 ## @default true
-var networking: bool = true setget set_networking
+var networking: bool = true : set = set_networking
 
 ## A Dictionary containing all authentication fields for the current logged user.
 ## @type Dictionary
@@ -48,7 +48,7 @@ var _base_url : String =  ""
 
 var _http_request_pool : Array = []
 
-var _offline: bool = false setget _set_offline
+var _offline: bool = false : set = _set_offline
 
 func _ready() -> void:
     pass
@@ -60,7 +60,8 @@ func _process(delta : float) -> void:
             var lifetime: float = request.get_meta("lifetime") + delta
             if lifetime > _MAX_POOLED_REQUEST_AGE:
                 request.queue_free()
-                _http_request_pool.remove(i)
+                _http_request_pool.remove_at(i)
+                return # Prevent setting a value on request after it's already been queue_freed
             request.set_meta("lifetime", lifetime)
 
 
@@ -68,24 +69,23 @@ func _process(delta : float) -> void:
 ## @return FunctionTask
 func execute(function: String, method: int, params: Dictionary = {}, body: Dictionary = {}) -> FunctionTask:
     var function_task : FunctionTask = FunctionTask.new()
-    function_task.connect("task_error", self, "_on_task_error")
-    function_task.connect("task_finished", self, "_on_task_finished")
-    function_task.connect("function_executed", self, "_on_function_executed")
+    function_task.task_error.connect(_on_task_error)
+    function_task.task_finished.connect(_on_task_finished)
+    function_task.function_executed.connect(_on_function_executed)
 
     function_task._method = method
 
     var url : String = _base_url + ("/" if not _base_url.ends_with("/") else "") + function
+    function_task._url = url
 
-    if not params.empty():
+    if not params.is_empty():
         url += "?"
         for key in params.keys():
             url += key + "=" + params[key] + "&"
-    
-    function_task._url = url
 
-    if not body.empty():
-        function_task._headers = PoolStringArray(["Content-Type: application/json"])
-        function_task._fields = to_json(body)
+    if not body.is_empty():
+        function_task._headers = PackedStringArray(["Content-Type: application/json"])
+        function_task._fields = JSON.stringify(body)
 
     _pooled_request(function_task)
     return function_task
@@ -146,13 +146,13 @@ func _check_emulating() -> void :
 
 func _pooled_request(task : FunctionTask) -> void:
     if _offline:
-        task._on_request_completed(HTTPRequest.RESULT_CANT_CONNECT, 404, PoolStringArray(), PoolByteArray())
+        task._on_request_completed(HTTPRequest.RESULT_CANT_CONNECT, 404, PackedStringArray(), PackedByteArray())
         return
 
-    if not auth:
+    if auth == null or auth.is_empty():
         Firebase._print("Unauthenticated request issued...")
         Firebase.Auth.login_anonymous()
-        var result : Array = yield(Firebase.Auth, "auth_request")
+        var result : Array = await Firebase.Auth.auth_request
         if result[0] != 1:
             _check_auth_error(result[0], result[1])
         Firebase._print("Client connected as Anonymous")
@@ -170,12 +170,12 @@ func _pooled_request(task : FunctionTask) -> void:
         http_request = HTTPRequest.new()
         _http_request_pool.append(http_request)
         add_child(http_request)
-        http_request.connect("request_completed", self, "_on_pooled_request_completed", [http_request])
+        http_request.request_completed.connect(_on_pooled_request_completed.bind(http_request))
 
     http_request.set_meta("requesting", true)
     http_request.set_meta("lifetime", 0.0)
     http_request.set_meta("task", task)
-    http_request.request(task._url, task._headers, true, task._method, task._fields)
+    http_request.request(task._url, task._headers, task._method, task._fields)
 
 
 # -------------
@@ -187,7 +187,7 @@ func _on_function_executed(result : int, data : Dictionary) :
     pass
 
 func _on_task_error(code : int, status : int, message : String):
-    emit_signal("task_error", code, status, message)
+    task_error.emit(code, status, message)
     Firebase._printerr(message)
 
 func _on_FirebaseAuth_login_succeeded(auth_result : Dictionary) -> void:
@@ -198,14 +198,13 @@ func _on_FirebaseAuth_token_refresh_succeeded(auth_result : Dictionary) -> void:
     auth = auth_result
 
 
-func _on_pooled_request_completed(result : int, response_code : int, headers : PoolStringArray, body : PoolByteArray, request : HTTPRequest) -> void:
+func _on_pooled_request_completed(result : int, response_code : int, headers : PackedStringArray, body : PackedByteArray, request : HTTPRequest) -> void:
     request.get_meta("task")._on_request_completed(result, response_code, headers, body)
     request.set_meta("requesting", false)
 
 
 func _on_connect_check_request_completed(result : int, _response_code, _headers, _body) -> void:
     _set_offline(result != HTTPRequest.RESULT_SUCCESS)
-    #_connect_check_node.request(_base_url)
 
 
 func _on_FirebaseAuth_logout() -> void:
