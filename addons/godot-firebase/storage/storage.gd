@@ -192,7 +192,7 @@ func _download(ref : StorageReference, meta_only : bool, url_only : bool) -> Sto
 
     var data = await info_task.task_finished
     if info_task.result == OK:
-        task._url += data.downloadTokens # I don't see how this will ever work, but who knows; pretty sure it doesn't, which means in theory it should be running the else every single time; data is a PackedByteArray, not sure what the original code was smoking
+        task._url += info_task.data.downloadTokens
     else:
         task.data = info_task.data
         task.response_headers = info_task.response_headers
@@ -306,7 +306,7 @@ func _finish_request(result : int) -> void:
         next_task = _pending_tasks.pop_front()
 
     task.finished = true
-    task.task_finished.emit()
+    task.task_finished.emit(task.data) # I believe this parameter has been missing all along, but not sure. Caused weird results at times with a yield/await returning null, but the task containing data.
     if typeof(task.data) == TYPE_DICTIONARY and task.data.has("error"):
         task_failed.emit(task.result, task.response_code, task.data)
     else:

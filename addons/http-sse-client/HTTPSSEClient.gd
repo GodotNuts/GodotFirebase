@@ -23,6 +23,7 @@ var is_requested = false
 var response_body = PackedByteArray()
 
 func connect_to_host(domain : String, url_after_domain : String, port : int = -1, trusted_chain : X509Certificate = null, common_name_override : String = ""):
+    process_mode = Node.PROCESS_MODE_INHERIT
     self.domain = domain
     self.url_after_domain = url_after_domain
     self.port = port
@@ -103,7 +104,7 @@ func _process(delta):
             if response_body.size() > 0:
                 _parse_response_body(headers)
 
-func get_event_data(body : String) -> Dictionary:
+func get_event_data(body : String):
     var result = {}
     var event_idx = body.find(event_tag)
     if event_idx == -1:
@@ -113,11 +114,11 @@ func get_event_data(body : String) -> Dictionary:
     var data_idx = body.find(data_tag, event_idx + event_tag.length())
     assert(data_idx != -1)
     var event = body.substr(event_idx, data_idx)
-    event = event.replace(event_tag, "").strip_edges()
-    assert(event)
-    assert(event.length() > 0)
-    result["event"] = event
-    var data = body.right(data_idx + data_tag.length()).strip_edges()
+    var event_value = event.replace(event_tag, "").strip_edges()
+    assert(event_value)
+    assert(event_value.length() > 0)
+    result["event"] = event_value
+    var data = body.right(body.length() - (data_idx + data_tag.length())).strip_edges()
     assert(data)
     assert(data.length() > 0)
     result["data"] = data

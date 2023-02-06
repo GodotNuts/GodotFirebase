@@ -403,7 +403,7 @@ func manual_token_refresh(auth_data):
 # This function is called whenever there is an authentication request to Firebase
 # On an error, this function with emit the signal 'login_failed' and print the error to the console
 func _on_FirebaseAuth_request_completed(result : int, response_code : int, headers : PackedStringArray, body : PackedByteArray) -> void:
-    var json = Utilities.get_json_data(body)
+    var json = Utilities.get_json_data(body.get_string_from_utf8())
     is_busy = false
     var res
     if response_code == 0:
@@ -467,7 +467,6 @@ func save_auth(auth : Dictionary) -> void:
         Firebase._printerr("Error Opening File. Error Code: " + str(FileAccess.get_open_error()))
     else:
         encrypted_file.store_line(JSON.stringify(auth))
-        encrypted_file.close()
 
 
 # Function used to load the auth data file that has been stored locally

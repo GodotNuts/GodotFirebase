@@ -104,7 +104,6 @@ func put_string(data : String, metadata := {}) -> StorageTask:
 func put_file(file_path : String, metadata := {}) -> StorageTask:
     var file := FileAccess.open(file_path, FileAccess.READ)
     var data := file.get_buffer(file.get_length())
-    file.close()
 
     if "Content-Type" in metadata:
         metadata["Content-Type"] = MIME_TYPES.get(file_path.get_extension(), DEFAULT_MIME_TYPE)
