@@ -46,6 +46,7 @@ signal result_query(result)
 ## @arg-types Dictionary
 signal task_error(code, status, message, task)
 signal transaction_commit()
+signal transaction_begun(transaction)
 
 enum Task {
 	TASK_GET,        ## A GET Request Task, processing a get() request
@@ -139,8 +140,10 @@ func _on_request_completed(result : int, response_code : int, headers : PoolStri
 				emit_signal("update_document", document)
 			Task.TASK_DELETE:
 				emit_signal("delete_document")
-			Task.TASK_TRANSACTION:
+			Task.TASK_COMMIT:
 				emit_signal("transaction_commit")
+			Task.TASK_TRANSACTION:
+				emit_signal("transaction_begun")
 			Task.TASK_QUERY:
 				data = []
 				for doc in bod:
