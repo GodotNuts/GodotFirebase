@@ -460,18 +460,19 @@ func _on_FirebaseAuth_request_completed(result : int, response_code : int, heade
 
 # Function used to save the auth data provided by Firebase into an encrypted file
 # Note this does not work in HTML5 or UWP
-func save_auth(auth : Dictionary) -> void:
+func save_auth(auth : Dictionary) -> bool:
     var encrypted_file = FileAccess.open_encrypted_with_pass("user://user.auth", FileAccess.WRITE, _config.apiKey)
     var err = encrypted_file == null
     if err:
         Firebase._printerr("Error Opening File. Error Code: " + str(FileAccess.get_open_error()))
     else:
         encrypted_file.store_line(JSON.stringify(auth))
+    return not err
 
 
 # Function used to load the auth data file that has been stored locally
 # Note this does not work in HTML5 or UWP
-func load_auth() -> void:
+func load_auth() -> bool:
     var encrypted_file = FileAccess.open_encrypted_with_pass("user://user.auth", FileAccess.WRITE, _config.apiKey)
     var err = encrypted_file == null
     if err:
@@ -483,7 +484,7 @@ func load_auth() -> void:
         if json_parse_result == OK:
             var encrypted_file_data = json.data
             manual_token_refresh(encrypted_file_data)
-
+    return not err
 
 # Function used to remove_at the local encrypted auth file
 func remove_auth() -> void:
@@ -495,13 +496,14 @@ func remove_auth() -> void:
 
 # Function to check if there is an encrypted auth data file
 # If there is, the game will load it and refresh the token
-func check_auth_file() -> void:
+func check_auth_file() -> bool:
     if (FileAccess.file_exists("user://user.auth")):
         # Will ensure "auth_request" emitted
-        load_auth()
+        return load_auth()
     else:
         Firebase._printerr("Encrypted Firebase Auth file does not exist")
         auth_request.emit(ERR_DOES_NOT_EXIST, "Encrypted Firebase Auth file does not exist")
+        return false
 
 
 # Function used to change the email account for the currently logged in user
