@@ -473,7 +473,7 @@ func save_auth(auth : Dictionary) -> bool:
 # Function used to load the auth data file that has been stored locally
 # Note this does not work in HTML5 or UWP
 func load_auth() -> bool:
-    var encrypted_file = FileAccess.open_encrypted_with_pass("user://user.auth", FileAccess.WRITE, _config.apiKey)
+    var encrypted_file = FileAccess.open_encrypted_with_pass("user://user.auth", FileAccess.READ, _config.apiKey)
     var err = encrypted_file == null
     if err:
         Firebase._printerr("Error Opening Firebase Auth File. Error Code: " + str(FileAccess.get_open_error()))
