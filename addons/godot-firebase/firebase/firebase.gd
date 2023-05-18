@@ -17,27 +17,27 @@ const _AUTH_PROVIDERS : String = "firebase/auth_providers"
 
 ## @type FirebaseAuth
 ## The Firebase Authentication API.
-@onready var Auth := $Auth
+@onready var Auth : FirebaseAuth = $Auth
 
 ## @type FirebaseFirestore
 ## The Firebase Firestore API.
-@onready var Firestore := $Firestore
+@onready var Firestore : FirebaseFirestore = $Firestore
 
 ## @type FirebaseDatabase
 ## The Firebase Realtime Database API.
-@onready var Database := $Database
+@onready var Database : FirebaseDatabase = $Database
 
 ## @type FirebaseStorage
 ## The Firebase Storage API.
-@onready var Storage := $Storage
+@onready var Storage : FirebaseStorage = $Storage
 
 ## @type FirebaseDynamicLinks
 ## The Firebase Dynamic Links API.
-@onready var DynamicLinks := $DynamicLinks
+@onready var DynamicLinks : FirebaseDynamicLinks = $DynamicLinks
 
 ## @type FirebaseFunctions
 ## The Firebase Cloud Functions API
-@onready var Functions := $Functions
+@onready var Functions : FirebaseFunctions = $Functions
 
 @export var emulating : bool = false
 
@@ -106,9 +106,9 @@ func _load_config() -> void:
                 if key == "emulators" and config_value.has("ports"):
                     for port in config_value["ports"].keys():
                         config_value["ports"][port] = env.get_value(_EMULATORS_PORTS, port, "")
-                if key == "auth_providers" and config_value.has("auth_providers"):
+                if key == "auth_providers":
                     for provider in config_value.keys():
-                        config_value[provider] = env.get_value(_AUTH_PROVIDERS, provider)
+                        config_value[provider] = env.get_value(_AUTH_PROVIDERS, provider, "")
                 else:
                     var value : String = env.get_value(_ENVIRONMENT_VARIABLES, key, "")
                     if value == "":
