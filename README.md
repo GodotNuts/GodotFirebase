@@ -14,11 +14,11 @@ godotnuts@gmail.com
 
 The following individuals and many more have contributed significantly to this project. If you would like to support this project's further development, consider supporting them.
 
-- [Kyle Szklenski](https://github.com/WolfgangSenff) (creator) ([buy me a coffee](https://ko-fi.com/kyleszklenski))
-- [Nicolò Santilio](https://github.com/fenix-hub) (creator)
-- [Chuck Lindblom](https://github.com/BearDooks) (creator)
-- [SIsilicon](https://github.com/SISilicon) (creator)
-- [Luke Hollenback](https://github.com/lukehollenback) ([buy me a coffee](https://ko-fi.com/lukehollenback))
+- [Kyle Szklenski](https://github.com/WolfgangSenff) (creator - Database, Functions, multiple other features) ([buy me a coffee](https://ko-fi.com/kyleszklenski))
+- [Nicolò Santilio](https://github.com/fenix-hub) (creator - Firestore, multiple other features)
+- [Chuck Lindblom](https://github.com/BearDooks) (creator - Test Harness, individual code)
+- [SIsilicon](https://github.com/SISilicon) (creator - Firestore)
+- [Luke Hollenback](https://github.com/lukehollenback) (unit testing) ([buy me a coffee](https://ko-fi.com/lukehollenback))
 
 ## :arrow_down:  Cloning
 SSH:
