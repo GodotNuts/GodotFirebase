@@ -52,7 +52,7 @@ var request : int = -1
 
 ## Whether cache files can be used and generated.
 ## @default true
-var persistence_enabled : bool = true
+var persistence_enabled : bool = false
 
 ## Whether an internet connection can be used.
 ## @default true
