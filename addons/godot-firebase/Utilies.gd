@@ -10,3 +10,11 @@ static func get_json_data(value):
         return json.data
     
     return null
+
+
+# HTTPRequeust seems to have an issue in Web exports where the body returns empty
+# This appears to be caused by the gzip compression being unsupported, so we
+# disable it when web export is detected.
+static func fix_http_request(http_request):
+    if OS.get_name() == "HTML5" or OS.get_name() == "Web":
+        http_request.accept_gzip = false

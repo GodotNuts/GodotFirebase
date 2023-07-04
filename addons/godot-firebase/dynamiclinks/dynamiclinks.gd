@@ -32,8 +32,7 @@ enum Requests {
 func _set_config(config_json : Dictionary) -> void:
     _config = config_json
     _request_list_node = HTTPRequest.new()
-    if OS.get_name() == "HTML5" or OS.get_name() == "Web":
-        _request_list_node.accept_gzip = false # Fixes broken gzip compression in web exports
+    Utilities.fix_http_request(_request_list_node)
     _request_list_node.request_completed.connect(_on_request_completed)
     add_child(_request_list_node)
     _check_emulating()

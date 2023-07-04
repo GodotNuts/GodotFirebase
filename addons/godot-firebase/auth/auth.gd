@@ -147,8 +147,8 @@ func _ready() -> void:
     tcp_timer.wait_time = tcp_timeout
     tcp_timer.timeout.connect(_tcp_stream_timer)
     
+    Utilities.fix_http_request(self)
     if OS.get_name() == "HTML5" or OS.get_name() == "Web":
-        accept_gzip = false # Fixes broken gzip compression in web exports
         _local_uri += "tmp_js_export.html"
 
 
