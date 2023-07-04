@@ -168,6 +168,8 @@ func _pooled_request(task : FunctionTask) -> void:
 
     if not http_request:
         http_request = HTTPRequest.new()
+        if OS.get_name() == "HTML5" or OS.get_name() == "Web":
+            http_request.accept_gzip = false # Fixes broken gzip compression in web exports
         _http_request_pool.append(http_request)
         add_child(http_request)
         http_request.request_completed.connect(_on_pooled_request_completed.bind(http_request))
