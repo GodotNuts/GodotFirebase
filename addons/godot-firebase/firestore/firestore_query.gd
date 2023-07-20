@@ -75,9 +75,11 @@ func select(fields) -> FirestoreQuery:
         TYPE_STRING:
             query["select"] = { fields = { fieldPath = fields } }
         TYPE_ARRAY:
+            var local_fields = []
             for field in fields:
                 field = ({ fieldPath = field })
-            query["select"] = { fields = fields }
+                local_fields.append(field)
+            query["select"] = { fields = local_fields }
         _:
             print("Type of 'fields' is not accepted.")
     return self
