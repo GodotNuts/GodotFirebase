@@ -346,7 +346,7 @@ func get_google_auth_manual(provider: AuthProvider = _local_provider) -> void:
 func _tcp_stream_timer() -> void:
     var peer : StreamPeer = tcp_server.take_connection()
     if peer != null:
-        var raw_result : String = peer.get_utf8_string(400)
+        var raw_result : String = peer.get_utf8_string(441) #https://discord.com/channels/794559524903714886/867410297333219338/1133130536198602752
         if raw_result != "" and raw_result.begins_with("GET"):
             tcp_timer.stop()
             remove_child(tcp_timer)
