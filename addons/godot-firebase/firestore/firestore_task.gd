@@ -24,22 +24,22 @@ extends Reference
 ## Emitted when a request is completed. The request can be successful or not successful: if not, an [code]error[/code] Dictionary will be passed as a result.
 ## @arg-types Variant
 signal task_finished(task)
-## Emitted when a [code]add(document)[/code] request on a [class FirebaseCollection] is successfully completed. [code]error()[/code] signal will be emitted otherwise.
+## Emitted when a [code]add(document)[/code] request on a [class FirebaseCollection] is successfully completed. [code]error()[/code] signal will be emitted otherwise and [code]null[/code] will be passed as a result..
 ## @arg-types FirestoreDocument
 signal add_document(doc)
-## Emitted when a [code]get(document)[/code] request on a [class FirebaseCollection] is successfully completed. [code]error()[/code] signal will be emitted otherwise.
+## Emitted when a [code]get(document)[/code] request on a [class FirebaseCollection] is successfully completed. [code]error()[/code] signal will be emitted otherwise and [code]null[/code] will be passed as a result.
 ## @arg-types FirestoreDocument
 signal get_document(doc)
-## Emitted when a [code]update(document)[/code] request on a [class FirebaseCollection] is successfully completed. [code]error()[/code] signal will be emitted otherwise.
+## Emitted when a [code]update(document)[/code] request on a [class FirebaseCollection] is successfully completed. [code]error()[/code] signal will be emitted otherwise and [code]null[/code] will be passed as a result.
 ## @arg-types FirestoreDocument
 signal update_document(doc)
-## Emitted when a [code]delete(document)[/code] request on a [class FirebaseCollection] is successfully completed. [code]error()[/code] signal will be emitted otherwise.
-## @arg-types FirestoreDocument
-signal delete_document()
-## Emitted when a [code]list(collection_id)[/code] request on [class FirebaseFirestore] is successfully completed. [code]error()[/code] signal will be emitted otherwise.
+## Emitted when a [code]delete(document)[/code] request on a [class FirebaseCollection] is successfully completed and [code]true[/code] will be passed. [code]error()[/code] signal will be emitted otherwise and [code]false[/code] will be passed as a result.
+## @arg-types bool
+signal delete_document(success)
+## Emitted when a [code]list(collection_id)[/code] request on [class FirebaseFirestore] is successfully completed. [code]error()[/code] signal will be emitted otherwise and [code][][/code] will be passed as a result..
 ## @arg-types Array
 signal listed_documents(documents)
-## Emitted when a [code]query(collection_id)[/code] request on [class FirebaseFirestore] is successfully completed. [code]error()[/code] signal will be emitted otherwise.
+## Emitted when a [code]query(collection_id)[/code] request on [class FirebaseFirestore] is successfully completed. [code]error()[/code] signal will be emitted otherwise and [code][][/code] will be passed as a result.
 ## @arg-types Array
 signal result_query(result)
 ## Emitted when a request is [b]not[/b] successfully completed.
@@ -135,7 +135,7 @@ func _on_request_completed(result : int, response_code : int, headers : PoolStri
                 document = FirestoreDocument.new(bod)
                 emit_signal("update_document", document)
             Task.TASK_DELETE:
-                emit_signal("delete_document")
+                emit_signal("delete_document", true)
             Task.TASK_QUERY:
                 data = []
                 for doc in bod:
@@ -153,6 +153,21 @@ func _on_request_completed(result : int, response_code : int, headers : PoolStri
     else:
         Firebase._printerr("Action in error was: " + str(action))
         emit_error("task_error", bod, action)
+        match action:
+            Task.TASK_POST:
+                emit_signal("add_document", null)
+            Task.TASK_GET:
+                emit_signal("get_document", null)
+            Task.TASK_PATCH:
+                emit_signal("update_document", null)
+            Task.TASK_DELETE:
+                emit_signal("delete_document", false)
+            Task.TASK_QUERY:
+                data = []
+                emit_signal("result_query", data)
+            Task.TASK_LIST:
+                data = []
+                emit_signal("listed_documents", data)
 
     emit_signal("task_finished", self)
 
