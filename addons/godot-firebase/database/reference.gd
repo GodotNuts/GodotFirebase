@@ -1,5 +1,5 @@
-## @meta-authors TODO
-## @meta-version 2.3
+## @meta-authors BackAt50Ft
+## @meta-version 2.4
 ## A reference to a location in the Realtime Database.
 ## Documentation TODO.
 @tool
@@ -10,8 +10,12 @@ signal new_data_update(data)
 signal patch_data_update(data)
 signal delete_data_update(data)
 
+signal once_successful(dataSnapshot)
+signal once_failed()
+
 signal push_successful()
 signal push_failed()
+
 
 const ORDER_BY : String = "orderBy"
 const LIMIT_TO_FIRST : String = "limitToFirst"
@@ -21,6 +25,7 @@ const END_AT : String = "endAt"
 const EQUAL_TO : String = "equalTo"
 
 var _pusher : HTTPRequest
+var _getter : HTTPRequest
 var _listener : Node
 var _store : FirebaseDatabaseStore
 var _auth : Dictionary
@@ -29,6 +34,7 @@ var _filter_query : Dictionary
 var _db_path : String
 var _cached_filter : String
 var _push_queue : Array = []
+var _get_queue : Array = []
 var _update_queue : Array = []
 var _delete_queue : Array = []
 var _can_connect_to_host : bool = false
@@ -63,6 +69,13 @@ func set_pusher(pusher_ref : HTTPRequest) -> void:
         _pusher = pusher_ref
         add_child(_pusher)
         _pusher.request_completed.connect(on_push_request_complete)
+
+func set_getter(getter_ref : HTTPRequest) -> void:
+    if !_getter:
+        _getter = getter_ref
+        add_child(_getter)
+        _getter.request_completed.connect(on_get_request_complete)
+        
 
 func set_listener(listener_ref : Node) -> void:
     if !_listener:
@@ -125,6 +138,16 @@ func delete(reference : String) -> void:
         _pusher.request(_get_list_url() + _db_path + _separator + reference + _get_remaining_path(), _headers, HTTPClient.METHOD_DELETE, "")
     else:
         _delete_queue.append(reference)
+
+#
+# Gets a data snapshot once at the position passed in
+#
+func once(reference : String) -> void:
+    if _getter.get_http_client_status() == HTTPClient.STATUS_DISCONNECTED:
+        var ref_pos = _get_list_url() + _db_path + _separator + reference + _get_remaining_path()
+        _getter.request(ref_pos, _headers, HTTPClient.METHOD_GET, "")
+    else:
+        _get_queue.append(reference)
 
 #
 # Returns a deep copy of the current local copy of the data stored at this reference in the Firebase
@@ -204,3 +227,15 @@ func on_push_request_complete(result : int, response_code : int, headers : Packe
         
     if _delete_queue.size() > 0:
         delete(_delete_queue.pop_front())
+
+func on_get_request_complete(result : int, response_code : int, headers : PackedStringArray, body : PackedByteArray) -> void:
+    if response_code == HTTPClient.RESPONSE_OK:
+        var bod = Utilities.get_json_data(body)            
+        once_successful.emit(bod)
+    else:
+        once_failed.emit()
+
+    # handle queued operations
+    if _get_queue.size() > 0:
+        once(_get_queue.pop_front())
+        

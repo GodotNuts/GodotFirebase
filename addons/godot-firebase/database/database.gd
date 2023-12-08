@@ -41,8 +41,9 @@ func _on_FirebaseAuth_logout() -> void:
 
 func get_database_reference(path : String, filter : Dictionary = {}) -> FirebaseDatabaseReference:
     var firebase_reference : FirebaseDatabaseReference = FirebaseDatabaseReference.new()
+    var getter := HTTPRequest.new()
+    getter.use_threads = true
     var pusher : HTTPRequest = HTTPRequest.new()
-    Utilities.fix_http_request(pusher)
     pusher.use_threads = true
     var listener : Node = Node.new()
     listener.set_script(load("res://addons/http-sse-client/HTTPSSEClient.gd"))
@@ -50,6 +51,7 @@ func get_database_reference(path : String, filter : Dictionary = {}) -> Firebase
     firebase_reference.set_db_path(path, filter)
     firebase_reference.set_auth_and_config(_auth, _config)
     firebase_reference.set_pusher(pusher)
+    firebase_reference.set_getter(getter)
     firebase_reference.set_listener(listener)
     firebase_reference.set_store(store)
     add_child(firebase_reference)
