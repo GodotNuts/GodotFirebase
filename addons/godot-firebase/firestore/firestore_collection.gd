@@ -136,8 +136,8 @@ func _on_add_document(document : FirestoreDocument):
 func _on_update_document(document : FirestoreDocument):
     emit_signal("update_document", document )
 
-func _on_delete_document():
-    emit_signal("delete_document")
+func _on_delete_document(success: bool):
+    emit_signal("delete_document", success)
 
 func _on_error(code, status, message, task):
     emit_signal("error", code, status, message)
