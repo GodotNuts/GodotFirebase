@@ -135,10 +135,13 @@ var _update_profile_body: Dictionary = {
     "returnSecureToken": true,
 }
 
-var _local_port: int = 8060
+var _local_port: int = 8060 setget _set_local_port
 var _local_uri: String = "http://localhost:%s/" % _local_port
 var _local_provider: AuthProvider = AuthProvider.new()
 
+func _set_local_port(value: int) -> void:
+    _local_port = value
+    _local_uri = "http://localhost:%s" % _local_port
 
 func _ready() -> void:
     tcp_timer.wait_time = tcp_timeout
@@ -251,6 +254,7 @@ func login_with_custom_token(token: String) -> void:
 # Once given user's authorization, a token will be generated.
 # NOTE** the generated token will be automatically captured and a login request will be made if the token is correct
 func get_auth_localhost(provider: AuthProvider = get_GoogleProvider(), port: int = _local_port):
+    _set_local_port(port)
     get_auth_with_redirect(provider)
     yield(get_tree().create_timer(0.5),"timeout")
     if has_child == false:
