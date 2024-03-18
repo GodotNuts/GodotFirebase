@@ -431,6 +431,10 @@ func _on_FirebaseAuth_request_completed(result : int, response_code : int, heade
             begin_refresh_countdown()
             # Refresh token countdown
             auth_request.emit(1, auth)
+
+			if _needs_refresh:
+				_needs_refresh = false
+				login_succeeded.emit(auth)
         else:
             match res.kind:
                 RESPONSE_SIGNUP:
