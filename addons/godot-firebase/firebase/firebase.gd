@@ -15,6 +15,8 @@ const _ENVIRONMENT_VARIABLES : String = "firebase/environment_variables"
 const _EMULATORS_PORTS : String = "firebase/emulators/ports"
 const _AUTH_PROVIDERS : String = "firebase/auth_providers"
 
+@export_global_file("*.env") var EnvPath : String
+
 ## @type FirebaseAuth
 ## The Firebase Authentication API.
 @onready var Auth : FirebaseAuth = $Auth
@@ -99,7 +101,7 @@ func _check_emulating() -> void:
 func _load_config() -> void:
     if not (_config.apiKey != "" and _config.authDomain != ""):
         var env = ConfigFile.new()
-        var err = env.load("res://addons/godot-firebase/.env")
+		var err = env.load("res://addons/godot-firebase/.env" if EnvPath == null else EnvPath)
         if err == OK:
             for key in _config.keys():
                 var config_value = _config[key]
