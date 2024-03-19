@@ -383,6 +383,11 @@ func logout() -> void:
     remove_auth()
     logged_out.emit()
 
+# Checks to see if we need a hard login
+func needs_login() -> bool:
+    var encrypted_file = FileAccess.open_encrypted_with_pass("user://user.auth", FileAccess.READ, _config.apiKey)
+    var err = encrypted_file == null
+    return err
 
 # Function is called when requesting a manual token refresh
 func manual_token_refresh(auth_data):
