@@ -135,6 +135,14 @@ var _update_profile_body: Dictionary = {
     "returnSecureToken": true,
 }
 
+var _link_account_body: Dictionary = {
+	"idToken": "",
+	"requestUri": "",
+	"postBody": "",
+	"returnSecureToken": true,
+	"returnIdpCredential":true,
+}
+
 var _local_port: int = 8060 setget _set_local_port
 var _local_uri: String = "http://localhost:%s/" % _local_port
 var _local_provider: AuthProvider = AuthProvider.new()
