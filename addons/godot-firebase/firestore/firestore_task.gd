@@ -55,6 +55,16 @@ enum Task {
     TASK_LIST       ## A POST Request Task, processing a list() request
 }
 
+## Mapping of Task enum values to descriptions for use in printing user-friendly error codes.
+const TASK_MAP {
+    Task.TASK_GET: "GET DOCUMENT",
+    Task.TASK_POST: "ADD DOCUMENT",
+    Task.TASK_PATCH: "UPDATE DOCUMENT",
+    Task.TASK_DELETE: "DELETE DOCUMENT",
+    Task.TASK_QUERY: "QUERY COLLECTION",
+    Task.TASK_LIST: "LIST DOCUMENTS"
+}
+
 ## The code indicating the request Firestore is processing.
 ## See @[enum FirebaseFirestore.Requests] to get a full list of codes identifiers.
 ## @setter set_action
@@ -114,7 +124,7 @@ func _on_request_completed(result : int, response_code : int, headers : PackedSt
                         data.append(bod.nextPageToken)
                 listed_documents.emit(data)
     else:
-        Firebase._printerr("Action in error was: " + str(action))
+        Firebase._printerr("Action in error was: " + str(action) + " (" + TASK_MAP[action] + ")")
         emit_error(task_error, bod, action)
         match action:
             Task.TASK_POST:
