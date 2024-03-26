@@ -282,6 +282,28 @@ func get_auth_with_redirect(provider: AuthProvider) -> void:
         print(url_endpoint)
 
 
+# Allows an anonymous account to be converted to a permanent account
+# User should be logged in to an anonymous account before calling link_with_credential.
+# You should also obtain a token from the provider of choice, for example, by calling
+# Firebase.Auth.get_auth_with_redirect(provider), and then calling link_with_credential
+# once this token is returned from the provider.
+func link_with_credential(_token: String, provider: AuthProvider):
+	_link_account_body.idToken = auth.idtoken
+	_link_account_body.requestUri = provider.redirect_uri
+	
+	var token: String = _token.percent_decode()
+	
+	var is_successful: bool = true
+	if provider.should_exchange:
+		exchange_token(token, _local_uri, provider.access_token_uri, provider.get_client_id(), provider.get_client_secret())
+		is_successful = yield(self, "token_exchanged")
+		token = auth.accesstoken
+	if is_successful and _is_ready():
+		is_busy = true		
+		_link_account_body.postBody = "access_token=" + token + "&providerId=" + provider.provider_id
+		request(_base_url + _signin_with_oauth_request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_link_account_body))
+
+
 # Login with Google oAuth2.
 # A token is automatically obtained using an authorization code using @get_google_auth()
 # @provider_id and @request_uri can be changed
