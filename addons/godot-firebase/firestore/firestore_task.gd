@@ -56,7 +56,7 @@ enum Task {
 }
 
 ## Mapping of Task enum values to descriptions for use in printing user-friendly error codes.
-const TASK_MAP {
+const TASK_MAP = {
     Task.TASK_GET: "GET DOCUMENT",
     Task.TASK_POST: "ADD DOCUMENT",
     Task.TASK_PATCH: "UPDATE DOCUMENT",
