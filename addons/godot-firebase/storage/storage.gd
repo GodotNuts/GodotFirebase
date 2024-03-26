@@ -325,7 +325,7 @@ func _finish_request(result : int) -> void:
 func _get_file_url(ref : StorageReference) -> String:
     var url := _extended_url.replace("[APP_ID]", ref.bucket)
     url = url.replace("[API_VERSION]", _API_VERSION)
-    return url.replace("[FILE_PATH]", ref.full_path.replace("/", "%2F"))
+    return url.replace("[FILE_PATH]", ref.full_path.uri_encode())
 
 # Removes any "../" or "./" in the file path.
 func _simplify_path(path : String) -> String:
