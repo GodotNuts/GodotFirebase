@@ -16,5 +16,8 @@ static func get_json_data(value):
 # This appears to be caused by the gzip compression being unsupported, so we
 # disable it when web export is detected.
 static func fix_http_request(http_request):
-    if OS.get_name() == "HTML5" or OS.get_name() == "Web":
+    if is_web():
         http_request.accept_gzip = false
+
+static func is_web() -> bool:
+    return OS.get_name() in ["HTML5", "Web"]
