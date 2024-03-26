@@ -42,7 +42,7 @@ var auth : Dictionary
 
 var _config : Dictionary = {}
 var _cache_loc: String
-var _encrypt_key: String = "" if OS.get_name() in ["HTML5", "UWP", "Web"] else OS.get_unique_id()
+var _encrypt_key: String = "" if Utilities.is_web() else OS.get_unique_id()
 
 var _base_url : String =  ""
 

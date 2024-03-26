@@ -83,7 +83,7 @@ func child(path : String) -> StorageReference:
 func put_data(data : PackedByteArray, metadata := {}) -> StorageTask:
     if not valid:
         return null
-    if not "Content-Length" in metadata and OS.get_name() != "HTML5":
+    if not "Content-Length" in metadata and not Utilities.is_web():
         metadata["Content-Length"] = data.size()
 
     var headers := []

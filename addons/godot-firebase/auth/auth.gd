@@ -148,7 +148,7 @@ func _ready() -> void:
     tcp_timer.timeout.connect(_tcp_stream_timer)
 
     Utilities.fix_http_request(self)
-    if OS.get_name() == "HTML5" or OS.get_name() == "Web":
+    if Utilities.is_web():
         _local_uri += "tmp_js_export.html"
 
 
@@ -281,7 +281,7 @@ func get_auth_with_redirect(provider: AuthProvider) -> void:
         url_endpoint+=key+"="+provider.params[key]+"&"
     url_endpoint += provider.params.redirect_type+"="+_local_uri
     url_endpoint = _clean_url(url_endpoint)
-    if OS.get_name() == "HTML5" and OS.has_feature("web"):
+    if Utilities.is_web() and OS.has_feature("JavaScript"):
         JavaScriptBridge.eval('window.location.replace("' + url_endpoint + '")')
     elif Engine.has_singleton(_INAPP_PLUGIN) and OS.get_name() == "iOS":
         #in app for ios if the iOS plugin exists

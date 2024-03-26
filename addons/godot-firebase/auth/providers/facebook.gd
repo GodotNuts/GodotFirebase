@@ -11,7 +11,7 @@ func _init(client_id: String,client_secret: String):
     self.provider_id = "facebook.com"
     self.params.scope = "public_profile"
     self.params.state = str(randf_range(0, 1))
-    if OS.get_name() == "HTML5":
+    if Utilities.is_web():
         self.should_exchange = false
         self.params.response_type = "token"
     else:
