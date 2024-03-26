@@ -124,7 +124,11 @@ func _on_request_completed(result : int, response_code : int, headers : PackedSt
                         data.append(bod.nextPageToken)
                 listed_documents.emit(data)
     else:
-        Firebase._printerr("Action in error was: " + str(action) + " (" + TASK_MAP[action] + ")")
+        var description = ""
+        if TASK_MAP.has(action):
+            description = "(" + TASK_MAP[action] + ")"
+
+        Firebase._printerr("Action in error was: " + str(action) + " " + description)
         emit_error(task_error, bod, action)
         match action:
             Task.TASK_POST:
