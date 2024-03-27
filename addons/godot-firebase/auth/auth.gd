@@ -135,6 +135,14 @@ var _update_profile_body: Dictionary = {
     "returnSecureToken": true,
 }
 
+var _link_account_body: Dictionary = {
+	"idToken": "",
+	"requestUri": "",
+	"postBody": "",
+	"returnSecureToken": true,
+	"returnIdpCredential":true,
+}
+
 var _local_port: int = 8060 setget _set_local_port
 var _local_uri: String = "http://localhost:%s/" % _local_port
 var _local_provider: AuthProvider = AuthProvider.new()
@@ -280,6 +288,28 @@ func get_auth_with_redirect(provider: AuthProvider) -> void:
         set_local_provider(provider)
         OS.shell_open(url_endpoint)
         print(url_endpoint)
+
+
+# Allows an anonymous account to be converted to a permanent account
+# User should be logged in to an anonymous account before calling link_with_credential.
+# You should also obtain a token from the provider of choice, for example, by calling
+# Firebase.Auth.get_auth_with_redirect(provider), and then calling link_with_credential
+# once this token is returned from the provider.
+func link_with_credential(_token: String, provider: AuthProvider):
+	_link_account_body.idToken = auth.idtoken
+	_link_account_body.requestUri = provider.redirect_uri
+	
+	var token: String = _token.percent_decode()
+	
+	var is_successful: bool = true
+	if provider.should_exchange:
+		exchange_token(token, _local_uri, provider.access_token_uri, provider.get_client_id(), provider.get_client_secret())
+		is_successful = yield(self, "token_exchanged")
+		token = auth.accesstoken
+	if is_successful and _is_ready():
+		is_busy = true		
+		_link_account_body.postBody = "access_token=" + token + "&providerId=" + provider.provider_id
+		request(_base_url + _signin_with_oauth_request_url, _headers, true, HTTPClient.METHOD_POST, JSON.print(_link_account_body))
 
 
 # Login with Google oAuth2.
