@@ -437,9 +437,9 @@ func _on_FirebaseAuth_request_completed(result : int, response_code : int, heade
             # Refresh token countdown
             auth_request.emit(1, auth)
 
-			if _needs_refresh:
-				_needs_refresh = false
-				login_succeeded.emit(auth)
+            if _needs_refresh:
+                _needs_refresh = false
+                login_succeeded.emit(auth)
         else:
             match res.kind:
                 RESPONSE_SIGNUP:
@@ -601,6 +601,8 @@ func delete_user_account() -> void:
         if err != OK:
             is_busy = false
             Firebase._printerr("Error deleting user: %s" % err)
+        else:
+            remove_auth()
 
 
 # Function is called when a new token is issued to a user. The function will yield until the token has expired, and then request a new one.
