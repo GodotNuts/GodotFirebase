@@ -1,0 +1,17 @@
+[gd_scene load_steps=5 format=3 uid="uid://btltp52tywbe4"]
+
+[ext_resource type="Script" path="res://addons/godot-firebase/database/reference.gd" id="1_l3oy5"]
+[ext_resource type="PackedScene" uid="uid://ctb4l7plg8kqg" path="res://addons/godot-firebase/queues/queueable_http_request.tscn" id="2_0qpk7"]
+[ext_resource type="Script" path="res://addons/http-sse-client/HTTPSSEClient.gd" id="2_4l0io"]
+[ext_resource type="Script" path="res://addons/godot-firebase/database/database_store.gd" id="3_c3r2w"]
+
+[node name="FirebaseDatabaseReference" type="Node"]
+script = ExtResource("1_l3oy5")
+
+[node name="Pusher" parent="." instance=ExtResource("2_0qpk7")]
+
+[node name="Listener" type="Node" parent="."]
+script = ExtResource("2_4l0io")
+
+[node name="DataStore" type="Node" parent="."]
+script = ExtResource("3_c3r2w")

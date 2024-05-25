@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://ctb4l7plg8kqg"]
+
+[ext_resource type="Script" path="res://addons/godot-firebase/queues/queueable_http_request.gd" id="1_2rucc"]
+
+[node name="QueueableHTTPRequest" type="HTTPRequest"]
+script = ExtResource("1_2rucc")

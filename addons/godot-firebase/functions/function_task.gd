@@ -42,18 +42,18 @@ var _fields : String = ""
 var _headers : PackedStringArray = []
 
 func _on_request_completed(result : int, response_code : int, headers : PackedStringArray, body : PackedByteArray) -> void:
-    var bod = Utilities.get_json_data(body)
-    if bod == null:
-        bod = {content = body.get_string_from_utf8()} # I don't understand what this line does at all. What the hell?!
+	var bod = Utilities.get_json_data(body)
+	if bod == null:
+		bod = {content = body.get_string_from_utf8()} # I don't understand what this line does at all. What the hell?!
 
-    var offline: bool = typeof(bod) == TYPE_NIL
-    from_cache = offline
+	var offline: bool = typeof(bod) == TYPE_NIL
+	from_cache = offline
 
-    data = bod
-    if response_code == HTTPClient.RESPONSE_OK and data!=null:
-        function_executed.emit(result, data)
-    else:
-        error = {result=result, response_code=response_code, data=data}
-        task_error.emit(result, response_code, str(data))
+	data = bod
+	if response_code == HTTPClient.RESPONSE_OK and data!=null:
+		function_executed.emit(result, data)
+	else:
+		error = {result=result, response_code=response_code, data=data}
+		task_error.emit(result, response_code, str(data))
 
-    task_finished.emit(data)
+	task_finished.emit(data)

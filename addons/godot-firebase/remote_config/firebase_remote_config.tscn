@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://5xa6ulbllkjk"]
+
+[ext_resource type="Script" path="res://addons/godot-firebase/remote_config/firebase_remote_config.gd" id="1_wx4ds"]
+
+[node name="FirebaseRemoteConfig" type="HTTPRequest"]
+use_threads = true
+script = ExtResource("1_wx4ds")
