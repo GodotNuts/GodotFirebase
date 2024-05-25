@@ -9,8 +9,8 @@ var key : String
 var data
 
 func _init(key : String,data):
-    self.key = key.lstrip("/")
-    self.data = data
+	self.key = key.lstrip("/")
+	self.data = data
 
 func _to_string():
-    return "{ key:{key}, data:{data} }".format({key = key, data = data})
+	return "{ key:{key}, data:{data} }".format({key = key, data = data})

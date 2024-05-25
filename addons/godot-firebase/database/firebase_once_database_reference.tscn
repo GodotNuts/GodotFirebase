@@ -1,0 +1,16 @@
+[gd_scene load_steps=3 format=3 uid="uid://d1u1bxp2fd60e"]
+
+[ext_resource type="Script" path="res://addons/godot-firebase/database/once_reference.gd" id="1_hq5s2"]
+[ext_resource type="PackedScene" uid="uid://ctb4l7plg8kqg" path="res://addons/godot-firebase/queues/queueable_http_request.tscn" id="2_t2f32"]
+
+[node name="FirebaseOnceDatabaseReference" type="Node"]
+script = ExtResource("1_hq5s2")
+
+[node name="Pusher" parent="." instance=ExtResource("2_t2f32")]
+accept_gzip = false
+
+[node name="Oncer" parent="." instance=ExtResource("2_t2f32")]
+accept_gzip = false
+
+[connection signal="queue_request_completed" from="Pusher" to="." method="on_push_request_complete"]
+[connection signal="queue_request_completed" from="Oncer" to="." method="on_get_request_complete"]
