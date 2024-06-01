@@ -441,31 +441,32 @@ func _on_FirebaseAuth_request_completed(result : int, response_code : int, heade
 			_needs_refresh = false
 			login_succeeded.emit(auth)
         else:
-            match res.kind:
-                RESPONSE_SIGNUP:
-                    auth = get_clean_keys(res)
-                    signup_succeeded.emit(auth)
-                    begin_refresh_countdown()
-                RESPONSE_SIGNIN, RESPONSE_ASSERTION, RESPONSE_CUSTOM_TOKEN:
-                    auth = get_clean_keys(res)
-                    login_succeeded.emit(auth)
-                    begin_refresh_countdown()
-                RESPONSE_USERDATA:
-                    var userdata = FirebaseUserData.new(res.users[0])
-                    userdata_received.emit(userdata)
-            auth_request.emit(1, auth)
-    else:
-        # error message would be INVALID_EMAIL, EMAIL_NOT_FOUND, INVALID_PASSWORD, USER_DISABLED or WEAK_PASSWORD
-        if requesting == Requests.EXCHANGE_TOKEN:
-            token_exchanged.emit(false)
-            login_failed.emit(res.error, res.error_description)
-            auth_request.emit(res.error, res.error_description)
-        else:
-            var sig = signup_failed if auth_request_type == Auth_Type.SIGNUP_EP else login_failed
-            sig.emit(res.error.code, res.error.message)
-            auth_request.emit(res.error.code, res.error.message)
-    requesting = Requests.NONE
-    auth_request_type = Auth_Type.NONE
+		match res.kind:
+			RESPONSE_SIGNUP:
+				auth = get_clean_keys(res)
+				signup_succeeded.emit(auth)
+				begin_refresh_countdown()
+			RESPONSE_SIGNIN, RESPONSE_ASSERTION, RESPONSE_CUSTOM_TOKEN:
+				auth = get_clean_keys(res)
+				login_succeeded.emit(auth)
+				begin_refresh_countdown()
+			RESPONSE_USERDATA:
+				var userdata = FirebaseUserData.new(res.users[0])
+				userdata_received.emit(userdata)
+		auth_request.emit(1, auth)
+	else:
+	# error message would be INVALID_EMAIL, EMAIL_NOT_FOUND, INVALID_PASSWORD, USER_DISABLED or WEAK_PASSWORD
+		if requesting == Requests.EXCHANGE_TOKEN:
+			token_exchanged.emit(false)
+			login_failed.emit(res.error, res.error_description)
+			auth_request.emit(res.error, res.error_description)
+		else:
+			var sig = signup_failed if auth_request_type == Auth_Type.SIGNUP_EP else login_failed
+			sig.emit(res.error.code, res.error.message)
+			auth_request.emit(res.error.code, res.error.message)
+		
+		requesting = Requests.NONE
+		auth_request_type = Auth_Type.NONE
 
 
 # Function used to save the auth data provided by Firebase into an encrypted file
@@ -595,14 +596,14 @@ func get_user_data() -> void:
 
 # Function used to delete the account of the currently authenticated user
 func delete_user_account() -> void:
-    if _is_ready():
-        is_busy = true
-        var err = request(_base_url + _delete_account_request_url, _headers, HTTPClient.METHOD_POST, JSON.stringify({"idToken":auth.idtoken}))
-        if err != OK:
-            is_busy = false
-            Firebase._printerr("Error deleting user: %s" % err)
-        else:
-            remove_auth()
+	if _is_ready():
+		is_busy = true
+		var err = request(_base_url + _delete_account_request_url, _headers, HTTPClient.METHOD_POST, JSON.stringify({"idToken":auth.idtoken}))
+		if err != OK:
+			is_busy = false
+			Firebase._printerr("Error deleting user: %s" % err)
+		else:
+			remove_auth()
 
 
 # Function is called when a new token is issued to a user. The function will yield until the token has expired, and then request a new one.
