@@ -58,7 +58,7 @@ class SignalReducer extends RefCounted: # No need for a node, as this deals stri
 	var awaiters : Array[Signal] = []
 
 	var reducers = {
-		0 : completed.emit,
+		0 : func(): completed.emit(),
 		1 : func(p): completed.emit(),
 		2 : func(p1, p2): completed.emit(),
 		3 : func(p1, p2, p3): completed.emit(),
@@ -75,7 +75,7 @@ class SignalReducerWithResult extends RefCounted: # No need for a node, as this 
 	var awaiters : Array[Signal] = []
 
 	var reducers = {
-		0 : completed.emit,
+		0 : func(): completed.emit(),
 		1 : func(p): completed.emit({1 : p}),
 		2 : func(p1, p2): completed.emit({ 1 : p1, 2 : p2 }),
 		3 : func(p1, p2, p3): completed.emit({ 1 : p1, 2 : p2, 3 : p3 }),
