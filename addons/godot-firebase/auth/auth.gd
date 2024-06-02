@@ -437,25 +437,25 @@ func _on_FirebaseAuth_request_completed(result : int, response_code : int, heade
 			# Refresh token countdown
 			auth_request.emit(1, auth)
 
-		if _needs_refresh:
-			_needs_refresh = false
-			login_succeeded.emit(auth)
-        else:
-		match res.kind:
-			RESPONSE_SIGNUP:
-				auth = get_clean_keys(res)
-				signup_succeeded.emit(auth)
-				begin_refresh_countdown()
-			RESPONSE_SIGNIN, RESPONSE_ASSERTION, RESPONSE_CUSTOM_TOKEN:
-				auth = get_clean_keys(res)
+			if _needs_refresh:
+				_needs_refresh = false
 				login_succeeded.emit(auth)
-				begin_refresh_countdown()
-			RESPONSE_USERDATA:
-				var userdata = FirebaseUserData.new(res.users[0])
-				userdata_received.emit(userdata)
-		auth_request.emit(1, auth)
+		else:
+			match res.kind:
+				RESPONSE_SIGNUP:
+					auth = get_clean_keys(res)
+					signup_succeeded.emit(auth)
+					begin_refresh_countdown()
+				RESPONSE_SIGNIN, RESPONSE_ASSERTION, RESPONSE_CUSTOM_TOKEN:
+					auth = get_clean_keys(res)
+					login_succeeded.emit(auth)
+					begin_refresh_countdown()
+				RESPONSE_USERDATA:
+					var userdata = FirebaseUserData.new(res.users[0])
+					userdata_received.emit(userdata)
+			auth_request.emit(1, auth)
 	else:
-	# error message would be INVALID_EMAIL, EMAIL_NOT_FOUND, INVALID_PASSWORD, USER_DISABLED or WEAK_PASSWORD
+		# error message would be INVALID_EMAIL, EMAIL_NOT_FOUND, INVALID_PASSWORD, USER_DISABLED or WEAK_PASSWORD
 		if requesting == Requests.EXCHANGE_TOKEN:
 			token_exchanged.emit(false)
 			login_failed.emit(res.error, res.error_description)
@@ -464,9 +464,9 @@ func _on_FirebaseAuth_request_completed(result : int, response_code : int, heade
 			var sig = signup_failed if auth_request_type == Auth_Type.SIGNUP_EP else login_failed
 			sig.emit(res.error.code, res.error.message)
 			auth_request.emit(res.error.code, res.error.message)
-		
-		requesting = Requests.NONE
-		auth_request_type = Auth_Type.NONE
+	requesting = Requests.NONE
+	auth_request_type = Auth_Type.NONE
+
 
 
 # Function used to save the auth data provided by Firebase into an encrypted file
