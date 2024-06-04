@@ -18,16 +18,8 @@ extends Node
 
 const _API_VERSION : String = "v1"
 
-## Emitted when a  [code]list()[/code] request is successfully completed. [code]error()[/code] signal will be emitted otherwise.
-## @arg-types Array
-signal listed_documents(documents)
-## Emitted when a  [code]query()[/code] request is successfully completed. [code]error()[/code] signal will be emitted otherwise.
-## @arg-types Array
-signal result_query(result)
-## Emitted when a  [code]query()[/code] request is successfully completed. [code]error()[/code] signal will be emitted otherwise.
-## @arg-types Array
 ## Emitted when a [code]list()[/code] or [code]query()[/code] request is [b]not[/b] successfully completed.
-signal task_error(code,status,message)
+signal error(code, status, message)
 
 enum Requests {
 	NONE = -1,  ## Firestore is not processing any request.
@@ -58,10 +50,6 @@ var persistence_enabled : bool = false
 ## @default true
 var networking: bool = true : set = set_networking
 
-## A Dictionary containing all collections currently referenced.
-## @type Dictionary
-var collections : Dictionary = {}
-
 ## A Dictionary containing all authentication fields for the current logged user.
 ## @type Dictionary
 var auth : Dictionary
@@ -81,24 +69,10 @@ var _request_list_node : HTTPRequest
 var _requests_queue : Array = []
 var _current_query : FirestoreQuery
 
-var _http_request_pool := []
-
 var _offline: bool = false : set = _set_offline
 
 func _ready() -> void:
 	pass
-
-func _process(delta : float) -> void:
-	for i in range(_http_request_pool.size() - 1, -1, -1):
-		var request = _http_request_pool[i]
-		if not request.get_meta("requesting"):
-			var lifetime: float = request.get_meta("lifetime") + delta
-			if lifetime > _MAX_POOLED_REQUEST_AGE:
-				request.queue_free()
-				_http_request_pool.remove_at(i)
-				continue # Just to skip set_meta on a queue_freed request
-			request.set_meta("lifetime", lifetime)
-
 
 ## Returns a reference collection by its [i]path[/i].
 ##
@@ -107,17 +81,19 @@ func _process(delta : float) -> void:
 ## @args path
 ## @return FirestoreCollection
 func collection(path : String) -> FirestoreCollection:
-	if not collections.has(path):
-		var coll : FirestoreCollection = FirestoreCollection.new()
-		coll._extended_url = _extended_url
-		coll._base_url = _base_url
-		coll._config = _config
-		coll.auth = auth
-		coll.collection_name = path
-		collections[path] = coll
-		return coll
-	else:
-		return collections[path]
+	for coll in get_children():
+		if coll is FirestoreCollection:
+			if coll.collection_name == path:
+				return coll
+			
+	var coll : FirestoreCollection = FirestoreCollection.new()
+	coll._extended_url = _extended_url
+	coll._base_url = _base_url
+	coll._config = _config
+	coll.auth = auth
+	coll.collection_name = path
+	add_child(coll)
+	return coll
 
 
 ## Issue a query checked your Firestore database.
@@ -139,19 +115,17 @@ func collection(path : String) -> FirestoreCollection:
 ## @args query
 ## @arg-types FirestoreQuery
 ## @return FirestoreTask
-func query(query : FirestoreQuery) -> FirestoreTask:
-	var firestore_task : FirestoreTask = FirestoreTask.new()
-	firestore_task.result_query.connect(_on_result_query) # In theory, this and the following could be a CONNECT_ONE_SHOT, but I'm iffy on whether or not that might break any client code, so leaving this for now.
-	firestore_task.task_error.connect(_on_task_error)
-	firestore_task.action = FirestoreTask.Task.TASK_QUERY
+func query(query : FirestoreQuery) -> Array:
+	var task : FirestoreTask = FirestoreTask.new()
+	task.action = FirestoreTask.Task.TASK_QUERY
 	var body : Dictionary = { structuredQuery = query.query }
 	var url : String = _base_url + _extended_url + _query_suffix
 
-	firestore_task.data = query
-	firestore_task._fields = JSON.stringify(body)
-	firestore_task._url = url
-	_pooled_request(firestore_task)
-	return firestore_task
+	task.data = query
+	task._fields = JSON.stringify(body)
+	task._url = url
+	_pooled_request(task)
+	return await _handle_task_finished(task)
 
 
 ## Request a list of contents (documents and/or collections) inside a collection, specified by its [i]id[/i]. This method will return a [code]FirestoreTask[/code] object, representing a reference to the request issued. If saved into a variable, the [code]FirestoreTask[/code] object can be used to yield checked the [code]result_query(result)[/code] signal, or the more generic [code]task_finished(result)[/code] signal.
@@ -168,11 +142,9 @@ func query(query : FirestoreQuery) -> FirestoreTask:
 ## @arg-types String, int, String, String
 ## @arg-defaults , 0, "", ""
 ## @return FirestoreTask
-func list(path : String = "", page_size : int = 0, page_token : String = "", order_by : String = "") -> FirestoreTask:
-	var firestore_task : FirestoreTask = FirestoreTask.new()
-	firestore_task.listed_documents.connect(_on_listed_documents) # Same as above with one shot connections
-	firestore_task.task_error.connect(_on_task_error)
-	firestore_task.action = FirestoreTask.Task.TASK_LIST
+func list(path : String = "", page_size : int = 0, page_token : String = "", order_by : String = "") -> Array:
+	var task : FirestoreTask = FirestoreTask.new()
+	task.action = FirestoreTask.Task.TASK_LIST
 	var url : String = _base_url + _extended_url + path
 	if page_size != 0:
 		url+="?pageSize="+str(page_size)
@@ -181,10 +153,11 @@ func list(path : String = "", page_size : int = 0, page_token : String = "", ord
 	if order_by != "":
 		url+="&orderBy="+order_by
 
-	firestore_task.data = [path, page_size, page_token, order_by]
-	firestore_task._url = url
-	_pooled_request(firestore_task)
-	return firestore_task
+	task.data = [path, page_size, page_token, order_by]
+	task._url = url
+	_pooled_request(task)
+	
+	return await _handle_task_finished(task)
 
 
 func set_networking(value: bool) -> void:
@@ -199,8 +172,9 @@ func enable_networking() -> void:
 		return
 	networking = true
 	_base_url = _base_url.replace("storeoffline", "firestore")
-	for key in collections:
-		collections[key]._base_url = _base_url
+	for coll in get_children():
+		if coll is FirestoreCollection:
+			coll._base_url = _base_url
 
 
 func disable_networking() -> void:
@@ -209,8 +183,9 @@ func disable_networking() -> void:
 	networking = false
 	# Pointing to an invalid url should do the trick.
 	_base_url = _base_url.replace("firestore", "storeoffline")
-	for key in collections:
-		collections[key]._base_url = _base_url
+	for coll in get_children():
+		if coll is FirestoreCollection:
+			coll._base_url = _base_url
 
 
 func _set_offline(value: bool) -> void:
@@ -225,7 +200,6 @@ func _set_config(config_json : Dictionary) -> void:
 	# Since caching is causing a lot of issues, I'm removing this check for now. We will revisit this in the future, once we have some time to investigate why the cache is being corrupted.
 
 	_check_emulating()
-
 
 func _check_emulating() -> void :
 	## Check emulating
@@ -254,55 +228,29 @@ func _pooled_request(task : FirestoreTask) -> void:
 	if not Firebase.emulating:
 		task._headers = PackedStringArray([_AUTHORIZATION_HEADER + auth.idtoken])
 
-	var http_request : HTTPRequest
-	for request in _http_request_pool:
-		if not request.get_meta("requesting"):
-			http_request = request
-			break
-
-	if not http_request:
-		http_request = HTTPRequest.new()
-		http_request.timeout = 5
-		Utilities.fix_http_request(http_request)
-		_http_request_pool.append(http_request)
-		add_child(http_request)
-		http_request.request_completed.connect(_on_pooled_request_completed.bind(http_request))
-
-	http_request.set_meta("requesting", true)
-	http_request.set_meta("lifetime", 0.0)
-	http_request.set_meta("task", task)
+	var	http_request = HTTPRequest.new()
+	http_request.timeout = 5
+	Utilities.fix_http_request(http_request)
+	add_child(http_request)
+	http_request.request_completed.connect(
+		func(result, response_code, headers, body): 
+			task._on_request_completed(result, response_code, headers, body)
+			http_request.queue_free()
+	)
+	
 	http_request.request(task._url, task._headers, task._method, task._fields)
-
-
-# -------------
-
-
-func _on_listed_documents(_listed_documents : Array):
-	listed_documents.emit(_listed_documents)
-
-func _on_result_query(result : Array):
-	result_query.emit(result)
-
-func _on_task_error(code : int, status : String, message : String, task : int):
-	task_error.emit(code, status, message)
-	Firebase._printerr(message)
 
 func _on_FirebaseAuth_login_succeeded(auth_result : Dictionary) -> void:
 	auth = auth_result
-	for key in collections:
-		collections[key].auth = auth
-
+	for coll in get_children():
+		if coll is FirestoreCollection:
+			coll.auth = auth
 
 func _on_FirebaseAuth_token_refresh_succeeded(auth_result : Dictionary) -> void:
 	auth = auth_result
-	for key in collections:
-		collections[key].auth = auth
-
-
-func _on_pooled_request_completed(result : int, response_code : int, headers : PackedStringArray, body : PackedByteArray, request : HTTPRequest) -> void:
-	request.get_meta("task")._on_request_completed(result, response_code, headers, body)
-	request.set_meta("requesting", false)
-
+	for coll in get_children():
+		if coll is FirestoreCollection:
+			coll.auth = auth
 
 func _on_connect_check_request_completed(result : int, _response_code, _headers, _body) -> void:
 	_set_offline(result != HTTPRequest.RESULT_SUCCESS)
@@ -318,3 +266,11 @@ func _check_auth_error(code : int, message : String) -> void:
 		400: err = "Please enable the Anonymous Sign-in method, or Authenticate the Client before issuing a request"
 	Firebase._printerr(err)
 	Firebase._printerr(message)
+
+func _handle_task_finished(task : FirestoreTask):
+	await task.task_finished
+	
+	if task.error.keys().size() > 0:
+		error.emit(task.error)
+		
+	return task.data

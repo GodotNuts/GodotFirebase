@@ -195,7 +195,7 @@ func limit(limit : int) -> FirestoreQuery:
 # UTILITIES ----------------------------------------
 
 static func _cursor_object(value, before : bool) -> Cursor:
-	var parse : Dictionary = FirestoreDocument.dict2fields({value = value}).fields.value
+	var parse : Dictionary = Utilities.dict2fields({value = value}).fields.value
 	var cursor : Cursor = Cursor.new(parse.arrayValue.values if parse.has("arrayValue") else [parse], before)
 	return cursor
 
@@ -210,7 +210,7 @@ func create_field_filter(field : String, operator : int, value) -> Dictionary:
 		fieldFilter = {
 			field = { fieldPath = field },
 			op = OPERATOR.keys()[operator],
-			value = FirestoreDocument.dict2fields({value = value}).fields.value
+			value = Utilities.dict2fields({value = value}).fields.value
 		} }
 
 func create_unary_filter(field : String, operator : int) -> Dictionary:

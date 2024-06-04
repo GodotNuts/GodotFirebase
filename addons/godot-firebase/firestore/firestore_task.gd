@@ -23,31 +23,7 @@ extends RefCounted
 
 ## Emitted when a request is completed. The request can be successful or not successful: if not, an [code]error[/code] Dictionary will be passed as a result.
 ## @arg-types Variant
-signal task_finished(task)
-## Emitted when a [code]add(document)[/code] request checked a [class FirebaseCollection] is successfully completed. [code]error()[/code] signal will be emitted otherwise and [code]null[/code] will be passed as a result..
-## @arg-types FirestoreDocument
-signal add_document(doc)
-## Emitted when a [code]get(document)[/code] request checked a [class FirebaseCollection] is successfully completed. [code]error()[/code] signal will be emitted otherwise and [code]null[/code] will be passed as a result.
-## @arg-types FirestoreDocument
-signal get_document(doc)
-## Emitted when a [code]update(document)[/code] request checked a [class FirebaseCollection] is successfully completed. [code]error()[/code] signal will be emitted otherwise and [code]null[/code] will be passed as a result.
-## @arg-types FirestoreDocument
-signal update_document(doc)
-## Emitted when a [code]write(document)[/code] request for a document is successfully completed. [code]error()[/code] signal will be emitted otherwise and [code]result[/code] will be passed as a result.
-## @arg-types FirestoreDocument
-signal commit_document(result)
-## Emitted when a [code]delete(document)[/code] request checked a [class FirebaseCollection] is successfully completed and [code]true[/code] will be passed. [code]error()[/code] signal will be emitted otherwise and [code]false[/code] will be passed as a result.
-## @arg-types bool
-signal delete_document(success)
-## Emitted when a [code]list(collection_id)[/code] request checked [class FirebaseFirestore] is successfully completed. [code]error()[/code] signal will be emitted otherwise and [code][][/code] will be passed as a result..
-## @arg-types Array
-signal listed_documents(documents)
-## Emitted when a [code]query(collection_id)[/code] request checked [class FirebaseFirestore] is successfully completed. [code]error()[/code] signal will be emitted otherwise and [code][][/code] will be passed as a result.
-## @arg-types Array
-signal result_query(result)
-## Emitted when a request is [b]not[/b] successfully completed.
-## @arg-types Dictionary
-signal task_error(code, status, message, task)
+signal task_finished()
 
 enum Task {
 	TASK_GET,       ## A GET Request Task, processing a get() request
@@ -79,8 +55,6 @@ var action : int = -1 : set = set_action
 var data
 var error : Dictionary
 var document : FirestoreDocument
-## Whether the data came from cache.
-var from_cache : bool = false
 
 var _response_headers : PackedStringArray = PackedStringArray()
 var _response_code : int = 0
@@ -95,31 +69,21 @@ func _on_request_completed(result : int, response_code : int, headers : PackedSt
 	if bod != "":
 		bod = Utilities.get_json_data(bod)
 
-	var offline: bool = typeof(bod) == TYPE_NIL
 	var failed: bool = bod is Dictionary and bod.has("error") and response_code != HTTPClient.RESPONSE_OK
-	from_cache = offline
 
 	# Probably going to regret this...
 	if response_code == HTTPClient.RESPONSE_OK:
-		data = bod
 		match action:
-			Task.TASK_POST:
+			Task.TASK_POST, Task.TASK_GET, Task.TASK_PATCH:
 				document = FirestoreDocument.new(bod)
-				add_document.emit(document)
-			Task.TASK_GET:
-				document = FirestoreDocument.new(bod)
-				get_document.emit(document)
-			Task.TASK_PATCH:
-				document = FirestoreDocument.new(bod)
-				update_document.emit(document)
+				data = document
 			Task.TASK_DELETE:
-				delete_document.emit(true)
+				data = true
 			Task.TASK_QUERY:
 				data = []
 				for doc in bod:
 					if doc.has('document'):
 						data.append(FirestoreDocument.new(doc.document))
-				result_query.emit(data)
 			Task.TASK_LIST:
 				data = []
 				if bod.has('documents'):
@@ -127,48 +91,36 @@ func _on_request_completed(result : int, response_code : int, headers : PackedSt
 						data.append(FirestoreDocument.new(doc))
 					if bod.has("nextPageToken"):
 						data.append(bod.nextPageToken)
-				listed_documents.emit(data)
 			Task.TASK_COMMIT:
-				commit_document.emit(bod)
+				data = bod # Commit's response is not a full document, so don't treat it as such
 	else:
 		var description = ""
 		if TASK_MAP.has(action):
 			description = "(" + TASK_MAP[action] + ")"
 
 		Firebase._printerr("Action in error was: " + str(action) + " " + description)
-		emit_error(task_error, bod, action)
-		match action:
-			Task.TASK_POST:
-				add_document.emit(null)
-			Task.TASK_GET:
-				get_document.emit(null)
-			Task.TASK_PATCH:
-				update_document.emit(null)
-			Task.TASK_DELETE:
-				delete_document.emit(false)
-			Task.TASK_QUERY:
-				data = []
-				result_query.emit(data)
-			Task.TASK_LIST:
-				data = []
-				listed_documents.emit(data)
-			Task.TASK_COMMIT:
-				commit_document.emit(null)
-
-	task_finished.emit(self)
-
-func emit_error(_signal, bod, task) -> void:
-	if bod:
-		if bod is Array and bod.size() > 0 and bod[0].has("error"):
-			error = bod[0].error
-		elif bod is Dictionary and bod.keys().size() > 0 and bod.has("error"):
-			error = bod.error
-
-		_signal.emit(error.code, error.status, error.message, task)
-
-		return
-
-	_signal.emit(1, 0, "Unknown error", task)
+		build_error(bod, action, description)
+	
+	task_finished.emit()
+		
+func build_error(_error, action, description) -> void:
+	if _error:
+		if _error is Array and _error.size() > 0 and _error[0].has("error"):
+			_error = _error[0].error
+		elif _error is Dictionary and _error.keys().size() > 0 and _error.has("error"):
+			_error = _error.error
+		
+		error = _error
+	else:
+		#error.code, error.status, error.message
+		error = { "error": {
+				 "code": 0,
+				 "status": "Unknown Error",
+				 "message": "Error: %s - %s" % [action, description]
+			}
+		}
+	
+	data = null
 
 func set_action(value : int) -> void:
 	action = value
@@ -184,9 +136,6 @@ func set_action(value : int) -> void:
 		Task.TASK_COMMIT:
 			_method = HTTPClient.METHOD_POST
 
-
-func _handle_cache(offline : bool, data, encrypt_key : String, cache_path : String, body) -> Dictionary:
-	return body # Removing caching for now, hopefully this works without killing everyone and everything
 
 func _merge_dict(dic_a : Dictionary, dic_b : Dictionary, nullify := false) -> Dictionary:
 	var ret := dic_a.duplicate(true)

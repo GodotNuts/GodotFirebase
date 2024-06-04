@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://bwv7vtgssc0n5"]
+
+[ext_resource type="Script" path="res://addons/godot-firebase/firestore/firestore_listener.gd" id="1_qlaei"]
+
+[node name="FirestoreListener" type="Node"]
+script = ExtResource("1_qlaei")

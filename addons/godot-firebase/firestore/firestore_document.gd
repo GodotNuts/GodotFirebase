@@ -4,7 +4,7 @@
 ## Documentation TODO.
 @tool
 class_name FirestoreDocument
-extends RefCounted
+extends Node
 
 # A FirestoreDocument objects that holds all important values for a Firestore Document,
 # @doc_name = name of the Firestore Document, which is the request PATH
@@ -12,169 +12,133 @@ extends RefCounted
 # created when requested from a `collection().get()` call
 
 var document : Dictionary       # the Document itself
-var doc_fields : Dictionary     # only .fields
 var doc_name : String           # only .name
 var create_time : String        # createTime
+var collection_name : String    # Name of the collection to which it belongs
 var _transforms : FieldTransformArray     # The transforms to apply
+signal changed(changes)
 
-func _init(doc : Dictionary = {},_doc_name : String = "",_doc_fields : Dictionary = {}):
+func _init(doc : Dictionary = {}):
 	_transforms = FieldTransformArray.new()
 	
-	document = doc
+	document = doc.fields
 	doc_name = doc.name
 	if doc_name.count("/") > 2:
 		doc_name = (doc_name.split("/") as Array).back()
 		
-	doc_fields = fields2dict(self.document)
-
 	self.create_time = doc.createTime
 
-# Pass a dictionary { 'key' : 'value' } to format it in a APIs usable .fields
-# Field Path3D using the "dot" (`.`) notation are supported:
-# ex. { "PATH.TO.SUBKEY" : "VALUE" } ==> { "PATH" : { "TO" : { "SUBKEY" : "VALUE" } } }
-static func dict2fields(dict : Dictionary) -> Dictionary:
-	var fields = {}
-	var var_type : String = ""
-	for field in dict.keys():
-		var field_value = dict[field]
-		if "." in field:
-			var keys: Array = field.split(".")
-			field = keys.pop_front()
-			keys.reverse()
-			for key in keys:
-				field_value = { key : field_value }
-		
-		match typeof(field_value):
-			TYPE_NIL: var_type = "nullValue"
-			TYPE_BOOL: var_type = "booleanValue"
-			TYPE_INT: var_type = "integerValue"
-			TYPE_FLOAT: var_type = "doubleValue"
-			TYPE_STRING: var_type = "stringValue"
-			TYPE_DICTIONARY:
-				if is_field_timestamp(field_value):
-					var_type = "timestampValue"
-					field_value = dict2timestamp(field_value)
-				else:
-					var_type = "mapValue"
-					field_value = dict2fields(field_value)
-			TYPE_ARRAY:
-				var_type = "arrayValue"
-				field_value = {"values": array2fields(field_value)}
-				
-		if fields.has(field) and fields[field].has("mapValue") and field_value.has("fields"):
-			for key in field_value["fields"].keys():
-				fields[field]["mapValue"]["fields"][key] = field_value["fields"][key]
-		else:
-			fields[field] = { var_type : field_value }
-		
-	return {'fields' : fields}
+func replace(with : FirestoreDocument, is_listener := false) -> void:
+	var current = document.duplicate()
+	document = with.document
 	
+	var changes = {
+		"added": [], "removed": [], "updated": [], "is_listener": is_listener
+	}
+	
+	for key in current.keys():
+		if not document.has(key):
+			changes.removed.push_back({ "key" : key })
+		else:
+			var new_value = Utilities.from_firebase_type(document[key])
+			var old_value = Utilities.from_firebase_type(current[key])
+			if new_value != old_value:
+				if old_value == null:
+					changes.removed.push_back({ "key" : key }) # ??
+				else:
+					changes.updated.push_back({ "key" : key, "old": old_value, "new" : new_value })
+	
+	for key in document.keys():
+		if not current.has(key):
+			changes.added.push_back({ "key" : key, "new" : Utilities.from_firebase_type(document[key]) })
+	
+	if not (changes.added.is_empty() and changes.removed.is_empty() and changes.updated.is_empty()):
+		changed.emit(changes)
+
+func is_null_value(key) -> bool:
+	return document.has(key) and Utilities.from_firebase_type(document[key]) == null
+
+# As of right now, we do not track these with track changes; instead, they'll come back when the document updates from the server.
+# Until that time, it's expected if you want to track these types of changes that you commit for the transforms and then get the document yourself.
 func add_field_transform(transform : FieldTransform) -> void:
 	_transforms.push_back(transform)
 
+func remove_field_transform(transform : FieldTransform) -> void:
+	_transforms.erase(transform)
+	
+func clear_field_transforms() -> void:
+	_transforms.transforms.clear()
+
 func remove_field(field_path : String) -> void:
 	if document.has(field_path):
-		document[field_path] = null
+		document[field_path] = Utilities.to_firebase_type(null)
 		
-	if doc_fields.has(field_path):
-		doc_fields[field_path] = null
+		var changes = {
+			"added": [], "removed": [], "updated": [], "is_listener": false
+		}
+		
+		changes.removed.push_back({ "key" : field_path })
+		changed.emit(changes)
+		
+func _erase(field_path : String) -> void:
+	document.erase(field_path)
 
-# Pass the .fields inside a Firestore Document to print out the Dictionary { 'key' : 'value' }
-static func fields2dict(doc) -> Dictionary:
-	var dict = {}
-	if doc.has("fields"):
-		var fields = doc["fields"]
-		print(fields)
-		for field in fields.keys():
-			if fields[field].has("mapValue"):
-				dict[field] = (fields2dict(fields[field].mapValue))
-			elif fields[field].has("timestampValue"):
-				dict[field] = timestamp2dict(fields[field].timestampValue)
-			elif fields[field].has("arrayValue"):
-				dict[field] = fields2array(fields[field].arrayValue)
-			elif fields[field].has("integerValue"):
-				dict[field] = fields[field].values()[0] as int
-			elif fields[field].has("doubleValue"):
-				dict[field] = fields[field].values()[0] as float
-			elif fields[field].has("booleanValue"):
-				dict[field] = fields[field].values()[0] as bool
-			elif fields[field].has("nullValue"):
-				dict[field] = null
-			else:
-				dict[field] = fields[field].values()[0]
-	return dict
+func add_or_update_field(field_path : String, value : Variant) -> void:		
+	var changes = {
+		"added": [], "removed": [], "updated": [], "is_listener": false
+	}
+	
+	var existing_value = get_value(field_path)
+	var has_field_path = existing_value != null and not is_null_value(field_path)
+	
+	var converted_value = Utilities.to_firebase_type(value)
+	document[field_path] = converted_value
+	
+	if has_field_path:
+		changes.updated.push_back({ "key" : field_path, "old" : existing_value, "new" : value })
+	else:
+		changes.added.push_back({ "key" : field_path, "new" : value })
 
-# Pass an Array to parse it to a Firebase arrayValue
-static func array2fields(array : Array) -> Array:
-	var fields : Array = []
-	var var_type : String = ""
-	for field in array:
-		match typeof(field):
-			TYPE_DICTIONARY:
-				if is_field_timestamp(field):
-					var_type = "timestampValue"
-					field = dict2timestamp(field)
-				else:
-					var_type = "mapValue"
-					field = dict2fields(field)
-			TYPE_NIL: var_type = "nullValue"
-			TYPE_BOOL: var_type = "booleanValue"
-			TYPE_INT: var_type = "integerValue"
-			TYPE_FLOAT: var_type = "doubleValue"
-			TYPE_STRING: var_type = "stringValue"
-			TYPE_ARRAY: var_type = "arrayValue"
-			_: var_type = "FieldTransform"
-		fields.append({ var_type : field })
-	return fields
+	changed.emit(changes)
+	
+func on_snapshot(when_called : Callable, poll_time : float = 1.0) -> FirestoreListener.FirestoreListenerConnection:
+	if get_child_count() >= 1: # Only one listener per
+		assert(false, "Multiple listeners not allowed for the same document yet")
+		return
+	
+	changed.connect(when_called, CONNECT_REFERENCE_COUNTED)
+	var listener = preload("res://addons/godot-firebase/firestore/firestore_listener.tscn").instantiate()
+	add_child(listener)
+	listener.initialize_listener(collection_name, doc_name, poll_time)
+	listener.owner = self
+	var result = listener.enable_connection()
+	return result
 
-# Pass a Firebase arrayValue Dictionary to convert it back to an Array
-static func fields2array(array : Dictionary) -> Array:
-	var fields : Array = []
-	if array.has("values"):
-		for field in array.values:
-			var item
-			match field.keys()[0]:
-				"mapValue":
-					item = fields2dict(field.mapValue)
-				"arrayValue":
-					item = fields2array(field.arrayValue)
-				"integerValue":
-					item = field.values()[0] as int
-				"doubleValue":
-					item = field.values()[0] as float
-				"booleanValue":
-					item = field.values()[0] as bool
-				"timestampValue":
-					item = timestamp2dict(field.timestampValue)
-				"nullValue":
-					item = null
-				_:
-					item = field.values()[0]
-			fields.append(item)
-	return fields
+func get_value(property : StringName) -> Variant:
+	if property == "doc_name":
+		return doc_name
+	elif property == "collection_name":
+		return collection_name
+	elif property == "create_time":
+		return create_time
+	
+	if document.has(property):
+		var result = Utilities.from_firebase_type(document[property])
+		
+		return result
+	
+	return null
 
-# Converts a gdscript Dictionary (most likely obtained with Time.get_datetime_dict_from_system()) to a Firebase Timestamp
-static func dict2timestamp(dict : Dictionary) -> String:
-	dict.erase('weekday')
-	dict.erase('dst')
-	var dict_values : Array = dict.values()
-	return "%04d-%02d-%02dT%02d:%02d:%02d.00Z" % dict_values
+func _set(property: StringName, value: Variant) -> bool:
+	document[property] = Utilities.to_firebase_type(value)
+	return true
 
-# Converts a Firebase Timestamp back to a gdscript Dictionary
-static func timestamp2dict(timestamp : String) -> Dictionary:
-	var datetime : Dictionary = {year = 0, month = 0, day = 0, hour = 0, minute = 0, second = 0}
-	var dict : PackedStringArray = timestamp.split("T")[0].split("-")
-	dict.append_array(timestamp.split("T")[1].split(":"))
-	for value in dict.size() :
-		datetime[datetime.keys()[value]] = int(dict[value])
-	return datetime
-
-static func is_field_timestamp(field : Dictionary) -> bool:
-	return field.has_all(['year','month','day','hour','minute','second'])
+func keys():
+	return document.keys()
 
 # Call print(document) to return directly this document formatted
 func _to_string() -> String:
-	return ("doc_name: {doc_name}, \ndoc_fields: {doc_fields}, \ncreate_time: {create_time}\n").format(
+	return ("doc_name: {doc_name}, \ndata: {data}, \ncreate_time: {create_time}\n").format(
 		{doc_name = self.doc_name,
-		doc_fields = self.doc_fields,
+		data = document,
 		create_time = self.create_time})

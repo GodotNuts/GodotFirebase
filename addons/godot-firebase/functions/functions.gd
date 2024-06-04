@@ -51,7 +51,7 @@ var _http_request_pool : Array = []
 var _offline: bool = false : set = _set_offline
 
 func _ready() -> void:
-	pass
+	set_process(false)
 
 func _process(delta : float) -> void:
 	for i in range(_http_request_pool.size() - 1, -1, -1):
@@ -68,6 +68,7 @@ func _process(delta : float) -> void:
 ## @args
 ## @return FunctionTask
 func execute(function: String, method: int, params: Dictionary = {}, body: Dictionary = {}) -> FunctionTask:
+	set_process(true)
 	var function_task : FunctionTask = FunctionTask.new()
 	function_task.task_error.connect(_on_task_error)
 	function_task.task_finished.connect(_on_task_finished)
