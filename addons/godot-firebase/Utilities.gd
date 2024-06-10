@@ -57,20 +57,9 @@ static func from_firebase_type(value : Variant) -> Variant:
 		return null
 	
 	if value.has("mapValue"):
-		value = _from_firebase_type_recursive(value.values()[0].fields)
+		value = fields2dict(value.values()[0])
 	elif value.has("timestampValue"):
 		value = Time.get_datetime_dict_from_datetime_string(value.values()[0], false)
-	else:
-		value = value.values()[0]
-	
-	return value
-	
-static func _from_firebase_type_recursive(value : Variant) -> Variant:
-	if value == null:
-		return null
-
-	if value.has("mapValue") or value.has("timestampValue"):
-		value = _from_firebase_type_recursive(value.value()[0].fields)
 	else:
 		value = value.values()[0]
 	
@@ -103,7 +92,7 @@ static func fields2dict(doc) -> Dictionary:
 	var dict = {}
 	if doc.has("fields"):
 		var fields = doc["fields"]
-		print(fields)
+		
 		for field in fields.keys():
 			if fields[field].has("mapValue"):
 				dict[field] = (fields2dict(fields[field].mapValue))
