@@ -12,11 +12,6 @@ const _API_VERSION : String = "v0"
 
 ## @arg-types int, int, PackedStringArray
 ## @arg-enums HTTPRequest.Result, HTTPClient.ResponseCode
-## Emitted when a [StorageTask] has finished successful.
-signal task_successful(result, response_code, data)
-
-## @arg-types int, int, PackedStringArray
-## @arg-enums HTTPRequest.Result, HTTPClient.ResponseCode
 ## Emitted when a [StorageTask] has finished with an error.
 signal task_failed(result, response_code, data)
 
@@ -83,6 +78,7 @@ func _internal_process(_delta : float) -> void:
 					for header in _response_headers:
 						if "Content-Length" in header:
 							_content_length = header.trim_prefix("Content-Length: ").to_int()
+							break
 
 				_http_client.poll()
 				var chunk = _http_client.read_response_body_chunk() # Get a chunk.
@@ -127,13 +123,13 @@ func ref(path := "") -> StorageReference:
 	if not _references.has(path):
 		var ref := StorageReference.new()
 		_references[path] = ref
-		ref.valid = true
 		ref.bucket = bucket
 		ref.full_path = path
-		ref.name = path.get_file()
+		ref.file_name = path.get_file()
 		ref.parent = ref(path.path_join(".."))
 		ref.root = _root_ref
 		ref.storage = self
+		add_child(ref)
 		return ref
 	else:
 		return _references[path]
@@ -158,9 +154,9 @@ func _check_emulating() -> void :
 			_base_url = "http://localhost:{port}/{version}/".format({ version = _API_VERSION, port = port })
 
 
-func _upload(data : PackedByteArray, headers : PackedStringArray, ref : StorageReference, meta_only : bool) -> StorageTask:
+func _upload(data : PackedByteArray, headers : PackedStringArray, ref : StorageReference, meta_only : bool) -> Variant:
 	if _is_invalid_authentication():
-		return null
+		return 0
 
 	var task := StorageTask.new()
 	task.ref = ref
@@ -169,11 +165,11 @@ func _upload(data : PackedByteArray, headers : PackedStringArray, ref : StorageR
 	task._headers = headers
 	task.data = data
 	_process_request(task)
-	return task
+	return await task.task_finished
 
-func _download(ref : StorageReference, meta_only : bool, url_only : bool) -> StorageTask:
+func _download(ref : StorageReference, meta_only : bool, url_only : bool) -> Variant:
 	if _is_invalid_authentication():
-		return null
+		return 0
 
 	var info_task := StorageTask.new()
 	info_task.ref = ref
@@ -182,7 +178,7 @@ func _download(ref : StorageReference, meta_only : bool, url_only : bool) -> Sto
 	_process_request(info_task)
 
 	if url_only or meta_only:
-		return info_task
+		return await info_task.task_finished
 
 	var task := StorageTask.new()
 	task.ref = ref
@@ -199,33 +195,36 @@ func _download(ref : StorageReference, meta_only : bool, url_only : bool) -> Sto
 		task.response_code = info_task.response_code
 		task.result = info_task.result
 		task.finished = true
-		task.task_finished.emit()
+		task.task_finished.emit(null)
 		task_failed.emit(task.result, task.response_code, task.data)
 		_pending_tasks.erase(task)
-
-	return task
-
-func _list(ref : StorageReference, list_all : bool) -> StorageTask:
-	if _is_invalid_authentication():
 		return null
+
+	return await task.task_finished
+
+func _list(ref : StorageReference, list_all : bool) -> Array:
+	if _is_invalid_authentication():
+		return []
 
 	var task := StorageTask.new()
 	task.ref = ref
 	task._url = _get_file_url(_root_ref).trim_suffix("/")
 	task.action = StorageTask.Task.TASK_LIST_ALL if list_all else StorageTask.Task.TASK_LIST
 	_process_request(task)
-	return task
+	return await task.task_finished
 
-func _delete(ref : StorageReference) -> StorageTask:
+func _delete(ref : StorageReference) -> bool:
 	if _is_invalid_authentication():
-		return null
+		return false
 
 	var task := StorageTask.new()
 	task.ref = ref
 	task._url = _get_file_url(ref)
 	task.action = StorageTask.Task.TASK_DELETE
 	_process_request(task)
-	return task
+	var data = await task.task_finished
+	
+	return data == null
 
 func _process_request(task : StorageTask) -> void:
 	if requesting:
@@ -262,7 +261,10 @@ func _finish_request(result : int) -> void:
 
 		StorageTask.Task.TASK_DELETE:
 			_references.erase(task.ref.full_path)
-			task.ref.valid = false
+			for child in get_children():
+				if child.full_path == task.ref.full_path:
+					child.queue_free()
+					break
 			if typeof(task.data) == TYPE_PACKED_BYTE_ARRAY:
 				task.data = null
 
@@ -301,26 +303,21 @@ func _finish_request(result : int) -> void:
 			var json = Utilities.get_json_data(_response_data)
 			task.data = json
 
-	var next_task : StorageTask
-	if not _pending_tasks.is_empty():
-		next_task = _pending_tasks.pop_front()
-
+	var next_task = _get_next_pending_task()
+	
 	task.finished = true
 	task.task_finished.emit(task.data) # I believe this parameter has been missing all along, but not sure. Caused weird results at times with a yield/await returning null, but the task containing data.
 	if typeof(task.data) == TYPE_DICTIONARY and task.data.has("error"):
 		task_failed.emit(task.result, task.response_code, task.data)
-	else:
-		task_successful.emit(task.result, task.response_code, task.data)
 
-	while true:
-		if next_task and not next_task.finished:
-			_process_request(next_task)
-			break
-		elif not _pending_tasks.is_empty():
-			next_task = _pending_tasks.pop_front()
-		else:
-			break
+	if next_task and not next_task.finished:
+		_process_request(next_task)
 
+func _get_next_pending_task() -> StorageTask:
+	if _pending_tasks.is_empty():
+		return null
+		
+	return _pending_tasks.pop_front()
 
 func _get_file_url(ref : StorageReference) -> String:
 	var url := _extended_url.replace("[APP_ID]", ref.bucket)

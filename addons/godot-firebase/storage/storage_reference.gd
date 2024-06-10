@@ -4,7 +4,7 @@
 ## This object is used to interact with the cloud storage. You may get data from the server, as well as upload your own back to it.
 @tool
 class_name StorageReference
-extends RefCounted
+extends Node
 
 ## The default MIME type to use when uploading a file.
 ## Data sent with this type are interpreted as plain binary data. Note that firebase will generate an MIME type based checked the file extenstion if none is provided.
@@ -36,7 +36,7 @@ const MIME_TYPES = {
 	"txt": "text/plain",
 	"wav": "audio/wav",
 	"webm": "video/webm",
-	"webp": "video/webm",
+	"webp": "image/webp",
 	"xml": "text/xml",
 }
 
@@ -51,7 +51,7 @@ var full_path : String = ""
 ## @default ""
 ## The name of the file/folder, including any file extension.
 ## Example: If the [member full_path] is [code]images/user/image.png[/code], then the [member name] would be [code]image.png[/code].
-var name : String = ""
+var file_name : String = ""
 
 ## The parent [StorageReference] one level up the file hierarchy.
 ## If the current [StorageReference] is the root (i.e. the [member full_path] is [code]""[/code]) then the [member parent] will be [code]null[/code].
@@ -64,25 +64,16 @@ var root : StorageReference
 ## The Storage API that created this [StorageReference] to begin with.
 var storage # FirebaseStorage (Can't static type due to cyclic reference)
 
-## @default false
-## Whether this [StorageReference] is valid. None of the functions will work when in an invalid state.
-## It is set to false when [method delete] is called.
-var valid : bool = false
-
 ## @args path
 ## @return StorageReference
 ## Returns a reference to another [StorageReference] relative to this one.
 func child(path : String) -> StorageReference:
-	if not valid:
-		return null
 	return storage.ref(full_path.path_join(path))
 
 ## @args data, metadata
-## @return StorageTask
-## Makes an attempt to upload data to the referenced file location. Status checked this task is found in the returned [StorageTask].
-func put_data(data : PackedByteArray, metadata := {}) -> StorageTask:
-	if not valid:
-		return null
+## @return int
+## Makes an attempt to upload data to the referenced file location. Returns Variant
+func put_data(data : PackedByteArray, metadata := {}) -> Variant:
 	if not "Content-Length" in metadata and not Utilities.is_web():
 		metadata["Content-Length"] = data.size()
 
@@ -90,90 +81,75 @@ func put_data(data : PackedByteArray, metadata := {}) -> StorageTask:
 	for key in metadata:
 		headers.append("%s: %s" % [key, metadata[key]])
 
-	return storage._upload(data, headers, self, false)
+	return await storage._upload(data, headers, self, false)
+	
 
 ## @args data, metadata
-## @return StorageTask
+## @return int
 ## Like [method put_data], but [code]data[/code] is a [String].
-func put_string(data : String, metadata := {}) -> StorageTask:
-	return put_data(data.to_utf8_buffer(), metadata)
+func put_string(data : String, metadata := {}) -> Variant:
+	return await put_data(data.to_utf8_buffer(), metadata)
 
 ## @args file_path, metadata
-## @return StorageTask
+## @return int
 ## Like [method put_data], but the data comes from a file at [code]file_path[/code].
-func put_file(file_path : String, metadata := {}) -> StorageTask:
+func put_file(file_path : String, metadata := {}) -> Variant:
 	var file := FileAccess.open(file_path, FileAccess.READ)
 	var data := file.get_buffer(file.get_length())
 
 	if "Content-Type" in metadata:
 		metadata["Content-Type"] = MIME_TYPES.get(file_path.get_extension(), DEFAULT_MIME_TYPE)
 
-	return put_data(data, metadata)
+	return await put_data(data, metadata)
 
-## @return StorageTask
+## @return Variant
 ## Makes an attempt to download the files from the referenced file location. Status checked this task is found in the returned [StorageTask].
-func get_data() -> StorageTask:
-	if not valid:
-		return null
-	storage._download(self, false, false)
-	return storage._pending_tasks[-1]
+func get_data() -> Variant:
+	var result = await storage._download(self, false, false)
+	return result
 
 ## @return StorageTask
 ## Like [method get_data], but the data in the returned [StorageTask] comes in the form of a [String].
-func get_string() -> StorageTask:
-	var task := get_data()
-	task.task_finished.connect(_on_task_finished.bind(task, "stringify"))
-	return task
+func get_string() -> String:
+	var task := await get_data()
+	_on_task_finished(task, "stringify")
+	return task.data
 
 ## @return StorageTask
 ## Attempts to get the download url that points to the referenced file's data. Using the url directly may require an authentication header. Status checked this task is found in the returned [StorageTask].
-func get_download_url() -> StorageTask:
-	if not valid:
-		return null
-	return storage._download(self, false, true)
+func get_download_url() -> Variant:
+	return await storage._download(self, false, true)
 
 ## @return StorageTask
 ## Attempts to get the metadata of the referenced file. Status checked this task is found in the returned [StorageTask].
-func get_metadata() -> StorageTask:
-	if not valid:
-		return null
-	return storage._download(self, true, false)
+func get_metadata() -> Variant:
+	return await storage._download(self, true, false)
 
 ## @args metadata
 ## @return StorageTask
 ## Attempts to update the metadata of the referenced file. Any field with a value of [code]null[/code] will be deleted checked the server end. Status checked this task is found in the returned [StorageTask].
-func update_metadata(metadata : Dictionary) -> StorageTask:
-	if not valid:
-		return null
+func update_metadata(metadata : Dictionary) -> Variant:
 	var data := JSON.stringify(metadata).to_utf8_buffer()
 	var headers := PackedStringArray(["Accept: application/json"])
-	return storage._upload(data, headers, self, true)
+	return await storage._upload(data, headers, self, true)
 
 ## @return StorageTask
 ## Attempts to get the list of files and/or folders under the referenced folder This function is not nested unlike [method list_all]. Status checked this task is found in the returned [StorageTask].
-func list() -> StorageTask:
-	if not valid:
-		return null
-	return storage._list(self, false)
+func list() -> Array:
+	return await storage._list(self, false)
 
 ## @return StorageTask
 ## Attempts to get the list of files and/or folders under the referenced folder This function is nested unlike [method list]. Status checked this task is found in the returned [StorageTask].
-func list_all() -> StorageTask:
-	if not valid:
-		return null
-	return storage._list(self, true)
+func list_all() -> Array:
+	return await storage._list(self, true)
 
 ## @return StorageTask
 ## Attempts to delete the referenced file/folder. If successful, the reference will become invalid And can no longer be used. If you need to reference this location again, make a new reference with [method StorageTask.ref]. Status checked this task is found in the returned [StorageTask].
-func delete() -> StorageTask:
-	if not valid:
-		return null
-	return storage._delete(self)
+func delete() -> bool:
+	return await storage._delete(self)
 
 func _to_string() -> String:
 	var string := "gs://%s/%s" % [bucket, full_path]
-	if not valid:
-		string += " [Invalid RefCounted]"
 	return string
 
 func _on_task_finished(task : StorageTask, action : String) -> void:
