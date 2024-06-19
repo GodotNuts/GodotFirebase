@@ -58,6 +58,8 @@ static func from_firebase_type(value : Variant) -> Variant:
 	
 	if value.has("mapValue"):
 		value = fields2dict(value.values()[0])
+	elif value.has("arrayValue"):
+		value = fields2array(value.values()[0])
 	elif value.has("timestampValue"):
 		value = Time.get_datetime_dict_from_datetime_string(value.values()[0], false)
 	else:
