@@ -10,7 +10,7 @@ extends Reference
 signal add_document(doc)
 signal get_document(doc)
 signal update_document(doc)
-signal delete_document()
+signal delete_document(successful)
 signal error(code,status,message)
 
 const _AUTHORIZATION_HEADER : String = "Authorization: Bearer "

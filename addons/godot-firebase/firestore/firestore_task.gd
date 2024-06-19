@@ -35,7 +35,7 @@ signal get_document(doc)
 signal update_document(doc)
 ## Emitted when a [code]delete(document)[/code] request on a [class FirebaseCollection] is successfully completed. [code]error()[/code] signal will be emitted otherwise.
 ## @arg-types FirestoreDocument
-signal delete_document()
+signal delete_document(successful)
 ## Emitted when a [code]list(collection_id)[/code] request on [class FirebaseFirestore] is successfully completed. [code]error()[/code] signal will be emitted otherwise.
 ## @arg-types Array
 signal listed_documents(documents)
