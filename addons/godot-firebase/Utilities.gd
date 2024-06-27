@@ -52,10 +52,37 @@ static func dict2fields(dict : Dictionary) -> Dictionary:
 		
 	return {'fields' : fields}
 
-static func from_firebase_type(value : Variant) -> Variant:
+
+class FirebaseTypeConverter extends RefCounted:
+	var converters = {
+		"nullValue": _to_null,
+		"booleanValue": _to_bool,
+		"integerValue": _to_int,
+		"doubleValue": _to_float
+	}
+
+	func convert_value(type, value):
+		if converters.has(type):
+			return converters[type].call(value)
+
+		return value
+
+	func _to_null(value):
+		return null
+
+	func _to_bool(value):
+		return bool(value)
+
+	func _to_int(value):
+		return int(value)
+
+	func _to_float(value):
+		return float(value)
+
+static func from_firebase_type(value):
 	if value == null:
 		return null
-	
+
 	if value.has("mapValue"):
 		value = fields2dict(value.values()[0])
 	elif value.has("arrayValue"):
@@ -63,9 +90,11 @@ static func from_firebase_type(value : Variant) -> Variant:
 	elif value.has("timestampValue"):
 		value = Time.get_datetime_dict_from_datetime_string(value.values()[0], false)
 	else:
-		value = value.values()[0]
-	
+		var converter = FirebaseTypeConverter.new()
+		value = converter.convert_value(value.keys()[0], value.values()[0])
+
 	return value
+
 
 static func to_firebase_type(value : Variant) -> Dictionary:
 	var var_type : String = ""
