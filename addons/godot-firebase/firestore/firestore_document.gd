@@ -21,7 +21,8 @@ signal changed(changes)
 func _init(doc : Dictionary = {}):
 	_transforms = FieldTransformArray.new()
 	
-	document = doc.fields
+	if doc.has("fields"):
+		document = doc.fields
 	doc_name = doc.name
 	if doc_name.count("/") > 2:
 		doc_name = (doc_name.split("/") as Array).back()
