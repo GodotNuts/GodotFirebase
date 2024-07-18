@@ -19,10 +19,12 @@ var collection_name : String    # Name of the collection to which it belongs
 signal changed(changes)
 
 func _init(doc : Dictionary = {}):
-	document = doc.fields
-	doc_name = doc.name
-	if doc_name.count("/") > 2:
-		doc_name = (doc_name.split("/") as Array).back()
+	if doc.has("fields"):
+		document = doc.fields
+	if doc.has("name"):
+		doc_name = doc.name
+		if doc_name.count("/") > 2:
+			doc_name = (doc_name.split("/") as Array).back()
 
 	self.create_time = doc.createTime
 
