@@ -108,8 +108,8 @@ func update(document : FirestoreDocument) -> FirestoreDocument:
 				child.replace(result, true)
 				break
 	
-	if temp_transforms != null:
-		result._transforms = temp_transforms
+		if temp_transforms != null:
+			result._transforms = temp_transforms
 	
 	return result
 
