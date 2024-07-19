@@ -90,7 +90,7 @@ func collection(path : String) -> FirestoreCollection:
 ## When awaited, this function returns the resulting array from the query.
 ##
 ## ex.
-## [code]var query_results = wait Firebase.Firestore.query(FirestoreQuery.new())[/code]
+## [code]var query_results = await Firebase.Firestore.query(FirestoreQuery.new())[/code]
 ##
 ## [b]Warning:[/b] It currently does not work offline!
 ##
