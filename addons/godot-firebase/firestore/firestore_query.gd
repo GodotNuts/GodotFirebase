@@ -1,4 +1,4 @@
-## @meta-authors Nicoló 'fenix' Santilio
+## @meta-authors Nicoló 'fenix' Santilio, Kyle Szklenski
 ## @meta-version 1.4
 ## A firestore query.
 ## Documentation TODO.
@@ -7,11 +7,11 @@ extends RefCounted
 class_name FirestoreQuery
 
 class Order:
-	var obj : Dictionary
+	var obj: Dictionary
 
 class Cursor:
-	var values : Array
-	var before : bool
+	var values: Array
+	var before: bool
 
 	func _init(v : Array,b : bool):
 		values = v
@@ -19,7 +19,7 @@ class Cursor:
 
 signal query_result(query_result)
 
-const TEMPLATE_QUERY : Dictionary = {
+const TEMPLATE_QUERY: Dictionary = {
 	select = {},
 	from = [],
 	where = {},
@@ -30,11 +30,12 @@ const TEMPLATE_QUERY : Dictionary = {
 	limit = 0
    }
 
-var query : Dictionary = {}
+var query: Dictionary = {}
+var aggregations: Array[Dictionary] = []
 
 enum OPERATOR {
 	# Standard operators
-	OPERATOR_NSPECIFIED,
+	OPERATOR_UNSPECIFIED,
 	LESS_THAN,
 	LESS_THAN_OR_EQUAL,
 	GREATER_THAN,
@@ -86,8 +87,6 @@ func select(fields) -> FirestoreQuery:
 func from(collection_id : String, all_descendants : bool = true) -> FirestoreQuery:
 	query["from"] = [{collectionId = collection_id, allDescendants = all_descendants}]
 	return self
-
-
 
 # @collections_array MUST be an Array of Arrays with this structure
 # [ ["collection_id", true/false] ]
@@ -159,8 +158,6 @@ func order_by_fields(order_field_list : Array) -> FirestoreQuery:
 	query["orderBy"] = order_list
 	return self
 
-
-
 func start_at(value, before : bool) -> FirestoreQuery:
 	var cursor : Cursor = _cursor_object(value, before)
 	query["startAt"] = { values = cursor.values, before = cursor.before }
@@ -191,6 +188,26 @@ func limit(limit : int) -> FirestoreQuery:
 	return self
 
 
+func aggregate() -> FirestoreAggregation:
+	return FirestoreAggregation.new(self)
+	
+class FirestoreAggregation extends RefCounted:
+	var _query: FirestoreQuery
+	
+	func _init(query: FirestoreQuery) -> void:
+		_query = query
+	
+	func sum(field: String) -> FirestoreQuery:
+		_query.aggregations.push_back({ sum = { field = { fieldPath = field }}})
+		return _query
+		
+	func count(up_to: int) -> FirestoreQuery:
+		_query.aggregations.push_back({ count = { upTo = up_to }})
+		return _query
+		
+	func average(field: String) -> FirestoreQuery:
+		_query.aggregations.push_back({ avg = { field = { fieldPath = field }}})
+		return _query
 
 # UTILITIES ----------------------------------------
 
