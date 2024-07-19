@@ -105,7 +105,7 @@ func query(query : FirestoreQuery) -> Array:
 	var task : FirestoreTask = FirestoreTask.new()
 	task.action = FirestoreTask.Task.TASK_QUERY
 	var body: Dictionary = { structuredQuery = query.query }
-	var	url: String = _base_url + _extended_url + _query_suffix
+	var url: String = _base_url + _extended_url + _query_suffix
 	
 	task.data = query
 	task._fields = JSON.stringify(body)
