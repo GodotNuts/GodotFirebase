@@ -31,6 +31,7 @@ enum Task {
 	TASK_PATCH,     ## A PATCH Request Task, processing a update() request
 	TASK_DELETE,    ## A DELETE Request Task, processing a delete() request
 	TASK_QUERY,     ## A POST Request Task, processing a query() request
+	TASK_AGG_QUERY,     ## A POST Request Task, processing an aggregation_query() request
 	TASK_LIST,      ## A POST Request Task, processing a list() request
 	TASK_COMMIT      ## A POST Request Task that hits the write api
 }
@@ -43,7 +44,8 @@ const TASK_MAP = {
 	Task.TASK_DELETE: "DELETE DOCUMENT",
 	Task.TASK_QUERY: "QUERY COLLECTION",
 	Task.TASK_LIST: "LIST DOCUMENTS", 
-	Task.TASK_COMMIT: "COMMIT DOCUMENT"
+	Task.TASK_COMMIT: "COMMIT DOCUMENT",
+	Task.TASK_AGG_QUERY: "AGG QUERY COLLECTION"
 }
 
 ## The code indicating the request Firestore is processing.
@@ -53,24 +55,23 @@ var action : int = -1 : set = set_action
 
 ## A variable, temporary holding the result of the request.
 var data
-var error : Dictionary
-var document : FirestoreDocument
+var error: Dictionary
+var document: FirestoreDocument
 
-var _response_headers : PackedStringArray = PackedStringArray()
-var _response_code : int = 0
+var _response_headers: PackedStringArray = PackedStringArray()
+var _response_code: int = 0
 
-var _method : int = -1
-var _url : String = ""
-var _fields : String = ""
-var _headers : PackedStringArray = []
+var _method: int = -1
+var _url: String = ""
+var _fields: String = ""
+var _headers: PackedStringArray = []
 
-func _on_request_completed(result : int, response_code : int, headers : PackedStringArray, body : PackedByteArray) -> void:
+func _on_request_completed(result: int, response_code: int, headers: PackedStringArray, body: PackedByteArray) -> void:
 	var bod = body.get_string_from_utf8()
 	if bod != "":
 		bod = Utilities.get_json_data(bod)
-
+	
 	var failed: bool = bod is Dictionary and bod.has("error") and response_code != HTTPClient.RESPONSE_OK
-
 	# Probably going to regret this...
 	if response_code == HTTPClient.RESPONSE_OK:
 		match action:
@@ -84,6 +85,18 @@ func _on_request_completed(result : int, response_code : int, headers : PackedSt
 				for doc in bod:
 					if doc.has('document'):
 						data.append(FirestoreDocument.new(doc.document))
+			Task.TASK_AGG_QUERY:
+				var agg_results = []
+				for agg_result in bod:
+					var idx = 0
+					var query_results = {}
+					for field_value in agg_result.result.aggregateFields.keys():
+						var agg = data.aggregations[idx]
+						var field = agg_result.result.aggregateFields[field_value]
+						query_results[agg.keys()[0]] = Utilities.from_firebase_type(field)
+						idx += 1
+					agg_results.push_back(query_results)
+				data = agg_results
 			Task.TASK_LIST:
 				data = []
 				if bod.has('documents'):
@@ -127,7 +140,7 @@ func set_action(value : int) -> void:
 	match action:
 		Task.TASK_GET, Task.TASK_LIST:
 			_method = HTTPClient.METHOD_GET
-		Task.TASK_POST, Task.TASK_QUERY:
+		Task.TASK_POST, Task.TASK_QUERY, Task.TASK_AGG_QUERY:
 			_method = HTTPClient.METHOD_POST
 		Task.TASK_PATCH:
 			_method = HTTPClient.METHOD_PATCH
@@ -135,6 +148,8 @@ func set_action(value : int) -> void:
 			_method = HTTPClient.METHOD_DELETE
 		Task.TASK_COMMIT:
 			_method = HTTPClient.METHOD_POST
+		_:
+			assert(false)
 
 
 func _merge_dict(dic_a : Dictionary, dic_b : Dictionary, nullify := false) -> Dictionary:

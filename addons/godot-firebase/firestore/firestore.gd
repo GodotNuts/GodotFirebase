@@ -40,39 +40,27 @@ const _MAX_POOLED_REQUEST_AGE = 30
 ## The code indicating the request Firestore is processing.
 ## See @[enum FirebaseFirestore.Requests] to get a full list of codes identifiers.
 ## @enum Requests
-var request : int = -1
-
-## Whether cache files can be used and generated.
-## @default true
-var persistence_enabled : bool = false
-
-## Whether an internet connection can be used.
-## @default true
-var networking: bool = true : set = set_networking
+var request: int = -1
 
 ## A Dictionary containing all authentication fields for the current logged user.
 ## @type Dictionary
-var auth : Dictionary
+var auth: Dictionary
 
-var _config : Dictionary = {}
+var _config: Dictionary = {}
 var _cache_loc: String
 var _encrypt_key := "5vg76n90345f7w390346" if Utilities.is_web() else OS.get_unique_id()
 
 
-var _base_url : String = ""
-var _extended_url : String = "projects/[PROJECT_ID]/databases/(default)/documents/"
-var _query_suffix : String = ":runQuery"
+var _base_url: String = ""
+var _extended_url: String = "projects/[PROJECT_ID]/databases/(default)/documents/"
+var _query_suffix: String = ":runQuery"
+var _agg_query_suffix: String = ":runAggregationQuery"
 
 #var _connect_check_node : HTTPRequest
 
-var _request_list_node : HTTPRequest
-var _requests_queue : Array = []
-var _current_query : FirestoreQuery
-
-var _offline: bool = false : set = _set_offline
-
-func _ready() -> void:
-	pass
+var _request_list_node: HTTPRequest
+var _requests_queue: Array = []
+var _current_query: FirestoreQuery
 
 ## Returns a reference collection by its [i]path[/i].
 ##
@@ -99,49 +87,69 @@ func collection(path : String) -> FirestoreCollection:
 ## Issue a query checked your Firestore database.
 ##
 ## [b]Note:[/b] a [code]FirestoreQuery[/code] object needs to be created to issue the query.
-## This method will return a [code]FirestoreTask[/code] object, representing a reference to the request issued.
-## If saved into a variable, the [code]FirestoreTask[/code] object can be used to yield checked the [code]result_query(result)[/code] signal, or the more generic [code]task_finished(result)[/code] signal.
+## When awaited, this function returns the resulting array from the query.
 ##
 ## ex.
-## [code]var query_task : FirestoreTask = Firebase.Firestore.query(FirestoreQuery.new())[/code]
-## [code]await query_task.task_finished[/code]
-## Since the emitted signal is holding an argument, it can be directly retrieved as a return variable from the [code]yield()[/code] function.
-##
-## ex.
-## [code]var result : Array = await query_task.task_finished[/code]
+## [code]var query_results = wait Firebase.Firestore.query(FirestoreQuery.new())[/code]
 ##
 ## [b]Warning:[/b] It currently does not work offline!
 ##
 ## @args query
 ## @arg-types FirestoreQuery
-## @return FirestoreTask
+## @return Array[FirestoreDocument]
 func query(query : FirestoreQuery) -> Array:
+	if query.aggregations.size() > 0:
+		Firebase._printerr("Aggregation query sent with normal query call: " + str(query))
+		return []
+		
 	var task : FirestoreTask = FirestoreTask.new()
 	task.action = FirestoreTask.Task.TASK_QUERY
-	var body : Dictionary = { structuredQuery = query.query }
-	var url : String = _base_url + _extended_url + _query_suffix
-
+	var body: Dictionary = { structuredQuery = query.query }
+	var	url: String = _base_url + _extended_url + _query_suffix
+	
 	task.data = query
 	task._fields = JSON.stringify(body)
 	task._url = url
 	_pooled_request(task)
 	return await _handle_task_finished(task)
-
-
-## Request a list of contents (documents and/or collections) inside a collection, specified by its [i]id[/i]. This method will return a [code]FirestoreTask[/code] object, representing a reference to the request issued. If saved into a variable, the [code]FirestoreTask[/code] object can be used to yield checked the [code]result_query(result)[/code] signal, or the more generic [code]task_finished(result)[/code] signal.
-## [b]Note:[/b] [code]order_by[/code] does not work in offline mode.
-## ex.
-## [code]var query_task : FirestoreTask = Firebase.Firestore.query(FirestoreQuery.new())[/code]
-## [code]await query_task.task_finished[/code]
-## Since the emitted signal is holding an argument, it can be directly retrieved as a return variable from the [code]yield()[/code] function.
+	
+## Issue an aggregation query (sum, average, count) against your Firestore database;
+## cheaper than a normal query and counting (for instance) values directly.
+##
+## [b]Note:[/b] a [code]FirestoreQuery[/code] object needs to be created to issue the query.
+## When awaited, this function returns the result from the aggregation query.
 ##
 ## ex.
-## [code]var result : Array = await query_task.task_finished[/code]
+## [code]var query_results = await Firebase.Firestore.query(FirestoreQuery.new())[/code]
 ##
+## [b]Warning:[/b] It currently does not work offline!
+##
+## @args query
+## @arg-types FirestoreQuery
+## @return Variant representing the array results of the aggregation query
+func aggregation_query(query : FirestoreQuery) -> Variant:
+	if query.aggregations.size() == 0:
+		Firebase._printerr("Aggregation query sent with no aggregation values: " + str(query))
+		return 0
+		
+	var task : FirestoreTask = FirestoreTask.new()
+	task.action = FirestoreTask.Task.TASK_AGG_QUERY
+	
+	var body: Dictionary = { structuredAggregationQuery = { structuredQuery = query.query, aggregations = query.aggregations } }
+	var	url: String = _base_url + _extended_url + _agg_query_suffix
+
+	task.data = query
+	task._fields = JSON.stringify(body)
+	task._url = url
+	_pooled_request(task)
+	var result = await _handle_task_finished(task)
+	return result
+
+## Request a list of contents (documents and/or collections) inside a collection, specified by its [i]id[/i]. This method will return an Array[FirestoreDocument]
 ## @args collection_id, page_size, page_token, order_by
 ## @arg-types String, int, String, String
 ## @arg-defaults , 0, "", ""
-## @return FirestoreTask
+## @return Array[FirestoreDocument]
 func list(path : String = "", page_size : int = 0, page_token : String = "", order_by : String = "") -> Array:
 	var task : FirestoreTask = FirestoreTask.new()
 	task.action = FirestoreTask.Task.TASK_LIST
@@ -158,38 +166,6 @@ func list(path : String = "", page_size : int = 0, page_token : String = "", ord
 	_pooled_request(task)
 	
 	return await _handle_task_finished(task)
-
-
-func set_networking(value: bool) -> void:
-	if value:
-		enable_networking()
-	else:
-		disable_networking()
-
-
-func enable_networking() -> void:
-	if networking:
-		return
-	networking = true
-	_base_url = _base_url.replace("storeoffline", "firestore")
-	for coll in get_children():
-		if coll is FirestoreCollection:
-			coll._base_url = _base_url
-
-
-func disable_networking() -> void:
-	if not networking:
-		return
-	networking = false
-	# Pointing to an invalid url should do the trick.
-	_base_url = _base_url.replace("firestore", "storeoffline")
-	for coll in get_children():
-		if coll is FirestoreCollection:
-			coll._base_url = _base_url
-
-
-func _set_offline(value: bool) -> void:
-	return # Since caching is causing a lot of issues, I'm turning it off for now. We will revisit this in the future, once we have some time to investigate why the cache is being corrupted.
 
 
 func _set_config(config_json : Dictionary) -> void:
@@ -213,10 +189,6 @@ func _check_emulating() -> void :
 			_base_url = "http://localhost:{port}/{version}/".format({ version = _API_VERSION, port = port })
 
 func _pooled_request(task : FirestoreTask) -> void:
-	if _offline:
-		task._on_request_completed(HTTPRequest.RESULT_CANT_CONNECT, 404, PackedStringArray(), PackedByteArray())
-		return
-
 	if (auth == null or auth.is_empty()) and not Firebase.emulating:
 		Firebase._print("Unauthenticated request issued...")
 		Firebase.Auth.login_anonymous()
@@ -251,11 +223,6 @@ func _on_FirebaseAuth_token_refresh_succeeded(auth_result : Dictionary) -> void:
 	for coll in get_children():
 		if coll is FirestoreCollection:
 			coll.auth = auth
-
-func _on_connect_check_request_completed(result : int, _response_code, _headers, _body) -> void:
-	_set_offline(result != HTTPRequest.RESULT_SUCCESS)
-	#_connect_check_node.request(_base_url)
-
 
 func _on_FirebaseAuth_logout() -> void:
 	auth = {}
