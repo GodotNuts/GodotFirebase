@@ -73,11 +73,12 @@ func _init():
 func select(fields) -> FirestoreQuery:
 	match typeof(fields):
 		TYPE_STRING:
-			query["select"] = { fields = { fieldPath = fields } }
+			query["select"] = { "fields": [{ "fieldPath": fields }] }
 		TYPE_ARRAY:
+			var field_list = []
 			for field in fields:
-				field = ({ fieldPath = field })
-			query["select"] = { fields = fields }
+				field_list.append({ "fieldPath": field })
+			query["select"] = { "fields": field_list }
 		_:
 			print("Type of 'fields' is not accepted.")
 	return self
