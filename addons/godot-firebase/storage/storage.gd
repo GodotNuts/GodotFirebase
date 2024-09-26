@@ -156,6 +156,7 @@ func _check_emulating() -> void :
 
 func _upload(data : PackedByteArray, headers : PackedStringArray, ref : StorageReference, meta_only : bool) -> Variant:
 	if _is_invalid_authentication():
+		Firebase._printerr("Error uploading to storage: Invalid authentication")
 		return 0
 
 	var task := StorageTask.new()
@@ -169,6 +170,7 @@ func _upload(data : PackedByteArray, headers : PackedStringArray, ref : StorageR
 
 func _download(ref : StorageReference, meta_only : bool, url_only : bool) -> Variant:
 	if _is_invalid_authentication():
+		Firebase._printerr("Error downloading from storage: Invalid authentication")
 		return 0
 
 	var info_task := StorageTask.new()
@@ -204,6 +206,7 @@ func _download(ref : StorageReference, meta_only : bool, url_only : bool) -> Var
 
 func _list(ref : StorageReference, list_all : bool) -> Array:
 	if _is_invalid_authentication():
+		Firebase._printerr("Error getting object list from storage: Invalid authentication")
 		return []
 
 	var task := StorageTask.new()
@@ -215,6 +218,7 @@ func _list(ref : StorageReference, list_all : bool) -> Array:
 
 func _delete(ref : StorageReference) -> bool:
 	if _is_invalid_authentication():
+		Firebase._printerr("Error deleting object from storage: Invalid authentication")
 		return false
 
 	var task := StorageTask.new()
@@ -270,6 +274,8 @@ func _finish_request(result : int) -> void:
 
 		StorageTask.Task.TASK_DOWNLOAD_URL:
 			var json = Utilities.get_json_data(_response_data)
+			if json != null and json.has("error"):
+				Firebase._printerr("Error getting object download url: "+json["error"].message)
 			if json != null and json.has("downloadTokens"):
 				task.data = _base_url + _get_file_url(task.ref) + "?alt=media&token=" + json.downloadTokens
 			else:
@@ -278,6 +284,8 @@ func _finish_request(result : int) -> void:
 		StorageTask.Task.TASK_LIST, StorageTask.Task.TASK_LIST_ALL:
 			var json = Utilities.get_json_data(_response_data)
 			var items := []
+			if json != null and json.has("error"):
+				Firebase._printerr("Error getting data from storage: "+json["error"].message)
 			if json != null and json.has("items"):
 				for item in json.items:
 					var item_name : String = item.name
