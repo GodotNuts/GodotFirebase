@@ -160,6 +160,7 @@ func _check_emulating() -> void :
 
 func _upload(data : PoolByteArray, headers : PoolStringArray, ref : StorageReference, meta_only : bool) -> StorageTask:
 	if not (_config and _auth):
+		Firebase._printerr("Error uploading to storage: Invalid authentication")
 		return null
 
 	var task := StorageTask.new()
@@ -173,6 +174,7 @@ func _upload(data : PoolByteArray, headers : PoolStringArray, ref : StorageRefer
 
 func _download(ref : StorageReference, meta_only : bool, url_only : bool) -> StorageTask:
 	if not (_config and _auth):
+		Firebase._printerr("Error downloading from storage: Invalid authentication")
 		return null
 
 	var info_task := StorageTask.new()
@@ -207,6 +209,7 @@ func _download(ref : StorageReference, meta_only : bool, url_only : bool) -> Sto
 
 func _list(ref : StorageReference, list_all : bool) -> StorageTask:
 	if not (_config and _auth):
+		Firebase._printerr("Error getting object list from storage: Invalid authentication")
 		return null
 
 	var task := StorageTask.new()
@@ -218,6 +221,7 @@ func _list(ref : StorageReference, list_all : bool) -> StorageTask:
 
 func _delete(ref : StorageReference) -> StorageTask:
 	if not (_config and _auth):
+		Firebase._printerr("Error deleting object from storage: Invalid authentication")
 		return null
 
 	var task := StorageTask.new()
@@ -268,6 +272,8 @@ func _finish_request(result : int) -> void:
 
 		StorageTask.Task.TASK_DOWNLOAD_URL:
 			var json : Dictionary = JSON.parse(_response_data.get_string_from_utf8()).result
+			if json and json.has("error"):
+				Firebase._printerr("Error getting download url: "+json["error"].message)
 			if json and json.has("downloadTokens"):
 				task.data = _base_url + _get_file_url(task.ref) + "?alt=media&token=" + json.downloadTokens
 			else:
@@ -276,6 +282,8 @@ func _finish_request(result : int) -> void:
 		StorageTask.Task.TASK_LIST, StorageTask.Task.TASK_LIST_ALL:
 			var json : Dictionary = JSON.parse(_response_data.get_string_from_utf8()).result
 			var items := []
+			if json and json.has("error"):
+				Firebase._printerr("Error getting data from storage: "+json["error"].message)
 			if json and json.has("items"):
 				for item in json.items:
 					var item_name : String = item.name
