@@ -1,7 +1,5 @@
 # Godot Firebase
 
-![Tests](https://github.com/WolfgangSenff/GodotFirebase/workflows/Run%20GUT%20Tests/badge.svg?branch=main)
-
 A Google Firebase SDK written in GDScript for use in Godot Engine projects.
 
 ## :speech_balloon: Discord
