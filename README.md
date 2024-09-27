@@ -1,5 +1,15 @@
 # Godot Firebase
 
+# BIG NOTE: IF YOU HAVE DOWNLOADED THIS MANUALLY BEFORE, YOU WILL NEED TO UPDATE YOUR REPO. I RECOMMEND BLOWING IT AWAY AND REDOWNLOADING, BUT NOTICE THAT 4.X IS THE NEW MAIN BRANCH, AND 3.X IS ITS OWN, SEPARATE BRANCH NOW.
+# You can also follow these steps:
+
+git branch -m 4.x main
+git fetch origin
+git branch -u origin/main main
+git remote set-head origin -a
+
+# END BIG NOTE!
+
 A Google Firebase SDK written in GDScript for use in Godot Engine projects.
 
 ## :speech_balloon: Discord
@@ -12,11 +22,8 @@ godotnuts@gmail.com
 
 The following individuals and many more have contributed significantly to this project. If you would like to support this project's further development, consider supporting them.
 
-- [Kyle Szklenski](https://github.com/WolfgangSenff) (creator - original, Database, Functions, several features) ([buy me a coffee](https://ko-fi.com/kyleszklenski))
-- [Nicolò Santilio](https://github.com/fenix-hub) (creator - Firestore, several features)
+- [Kyle Szklenski](https://github.com/WolfgangSenff) (creator - original, Authentication, Database, Firestore, Functions, Storage) ([buy me a coffee](https://ko-fi.com/kyleszklenski) or [join me on patreon!](https://patreon.com/KyleSzklenski))
 - [Chuck Lindblom](https://github.com/BearDooks) (creator - several features across the board)
-- [SIsilicon](https://github.com/SISilicon) (creator - Firestore, a few other features)
-- [Luke Hollenback](https://github.com/lukehollenback) (unit testing) ([buy me a coffee](https://ko-fi.com/lukehollenback))
 
 ## :arrow_down:  Cloning
 SSH:
