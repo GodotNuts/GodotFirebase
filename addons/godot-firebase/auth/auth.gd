@@ -140,6 +140,13 @@ var _update_profile_body : Dictionary = {
 	"returnSecureToken":true
 }
 
+var link_account_body : Dictionary = {
+	"idToken":"",
+	"email":"",
+	"password":"",
+	"returnSecureToken":true
+}
+
 var _local_port : int = 8060
 var _local_uri : String = "http://localhost:%s/"%_local_port
 var _local_provider : AuthProvider = AuthProvider.new()
@@ -551,6 +558,18 @@ func update_account(idToken : String, displayName : String, photoUrl : String, d
 		_update_profile_body.deleteAttribute = deleteAttribute
 		_update_profile_body.returnSecureToken = returnSecureToken
 		var err = request(_base_url + _update_account_request_url, _headers, HTTPClient.METHOD_POST, JSON.stringify(_update_profile_body))
+		if err != OK:
+			is_busy = false
+			Firebase._printerr("Error updating account: %s" % err)
+
+# Link account with Email and Password
+func link_account(email : String, password : String) -> void:
+	if _is_ready():
+		is_busy = true
+		link_account_body.idToken = auth.idtoken
+		link_account_body.email = email
+		link_account_body.password = password
+		var err = request(_base_url + _update_account_request_url, _headers, HTTPClient.METHOD_POST, JSON.stringify(link_account_body))
 		if err != OK:
 			is_busy = false
 			Firebase._printerr("Error updating account: %s" % err)
