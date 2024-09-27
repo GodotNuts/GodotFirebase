@@ -4,9 +4,13 @@
 # You can also follow these steps:
 
 git branch -m 4.x main
+
 git fetch origin
+
 git branch -u origin/main main
+
 git remote set-head origin -a
+
 
 # END BIG NOTE!
 
