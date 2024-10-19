@@ -25,10 +25,10 @@ func _init(doc : Dictionary = {}):
 		document = doc.fields
 	if doc.has("name"):
 		doc_name = doc.name
-	if doc_name.count("/") > 2:
-		doc_name = (doc_name.split("/") as Array).back()
-		
-	self.create_time = doc.createTime
+		if doc_name.count("/") > 2:
+			doc_name = (doc_name.split("/") as Array).back()
+	if doc.has("createTime"):	
+		self.create_time = doc.createTime
 
 func replace(with : FirestoreDocument, is_listener := false) -> void:
 	var current = document.duplicate()
