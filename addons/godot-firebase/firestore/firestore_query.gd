@@ -32,6 +32,7 @@ const TEMPLATE_QUERY: Dictionary = {
 
 var query: Dictionary = {}
 var aggregations: Array[Dictionary] = []
+var sub_collection_path: String = ""
 
 enum OPERATOR {
 	# Standard operators
