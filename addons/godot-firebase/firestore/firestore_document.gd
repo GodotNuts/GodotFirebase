@@ -1,4 +1,4 @@
-## @meta-authors TODO
+## @meta-authors Kyle Szklenski
 ## @meta-version 2.2
 ## A reference to a Firestore Document.
 ## Documentation TODO.
@@ -25,8 +25,8 @@ func _init(doc : Dictionary = {}):
 		document = doc.fields
 	if doc.has("name"):
 		doc_name = doc.name
-		if doc_name.count("/") > 2:
-			doc_name = (doc_name.split("/") as Array).back()
+	if doc_name.count("/") > 2:
+		doc_name = (doc_name.split("/") as Array).back()
 		
 	self.create_time = doc.createTime
 
@@ -44,7 +44,36 @@ func replace(with : FirestoreDocument, is_listener := false) -> void:
 		else:
 			var new_value = Utilities.from_firebase_type(document[key])
 			var old_value = Utilities.from_firebase_type(current[key])
-			if new_value != old_value:
+			if typeof(new_value) != typeof(old_value) or new_value != old_value:
+				if old_value == null:
+					changes.removed.push_back({ "key" : key }) # ??
+				else:
+					changes.updated.push_back({ "key" : key, "old": old_value, "new" : new_value })
+	
+	for key in document.keys():
+		if not current.has(key):
+			changes.added.push_back({ "key" : key, "new" : Utilities.from_firebase_type(document[key]) })
+	
+	if not (changes.added.is_empty() and changes.removed.is_empty() and changes.updated.is_empty()):
+		changed.emit(changes)
+
+func new_document(base_document: Dictionary) -> void:
+	var current = document.duplicate()
+	document = {}
+	for key in base_document.keys():
+		document[key] = Utilities.to_firebase_type(key)
+	
+	var changes = {
+		"added": [], "removed": [], "updated": [], "is_listener": false
+	}
+	
+	for key in current.keys():
+		if not document.has(key):
+			changes.removed.push_back({ "key" : key })
+		else:
+			var new_value = Utilities.from_firebase_type(document[key])
+			var old_value = Utilities.from_firebase_type(current[key])
+			if typeof(new_value) != typeof(old_value) or new_value != old_value:
 				if old_value == null:
 					changes.removed.push_back({ "key" : key }) # ??
 				else:
@@ -126,15 +155,25 @@ func get_value(property : StringName) -> Variant:
 	
 	if document.has(property):
 		var result = Utilities.from_firebase_type(document[property])
-		
 		return result
 	
 	return null
 
+func _get(property: StringName) -> Variant:
+	return get_value(property)
+
 func _set(property: StringName, value: Variant) -> bool:
+	assert(value != null, "When using the dictionary setter, the value cannot be null; use erase_field instead.")
 	document[property] = Utilities.to_firebase_type(value)
 	return true
 
+func get_unsafe_document() -> Dictionary:
+	var result = {}
+	for key in keys():
+		result[key] = Utilities.from_firebase_type(document[key])
+	
+	return result
+	
 func keys():
 	return document.keys()
 
