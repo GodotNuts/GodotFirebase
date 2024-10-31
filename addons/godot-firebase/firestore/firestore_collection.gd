@@ -176,3 +176,24 @@ func _process_request(task : FirestoreTask, document_id : String, url : String, 
 
 func get_database_url(append) -> String:
 	return _base_url + _extended_url.rstrip("/") + ":" + append
+
+
+## @args document_id: StringName, data: Variant
+## @return void
+# used to SET a document, specify the document ID and new data
+func set(document_id: StringName, data: Variant) -> void:
+	var task: FirestoreTask = FirestoreTask.new()
+	task.action = FirestoreTask.Task.TASK_PATCH
+	task.data = collection_name + "/" + document_id
+	var url = _get_request_url() + _separator + document_id.replace(" ", "%20")
+
+	_process_request(task, document_id, url, JSON.stringify(Utilities.dict2fields(data)))
+	var result = await Firebase.Firestore._handle_task_finished(task)
+
+	if result != null:
+		for child in get_children():
+			if child.doc_name == document_id:
+				child.replace(result, true)
+				break
+	else:
+		print("set_document returned null for %s %s" % [collection_name, document_id])
