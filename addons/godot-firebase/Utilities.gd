@@ -58,13 +58,14 @@ class FirebaseTypeConverter extends RefCounted:
 		"nullValue": _to_null,
 		"booleanValue": _to_bool,
 		"integerValue": _to_int,
-		"doubleValue": _to_float
+		"doubleValue": _to_float,
+		"vector2Value": _to_vector2,
+		"vector2iValue": _to_vector2i
 	}
 
 	func convert_value(type, value):
 		if converters.has(type):
 			return converters[type].call(value)
-
 		return value
 
 	func _to_null(value):
@@ -78,6 +79,12 @@ class FirebaseTypeConverter extends RefCounted:
 
 	func _to_float(value):
 		return float(value)
+	
+	func _to_vector2(value):
+		return type_convert(value, TYPE_VECTOR2)
+	
+	func _to_vector2i(value):
+		return type_convert(value, TYPE_VECTOR2I)
 
 static func from_firebase_type(value):
 	if value == null:
@@ -91,7 +98,13 @@ static func from_firebase_type(value):
 		value = Time.get_datetime_dict_from_datetime_string(value.values()[0], false)
 	else:
 		var converter = FirebaseTypeConverter.new()
-		value = converter.convert_value(value.keys()[0], value.values()[0])
+		var type: String = value.keys()[0]
+		value = value.values()[0]
+		if type == "stringValue":
+			var split_type: String = value.split("(")[0]
+			if split_type in [ "Vector2", "Vector2i" ]:
+				type = "{0}Value".format([split_type.to_lower()])
+		value = converter.convert_value(type, value)
 
 	return value
 
@@ -115,7 +128,10 @@ static func to_firebase_type(value : Variant) -> Dictionary:
 		TYPE_ARRAY:
 			var_type = "arrayValue"
 			value = {"values": array2fields(value)}
-				
+		TYPE_VECTOR2, TYPE_VECTOR2I:
+			var_type = "stringValue"
+			value = var_to_str(value)
+		
 	return { var_type : value }
 	
 # Pass the .fields inside a Firestore Document to print out the Dictionary { 'key' : 'value' }
