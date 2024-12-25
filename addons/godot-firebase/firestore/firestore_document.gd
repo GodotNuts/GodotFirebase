@@ -16,6 +16,7 @@ var doc_name : String           # only .name
 var create_time : String        # createTime
 var collection_name : String    # Name of the collection to which it belongs
 var _transforms : FieldTransformArray     # The transforms to apply
+var field_added_or_updated : bool     # true or false if anything has been added or updated since the last update()
 signal changed(changes)
 
 func _init(doc : Dictionary = {}):
@@ -129,7 +130,7 @@ func add_or_update_field(field_path : String, value : Variant) -> void:
 		changes.updated.push_back({ "key" : field_path, "old" : existing_value, "new" : value })
 	else:
 		changes.added.push_back({ "key" : field_path, "new" : value })
-
+	field_added_or_updated = true
 	changed.emit(changes)
 	
 func on_snapshot(when_called : Callable, poll_time : float = 1.0) -> FirestoreListener.FirestoreListenerConnection:
@@ -158,6 +159,9 @@ func get_value(property : StringName) -> Variant:
 		return result
 	
 	return null
+
+func has_changes_pending() -> bool:
+	return field_added_or_updated
 
 func _get(property: StringName) -> Variant:
 	return get_value(property)

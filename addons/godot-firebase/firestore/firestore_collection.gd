@@ -110,6 +110,8 @@ func update(document : FirestoreDocument) -> FirestoreDocument:
 	
 		if temp_transforms != null:
 			result._transforms = temp_transforms
+		
+		document.field_added_or_updated = false
 	
 	return result
 
