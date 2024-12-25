@@ -81,10 +81,10 @@ class FirebaseTypeConverter extends RefCounted:
 		return float(value)
 	
 	func _to_vector2(value):
-		return type_convert(value, TYPE_VECTOR2)
+		return str_to_var(value) as Vector2
 	
 	func _to_vector2i(value):
-		return type_convert(value, TYPE_VECTOR2I)
+		return str_to_var(value) as Vector2i
 
 static func from_firebase_type(value):
 	if value == null:
