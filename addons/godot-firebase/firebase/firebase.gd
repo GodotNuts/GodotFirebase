@@ -18,31 +18,31 @@ const _AUTH_PROVIDERS : String = "firebase/auth_providers"
 
 ## @type FirebaseAuth
 ## The Firebase Authentication API.
-@onready var Auth := $Auth
+@onready var Auth : FirebaseAuth = $Auth
 
 ## @type FirebaseFirestore
 ## The Firebase Firestore API.
-@onready var Firestore := $Firestore
+@onready var Firestore : FirebaseFirestore = $Firestore
 
 ## @type FirebaseDatabase
 ## The Firebase Realtime Database API.
-@onready var Database := $Database
+@onready var Database : FirebaseDatabase = $Database
 
 ## @type FirebaseStorage
 ## The Firebase Storage API.
-@onready var Storage := $Storage
+@onready var Storage : FirebaseStorage = $Storage
 
 ## @type FirebaseDynamicLinks
 ## The Firebase Dynamic Links API.
-@onready var DynamicLinks := $DynamicLinks
+@onready var DynamicLinks : FirebaseDynamicLinks = $DynamicLinks
 
 ## @type FirebaseFunctions
 ## The Firebase Cloud Functions API
-@onready var Functions := $Functions
+@onready var Functions : FirebaseFunctions = $Functions
 
 ## @type FirebaseRemoteConfig
 ## The Firebase Remote Config API
-@onready var RemoteConfigAPI := $RemoteConfig
+@onready var RemoteConfigAPI : FirebaseRemoteConfig = $RemoteConfig
 
 @export var emulating : bool = false
 
