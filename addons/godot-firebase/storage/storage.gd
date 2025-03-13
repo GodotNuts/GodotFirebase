@@ -313,7 +313,7 @@ func _finish_request(result : int) -> void:
 		next_task = _pending_tasks.pop_front()
 
 	task.finished = true
-	task.emit_signal("task_finished")
+	task.emit_signal("task_finished", task.data)
 	if typeof(task.data) == TYPE_DICTIONARY and task.data.has("error"):
 		emit_signal("task_failed", task.result, task.response_code, task.data)
 	else:
