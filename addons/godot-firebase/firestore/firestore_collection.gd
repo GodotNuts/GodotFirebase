@@ -181,7 +181,7 @@ func get_database_url(append) -> String:
 ## @args document_id: StringName, data: Variant
 ## @return void
 # used to SET a document, specify the document ID and new data
-func set(document_id: StringName, data: Variant) -> void:
+func set_doc(document_id: StringName, data: Variant) -> void:
 	var task: FirestoreTask = FirestoreTask.new()
 	task.action = FirestoreTask.Task.TASK_PATCH
 	task.data = collection_name + "/" + document_id
