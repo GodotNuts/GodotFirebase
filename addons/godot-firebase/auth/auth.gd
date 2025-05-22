@@ -289,7 +289,7 @@ func get_auth_with_redirect(provider: AuthProvider) -> void:
 		url_endpoint+=key+"="+provider.params[key]+"&"
 	url_endpoint += provider.params.redirect_type+"="+_local_uri
 	url_endpoint = _clean_url(url_endpoint)
-	if Utilities.is_web() and OS.has_feature("JavaScript"):
+	if Utilities.is_web():
 		JavaScriptBridge.eval('window.location.replace("' + url_endpoint + '")')
 	elif Engine.has_singleton(_INAPP_PLUGIN) and OS.get_name() == "iOS":
 		#in app for ios if the iOS plugin exists
