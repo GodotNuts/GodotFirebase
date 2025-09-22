@@ -54,6 +54,7 @@ var _config : Dictionary = {
 	"authDomain": "",
 	"databaseURL": "",
 	"projectId": "",
+	"databaseName": "",
 	"storageBucket": "",
 	"messagingSenderId": "",
 	"appId": "",
