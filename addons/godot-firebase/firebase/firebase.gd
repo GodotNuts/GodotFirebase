@@ -18,27 +18,23 @@ const _AUTH_PROVIDERS : String = "firebase/auth_providers"
 
 ## @type FirebaseAuth
 ## The Firebase Authentication API.
-@onready var Auth := $Auth
+@onready var Auth : FirebaseAuth = $Auth
 
 ## @type FirebaseFirestore
 ## The Firebase Firestore API.
-@onready var Firestore := $Firestore
+@onready var Firestore : FirebaseFirestore = $Firestore
 
 ## @type FirebaseDatabase
 ## The Firebase Realtime Database API.
-@onready var Database := $Database
+@onready var Database : FirebaseDatabase = $Database
 
 ## @type FirebaseStorage
 ## The Firebase Storage API.
-@onready var Storage := $Storage
-
-## @type FirebaseDynamicLinks
-## The Firebase Dynamic Links API.
-@onready var DynamicLinks := $DynamicLinks
+@onready var Storage : FirebaseStorage = $Storage
 
 ## @type FirebaseFunctions
 ## The Firebase Cloud Functions API
-@onready var Functions := $Functions
+@onready var Functions : FirebaseFunctions = $Functions
 
 ## @type FirebaseRemoteConfig
 ## The Firebase Remote Config API
@@ -61,7 +57,6 @@ var _config : Dictionary = {
 	"measurementId": "",
 	"clientId": "",
 	"clientSecret" : "",
-	"domainUriPrefix" : "",
 	"functionsGeoZone" : "",
 	"cacheLocation":"",
 	"emulators": {
@@ -71,7 +66,6 @@ var _config : Dictionary = {
 			"realtimeDatabase" : "",
 			"functions" : "",
 			"storage" : "",
-			"dynamicLinks" : ""
 		}
 	},
 	"workarounds":{
@@ -123,18 +117,6 @@ func _load_config() -> void:
 						_config[key] = value
 		else:
 			_printerr("Unable to read .env file at path 'res://addons/godot-firebase/.env'")
-
-	_setup_modules()
-
-func _setup_modules() -> void:
-	for module in get_children():
-		module._set_config(_config)
-		if not module.has_method("_on_FirebaseAuth_login_succeeded"):
-			continue
-		Auth.login_succeeded.connect(module._on_FirebaseAuth_login_succeeded)
-		Auth.signup_succeeded.connect(module._on_FirebaseAuth_login_succeeded)
-		Auth.token_refresh_succeeded.connect(module._on_FirebaseAuth_token_refresh_succeeded)
-		Auth.logged_out.connect(module._on_FirebaseAuth_logout)
 
 # -------------
 
