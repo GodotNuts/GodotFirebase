@@ -152,6 +152,7 @@ var _local_uri : String = "http://localhost:%s/"%_local_port
 var _local_provider : AuthProvider = AuthProvider.new()
 
 func _ready() -> void:
+	_set_config(Firebase._config)
 	tcp_timer.wait_time = tcp_timeout
 	tcp_timer.timeout.connect(_tcp_stream_timer)
 

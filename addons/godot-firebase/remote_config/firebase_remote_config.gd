@@ -12,6 +12,9 @@ var _headers : PackedStringArray = [
 ]
 var _auth : Dictionary
 
+func _ready() -> void:
+	_set_config(Firebase._config)
+
 func _set_config(config_json : Dictionary) -> void:
 	_project_config = config_json # This may get confusing, hoping the variable name makes it easier to understand
 

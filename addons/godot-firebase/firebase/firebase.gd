@@ -81,7 +81,7 @@ var _config : Dictionary = {
 	}
 }
 
-func _ready() -> void:
+func _enter_tree() -> void:
 	_load_config()
 
 

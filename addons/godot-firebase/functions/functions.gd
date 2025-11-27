@@ -51,6 +51,7 @@ var _http_request_pool : Array = []
 var _offline: bool = false : set = _set_offline
 
 func _ready() -> void:
+	_set_config(Firebase._config)
 	set_process(false)
 
 func _process(delta : float) -> void:
