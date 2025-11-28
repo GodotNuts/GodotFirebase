@@ -171,7 +171,7 @@ func list(path : String = "", page_size : int = 0, page_token : String = "", ord
 func _set_config(config_json : Dictionary) -> void:
 	_config = config_json
 	_cache_loc = _config["cacheLocation"]
-	if _config.databaseName.is_empty():
+	if not _config.has("databaseName") || _config.databaseName.is_empty():
 		_config.databaseName = "(default)"
 	_extended_url = _extended_url.format({"PROJECT_ID":_config.projectId, "DATABASE_NAME":_config.databaseName})
 	# Since caching is causing a lot of issues, I'm removing this check for now. We will revisit this in the future, once we have some time to investigate why the cache is being corrupted.
