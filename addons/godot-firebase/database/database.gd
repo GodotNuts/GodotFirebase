@@ -33,6 +33,11 @@ func get_once_database_reference(path: String, filter : Dictionary = {}) -> Fire
 	firebase_reference.set_db_path(path, filter)
 	add_child(firebase_reference)
 	return firebase_reference
+	
+func get_ephemeral_database_reference() -> FirebaseEphemeralDatabaseReference:
+	var ref = load("res://addons/godot-firebase/database/ephemeral_database_reference.gd").new()
+	add_child(ref)
+	return ref
 
 const PUSH_MIDDLEWARE = "push"
 const ALL_MIDDLEWARE = "all"
