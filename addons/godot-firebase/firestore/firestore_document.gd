@@ -31,6 +31,17 @@ func _init(doc : Dictionary = {}):
 	if doc.has("createTime"):	
 		self.create_time = doc.createTime
 
+func _emit_changes(changes) -> void:
+	var listener_found = false
+	for child in get_children():
+		if child is FirestoreListener:
+			child.send_change(changes)
+			listener_found = true
+			break
+			
+	if not listener_found:
+		changed.emit(changes)
+
 func replace(with : FirestoreDocument, is_listener := false) -> void:
 	var current = document.duplicate()
 	document = with.document
@@ -56,7 +67,7 @@ func replace(with : FirestoreDocument, is_listener := false) -> void:
 			changes.added.push_back({ "key" : key, "new" : Utilities.from_firebase_type(document[key]) })
 	
 	if not (changes.added.is_empty() and changes.removed.is_empty() and changes.updated.is_empty()):
-		changed.emit(changes)
+		_emit_changes(changes)
 
 func new_document(base_document: Dictionary) -> void:
 	var current = document.duplicate()
@@ -85,7 +96,7 @@ func new_document(base_document: Dictionary) -> void:
 			changes.added.push_back({ "key" : key, "new" : Utilities.from_firebase_type(document[key]) })
 	
 	if not (changes.added.is_empty() and changes.removed.is_empty() and changes.updated.is_empty()):
-		changed.emit(changes)
+		_emit_changes(changes)
 
 func is_null_value(key) -> bool:
 	return document.has(key) and Utilities.from_firebase_type(document[key]) == null
@@ -110,14 +121,14 @@ func remove_field(field_path : String) -> void:
 		}
 		
 		changes.removed.push_back({ "key" : field_path })
-		changed.emit(changes)
+		_emit_changes(changes)
 		
 func _erase(field_path : String) -> void:
 	document.erase(field_path)
 
-func add_or_update_field(field_path : String, value : Variant) -> void:		
+func add_or_update_field(field_path : String, value : Variant) -> void:         
 	var changes = {
-		"added": [], "removed": [], "updated": [], "is_listener": false
+		"added": [], "removed": [], "updated": []
 	}
 	
 	var existing_value = get_value(field_path)
@@ -130,19 +141,20 @@ func add_or_update_field(field_path : String, value : Variant) -> void:
 		changes.updated.push_back({ "key" : field_path, "old" : existing_value, "new" : value })
 	else:
 		changes.added.push_back({ "key" : field_path, "new" : value })
-	field_added_or_updated = true
-	changed.emit(changes)
 	
-func on_snapshot(when_called : Callable, poll_time : float = 1.0) -> FirestoreListener.FirestoreListenerConnection:
+	field_added_or_updated = true
+	_emit_changes(changes)
+	
+func on_snapshot(when_called : Callable) -> FirestoreListener.FirestoreListenerConnection:
 	if get_child_count() >= 1: # Only one listener per
 		assert(false, "Multiple listeners not allowed for the same document yet")
 		return
 	
-	changed.connect(when_called, CONNECT_REFERENCE_COUNTED)
 	var listener = preload("res://addons/godot-firebase/firestore/firestore_listener.tscn").instantiate()
 	add_child(listener)
-	listener.initialize_listener(collection_name, doc_name, poll_time)
+	listener.initialize_listener(collection_name, doc_name)
 	listener.owner = self
+	listener.changed.connect(when_called, CONNECT_REFERENCE_COUNTED)
 	var result = listener.enable_connection()
 	return result
 

@@ -27,6 +27,7 @@ var _auth : Dictionary
 var _config : Dictionary
 var _filter_query : Dictionary
 var _db_path : String
+var _cached_filter: String
 
 const _separator : String = "/"
 const _json_list_tag : String = ".json"
@@ -41,6 +42,7 @@ const _equal_tag : String = "="
 const _key_filter_tag : String = "$key"
 
 var _headers : PackedStringArray = []
+var last_etag : String = ""
 
 func set_db_path(path : String, filter_query_dict : Dictionary) -> void:
 	_db_path = path
@@ -54,8 +56,11 @@ func set_auth_and_config(auth_ref : Dictionary, config_ref : Dictionary) -> void
 # Gets a data snapshot once at the position passed in
 #
 func once(reference : String) -> void:
+	last_etag = "" # Reset ETag
 	var ref_pos = _get_list_url() + _db_path + _separator + reference + _get_remaining_path()
-	_oncer.request(ref_pos, _headers, HTTPClient.METHOD_GET, "")
+	var request_headers = _headers.duplicate()
+	request_headers.append("X-Firebase-ETag: true")
+	_oncer.request(ref_pos, request_headers, HTTPClient.METHOD_GET, "")
 
 func _get_remaining_path(is_push : bool = true) -> String:
 	var remaining_path = ""
@@ -80,24 +85,37 @@ func _get_filter():
 	if _filter_query_empty():
 		return ""
 	
-	var filter = ""
-	
-	if _filter_query.has(ORDER_BY):
-		filter += ORDER_BY + _equal_tag + _escaped_quote + _filter_query[ORDER_BY] + _escaped_quote
-		_filter_query.erase(ORDER_BY)
+	if _cached_filter != "":
+		_cached_filter = ""
+		if _filter_query.has(ORDER_BY):
+			_cached_filter += ORDER_BY + _equal_tag + _escaped_quote + _filter_query[ORDER_BY] + _escaped_quote
+			_filter_query.erase(ORDER_BY)
+		else:
+			_cached_filter += ORDER_BY + _equal_tag + _escaped_quote + _key_filter_tag + _escaped_quote # Presumptuous, but to get it to work at all...
+		for key in _filter_query.keys():
+			_cached_filter += _filter_tag + key + _equal_tag + _filter_query[key]
 	else:
-		filter += ORDER_BY + _equal_tag + _escaped_quote + _key_filter_tag + _escaped_quote # Presumptuous, but to get it to work at all...
+		if _filter_query.has(ORDER_BY):
+			_cached_filter += ORDER_BY + _equal_tag + _escaped_quote + _filter_query[ORDER_BY] + _escaped_quote
+			_filter_query.erase(ORDER_BY)
+		else:
+			_cached_filter += ORDER_BY + _equal_tag + _escaped_quote + _key_filter_tag + _escaped_quote # Presumptuous, but to get it to work at all...
+		for key in _filter_query.keys():
+			_cached_filter += _filter_tag + key + _equal_tag + str(_filter_query[key])
 		
-	for key in _filter_query.keys():
-		filter += _filter_tag + key + _equal_tag + _filter_query[key]
-
-	return filter
+	return _cached_filter
 
 func _filter_query_empty() -> bool:
 	return _filter_query == null or _filter_query.is_empty()
 
 func on_get_request_complete(result : int, response_code : int, headers : PackedStringArray, body : PackedByteArray) -> void:
 	if response_code == HTTPClient.RESPONSE_OK:
+		for header in headers:
+			if header.to_lower().begins_with("etag"):
+				# Split by first colon only
+				var parts = header.split(":", true, 1)
+				if parts.size() > 1:
+					last_etag = parts[1].strip_edges()
 		var bod = Utilities.get_json_data(body)            
 		once_successful.emit(bod)
 	else:
@@ -113,7 +131,7 @@ func push(data : Dictionary) -> void:
 	var to_push = JSON.stringify(data)
 	_pusher.request(_get_list_url() + _db_path + _get_remaining_path(true), _headers, HTTPClient.METHOD_POST, to_push)
 
-func update(path : String, data : Dictionary) -> void:
+func update(path : String, data : Dictionary, etag : String = "") -> void:
 	path = path.strip_edges(true, true)
 
 	if path == _separator:
@@ -121,4 +139,38 @@ func update(path : String, data : Dictionary) -> void:
 
 	var to_update = JSON.stringify(data)
 	var resolved_path = (_get_list_url() + _db_path + "/" + path + _get_remaining_path())
-	_pusher.request(resolved_path, _headers, HTTPClient.METHOD_PATCH, to_update)
+	
+	var request_headers = _headers.duplicate()
+	if etag != "":
+		request_headers.append("If-Match: %s" % etag)
+		
+	_pusher.request(resolved_path, request_headers, HTTPClient.METHOD_PATCH, to_update)
+
+func put(path : String, data : Dictionary, etag : String = "") -> void:
+	path = path.strip_edges(true, true)
+
+	if path == _separator:
+		path = ""
+
+	var to_put = JSON.stringify(data)
+	var resolved_path = (_get_list_url() + _db_path + "/" + path + _get_remaining_path())
+	
+	var request_headers = _headers.duplicate()
+	if etag != "":
+		request_headers.append("If-Match: %s" % etag)
+		
+	_pusher.request(resolved_path, request_headers, HTTPClient.METHOD_PUT, to_put)
+
+func delete(path : String, etag : String = "") -> void:
+	path = path.strip_edges(true, true)
+
+	if path == _separator:
+		path = ""
+
+	var resolved_path = (_get_list_url() + _db_path + "/" + path + _get_remaining_path())
+	
+	var request_headers = _headers.duplicate()
+	if etag != "":
+		request_headers.append("If-Match: %s" % etag)
+		
+	_pusher.request(resolved_path, request_headers, HTTPClient.METHOD_DELETE, "")

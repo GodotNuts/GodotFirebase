@@ -93,20 +93,37 @@ func _parse_response_body(headers):
 	var body = response_body.get_string_from_utf8()
 	if body:
 		var event_datas = get_event_data(body)
-		var resize_response_body_to_zero_after_for_loop_flag = false
+		var consumed_idx = 0
+		
 		for event_data in event_datas:
-			if event_data.event != "keep-alive" and event_data.event != continue_internal:
-				var result = Utilities.get_json_data(event_data.data)
-				if result != null:
-					var parsed_text = result
-					if response_body.size() > 0:
-						resize_response_body_to_zero_after_for_loop_flag = true
-						new_sse_event.emit(headers, event_data.event, result)
+			if event_data.event == continue_internal:
+				continue
+
+			if event_data.event == "keep-alive":
+				consumed_idx = event_data.end_idx
+				continue
+				
+			var result = Utilities.get_json_data(event_data.data)
+			if result != null:
+				new_sse_event.emit(headers, event_data.event, result)
+				consumed_idx = event_data.end_idx
 			else:
-				if event_data.event != continue_internal:
-					response_body.resize(0)
-		if resize_response_body_to_zero_after_for_loop_flag:
-			response_body.resize(0)
+				# JSON failed. 
+				# If this is not the last event, it's garbage, skip it.
+				# If it IS the last event, it might be partial, so we keep it.
+				if event_data != event_datas.back():
+					consumed_idx = event_data.end_idx
+				else:
+					# Last event failed parsing. Keep it in buffer.
+					pass
+		
+		if consumed_idx > 0:
+			if consumed_idx >= body.length():
+				response_body.resize(0)
+			else:
+				var remaining = body.substr(consumed_idx)
+				response_body = remaining.to_utf8_buffer()
+
 
 func get_event_data(body : String) -> Array:
 	var results = []
@@ -141,7 +158,7 @@ func get_event_data(body : String) -> Array:
 			break  # No valid data found
 
 		# Append the event and data to results
-		results.append({"event": event_value, "data": data_value})
+		results.append({"event": event_value, "data": data_value, "end_idx": data_end})
 		# Update the start index for the next iteration
 		start_idx = data_end  # Move past the current data section
 	

@@ -91,7 +91,7 @@ func on_new_sse_event(headers : Dictionary, event : String, data : Dictionary) -
 			elif command == _delete_tag:
 				delete_data_update.emit(FirebaseResource.new(data.path, data.data))
 
-func update(path : String, data : Dictionary) -> void:
+func update(path : String, data : Dictionary, etag : String = "") -> void:
 	path = path.strip_edges(true, true)
 
 	if path == _separator:
@@ -100,14 +100,39 @@ func update(path : String, data : Dictionary) -> void:
 	var to_update = JSON.stringify(data)
 	
 	var resolved_path = (_get_list_url() + _db_path + "/" + path + _get_remaining_path())
-	_pusher.request(resolved_path, _headers, HTTPClient.METHOD_PATCH, to_update)
+	
+	var request_headers = _headers.duplicate()
+	if etag != "":
+		request_headers.append("If-Match: %s" % etag)
+		
+	_pusher.request(resolved_path, request_headers, HTTPClient.METHOD_PATCH, to_update)
 
 func push(data : Dictionary) -> void:
 	var to_push = JSON.stringify(data)
 	_pusher.request(_get_list_url() + _db_path + _get_remaining_path(), _headers, HTTPClient.METHOD_POST, to_push)
 
-func delete(reference : String) -> void:
-	_pusher.request(_get_list_url() + _db_path + _separator + reference + _get_remaining_path(), _headers, HTTPClient.METHOD_DELETE, "")
+func put(path : String, data : Dictionary, etag : String = "") -> void:
+	path = path.strip_edges(true, true)
+
+	if path == _separator:
+		path = ""
+
+	var to_put = JSON.stringify(data)
+	
+	var resolved_path = (_get_list_url() + _db_path + "/" + path + _get_remaining_path())
+	
+	var request_headers = _headers.duplicate()
+	if etag != "":
+		request_headers.append("If-Match: %s" % etag)
+		
+	_pusher.request(resolved_path, request_headers, HTTPClient.METHOD_PUT, to_put)
+
+func delete(reference : String, etag : String = "") -> void:
+	var request_headers = _headers.duplicate()
+	if etag != "":
+		request_headers.append("If-Match: %s" % etag)
+		
+	_pusher.request(_get_list_url() + _db_path + _separator + reference + _get_remaining_path(), request_headers, HTTPClient.METHOD_DELETE, "")
 
 #
 # Returns a deep copy of the current local copy of the data stored at this reference in the Firebase
@@ -141,7 +166,7 @@ func _get_list_url(with_port:bool = true) -> String:
 func _get_filter():
 	if _filter_query_empty():
 		return ""
-	# At the moment, this means you can't dynamically change your filter; I think it's okay to specify that in the rules.
+
 	if _cached_filter != "":
 		_cached_filter = ""
 		if _filter_query.has(ORDER_BY):
@@ -151,6 +176,14 @@ func _get_filter():
 			_cached_filter += ORDER_BY + _equal_tag + _escaped_quote + _key_filter_tag + _escaped_quote # Presumptuous, but to get it to work at all...
 		for key in _filter_query.keys():
 			_cached_filter += _filter_tag + key + _equal_tag + _filter_query[key]
+	else:
+		if _filter_query.has(ORDER_BY):
+			_cached_filter += ORDER_BY + _equal_tag + _escaped_quote + _filter_query[ORDER_BY] + _escaped_quote
+			_filter_query.erase(ORDER_BY)
+		else:
+			_cached_filter += ORDER_BY + _equal_tag + _escaped_quote + _key_filter_tag + _escaped_quote # Presumptuous, but to get it to work at all...
+		for key in _filter_query.keys():
+			_cached_filter += _filter_tag + key + _equal_tag + str(_filter_query[key])
 
 	return _cached_filter
 

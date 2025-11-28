@@ -135,10 +135,25 @@ func commit(document : FirestoreDocument) -> Dictionary:
 	) # Only place we can set this is here, oofness
 	
 	var body = document._transforms.serialize()
+	# Capture transforms to map results back to fields
+	var applied_transforms = document._transforms.transforms.duplicate()
 	document.clear_field_transforms()
-	_process_request(task, document.doc_name, url, JSON.stringify(body))
 	
-	return await Firebase.Firestore._handle_task_finished(task) # Not implementing the follow-up get here as user may have a listener that's already listening for changes, but user should call get if they don't
+	_process_request(task, document.doc_name, url, JSON.stringify(body))
+	var result = await Firebase.Firestore._handle_task_finished(task)
+	
+	if result and result.has("writeResults"):
+		var write_results = result.writeResults         
+		for i in range(write_results.size()):
+			var write_result = write_results[i]
+			if i < applied_transforms.size():
+				var transform = applied_transforms[i]
+				if write_result.has("transformResults") and write_result.transformResults.size() > 0:
+					# Each write has one transform, so one transformResult
+					var new_value = Utilities.from_firebase_type(write_result.transformResults[0])
+					document.add_or_update_field(transform.field_path, new_value)
+
+	return result if result else task.error
 
 ## @args document_id
 ## @return FirestoreTask
