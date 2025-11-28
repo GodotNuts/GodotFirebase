@@ -41,9 +41,6 @@ var _response_data : PackedByteArray
 var _content_length : int
 var _reading_body : bool
 
-func _ready() -> void:
-	_set_config(Firebase._config)
-
 func _notification(what : int) -> void:
 	if what == NOTIFICATION_INTERNAL_PROCESS:
 		_internal_process(get_process_delta_time())

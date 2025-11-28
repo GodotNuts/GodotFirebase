@@ -62,9 +62,6 @@ var _request_list_node: HTTPRequest
 var _requests_queue: Array = []
 var _current_query: FirestoreQuery
 
-func _ready() -> void:
-	_set_config(Firebase._config)
-
 ## Returns a reference collection by its [i]path[/i].
 ##
 ## The returned object will be of [code]FirestoreCollection[/code] type.
