@@ -22,8 +22,6 @@ var _base_url : String
 var _extended_url : String
 var _config : Dictionary
 
-var _documents := {}
-
 # ----------------------- Requests
 
 ## @args document_id
@@ -44,18 +42,16 @@ func get_doc(document_id : String, from_cache : bool = false, is_listener : bool
 	_process_request(task, document_id, url)
 	var result = await Firebase.Firestore._handle_task_finished(task)
 	if result != null:
-		var found = false
+		var found_document = false
 		for child in get_children():
 			if child.doc_name == document_id:
 				child.replace(result, true)
 				result = child
-				found = true
+				found_document = true
 				break
 		
-		if not found:
+		if not found_document:
 			add_child(result, true)
-			
-		result.collection_name = collection_name
 	else:
 		print("get_document returned null for %s %s" % [collection_name, document_id])
 		
@@ -103,7 +99,7 @@ func update(document : FirestoreDocument) -> FirestoreDocument:
 	var temp_transforms
 	if document._transforms != null:
 		temp_transforms = document._transforms
-		document._transforms = null
+		document._transforms = FieldTransformArray.new()
 	
 	var body = JSON.stringify({"fields": document.document})
 
@@ -114,10 +110,11 @@ func update(document : FirestoreDocument) -> FirestoreDocument:
 			if child.doc_name == result.doc_name:
 				child.replace(result, true)
 				break
-		result.collection_name = collection_name
 	
 		if temp_transforms != null:
 			result._transforms = temp_transforms
+		
+		document.field_added_or_updated = false
 	
 	return result
 
@@ -138,26 +135,10 @@ func commit(document : FirestoreDocument) -> Dictionary:
 	) # Only place we can set this is here, oofness
 	
 	var body = document._transforms.serialize()
-	# Capture transforms to map results back to fields
-	var applied_transforms = document._transforms.transforms.duplicate()
 	document.clear_field_transforms()
-	
 	_process_request(task, document.doc_name, url, JSON.stringify(body))
-	var result = await Firebase.Firestore._handle_task_finished(task)
 	
-	if result and result.has("writeResults"):
-		var write_results = result.writeResults		
-		for i in range(write_results.size()):
-			var write_result = write_results[i]
-			if i < applied_transforms.size():
-				var transform = applied_transforms[i]
-				if write_result.has("transformResults") and write_result.transformResults.size() > 0:
-					# Each write has one transform, so one transformResult
-					var new_value = Utilities.from_firebase_type(write_result.transformResults[0])
-					document.add_or_update_field(transform.field_path, new_value)
-
-	return result if result else task.error
-
+	return await Firebase.Firestore._handle_task_finished(task) # Not implementing the follow-up get here as user may have a listener that's already listening for changes, but user should call get if they don't
 
 ## @args document_id
 ## @return FirestoreTask

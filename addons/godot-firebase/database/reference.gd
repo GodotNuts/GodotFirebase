@@ -137,6 +137,7 @@ func _get_list_url(with_port:bool = true) -> String:
 		url += ":" + _config.emulators.ports.realtimeDatabase
 	return url + _separator
 
+
 func _get_filter():
 	if _filter_query_empty():
 		return ""
@@ -150,14 +151,6 @@ func _get_filter():
 			_cached_filter += ORDER_BY + _equal_tag + _escaped_quote + _key_filter_tag + _escaped_quote # Presumptuous, but to get it to work at all...
 		for key in _filter_query.keys():
 			_cached_filter += _filter_tag + key + _equal_tag + _filter_query[key]
-	else:
-		if _filter_query.has(ORDER_BY):
-			_cached_filter += ORDER_BY + _equal_tag + _escaped_quote + _filter_query[ORDER_BY] + _escaped_quote
-			_filter_query.erase(ORDER_BY)
-		else:
-			_cached_filter += ORDER_BY + _equal_tag + _escaped_quote + _key_filter_tag + _escaped_quote # Presumptuous, but to get it to work at all...
-		for key in _filter_query.keys():
-			_cached_filter += _filter_tag + key + _equal_tag + str(_filter_query[key])
 
 	return _cached_filter
 

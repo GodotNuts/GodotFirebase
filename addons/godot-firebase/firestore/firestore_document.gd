@@ -16,6 +16,7 @@ var doc_name : String           # only .name
 var create_time : String        # createTime
 var collection_name : String    # Name of the collection to which it belongs
 var _transforms : FieldTransformArray     # The transforms to apply
+var field_added_or_updated : bool     # true or false if anything has been added or updated since the last update()
 signal changed(changes)
 
 func _init(doc : Dictionary = {}):
@@ -35,7 +36,7 @@ func replace(with : FirestoreDocument, is_listener := false) -> void:
 	document = with.document
 	
 	var changes = {
-		"added": [], "removed": [], "updated": []
+		"added": [], "removed": [], "updated": [], "is_listener": is_listener
 	}
 	
 	for key in current.keys():
@@ -45,24 +46,16 @@ func replace(with : FirestoreDocument, is_listener := false) -> void:
 			var new_value = Utilities.from_firebase_type(document[key])
 			var old_value = Utilities.from_firebase_type(current[key])
 			if typeof(new_value) != typeof(old_value) or new_value != old_value:
-				changes.updated.push_back({ "key" : key, "old": old_value, "new" : new_value })
+				if old_value == null:
+					changes.removed.push_back({ "key" : key }) # ??
+				else:
+					changes.updated.push_back({ "key" : key, "old": old_value, "new" : new_value })
 	
 	for key in document.keys():
 		if not current.has(key):
 			changes.added.push_back({ "key" : key, "new" : Utilities.from_firebase_type(document[key]) })
 	
 	if not (changes.added.is_empty() and changes.removed.is_empty() and changes.updated.is_empty()):
-		_emit_changes(changes)
-		
-func _emit_changes(changes) -> void:
-	var listener_found = false
-	for child in get_children():
-		if child is FirestoreListener:
-			child.send_change(changes)
-			listener_found = true
-			break
-			
-	if not listener_found:
 		changed.emit(changes)
 
 func new_document(base_document: Dictionary) -> void:
@@ -72,7 +65,7 @@ func new_document(base_document: Dictionary) -> void:
 		document[key] = Utilities.to_firebase_type(key)
 	
 	var changes = {
-		"added": [], "removed": [], "updated": []
+		"added": [], "removed": [], "updated": [], "is_listener": false
 	}
 	
 	for key in current.keys():
@@ -82,14 +75,17 @@ func new_document(base_document: Dictionary) -> void:
 			var new_value = Utilities.from_firebase_type(document[key])
 			var old_value = Utilities.from_firebase_type(current[key])
 			if typeof(new_value) != typeof(old_value) or new_value != old_value:
-				changes.updated.push_back({ "key" : key, "old": old_value, "new" : new_value })
+				if old_value == null:
+					changes.removed.push_back({ "key" : key }) # ??
+				else:
+					changes.updated.push_back({ "key" : key, "old": old_value, "new" : new_value })
 	
 	for key in document.keys():
 		if not current.has(key):
 			changes.added.push_back({ "key" : key, "new" : Utilities.from_firebase_type(document[key]) })
 	
 	if not (changes.added.is_empty() and changes.removed.is_empty() and changes.updated.is_empty()):
-		_emit_changes(changes)
+		changed.emit(changes)
 
 func is_null_value(key) -> bool:
 	return document.has(key) and Utilities.from_firebase_type(document[key]) == null
@@ -97,7 +93,6 @@ func is_null_value(key) -> bool:
 # As of right now, we do not track these with track changes; instead, they'll come back when the document updates from the server.
 # Until that time, it's expected if you want to track these types of changes that you commit for the transforms and then get the document yourself.
 func add_field_transform(transform : FieldTransform) -> void:
-	transform.document_name = doc_name
 	_transforms.push_back(transform)
 
 func remove_field_transform(transform : FieldTransform) -> void:
@@ -111,18 +106,18 @@ func remove_field(field_path : String) -> void:
 		document[field_path] = Utilities.to_firebase_type(null)
 		
 		var changes = {
-			"added": [], "removed": [], "updated": []
+			"added": [], "removed": [], "updated": [], "is_listener": false
 		}
 		
 		changes.removed.push_back({ "key" : field_path })
-		_emit_changes(changes)
+		changed.emit(changes)
 		
 func _erase(field_path : String) -> void:
 	document.erase(field_path)
 
 func add_or_update_field(field_path : String, value : Variant) -> void:		
 	var changes = {
-		"added": [], "removed": [], "updated": []
+		"added": [], "removed": [], "updated": [], "is_listener": false
 	}
 	
 	var existing_value = get_value(field_path)
@@ -135,19 +130,19 @@ func add_or_update_field(field_path : String, value : Variant) -> void:
 		changes.updated.push_back({ "key" : field_path, "old" : existing_value, "new" : value })
 	else:
 		changes.added.push_back({ "key" : field_path, "new" : value })
-	
-	_emit_changes(changes)
+	field_added_or_updated = true
+	changed.emit(changes)
 	
 func on_snapshot(when_called : Callable, poll_time : float = 1.0) -> FirestoreListener.FirestoreListenerConnection:
 	if get_child_count() >= 1: # Only one listener per
 		assert(false, "Multiple listeners not allowed for the same document yet")
 		return
 	
+	changed.connect(when_called, CONNECT_REFERENCE_COUNTED)
 	var listener = preload("res://addons/godot-firebase/firestore/firestore_listener.tscn").instantiate()
 	add_child(listener)
-	listener.initialize_listener(collection_name, doc_name)
+	listener.initialize_listener(collection_name, doc_name, poll_time)
 	listener.owner = self
-	listener.changed.connect(when_called, CONNECT_REFERENCE_COUNTED)
 	var result = listener.enable_connection()
 	return result
 
@@ -164,6 +159,9 @@ func get_value(property : StringName) -> Variant:
 		return result
 	
 	return null
+
+func has_changes_pending() -> bool:
+	return field_added_or_updated
 
 func _get(property: StringName) -> Variant:
 	return get_value(property)

@@ -1,54 +1,51 @@
-## @meta-authors BackAt50Ft
-## @meta-version 2.3
+## @meta-authors TODO
+## @meta-version 2.2
 ## The Realtime Database API for Firebase.
-## This class is effectively a factory class to get connections to the Firebase realtime database.
-## 
+## Documentation TODO.
 @tool
 class_name FirebaseDatabase
 extends Node
 
 var _base_url : String = ""
 
-@export var should_store_data: bool = true
+var _config : Dictionary = {}
 
-func check_emulating() -> void:
+var _auth : Dictionary = {}
+
+func _set_config(config_json : Dictionary) -> void:
+	_config = config_json
+	_check_emulating()
+
+func _check_emulating() -> void :
 	## Check emulating
 	if not Firebase.emulating:
-		_base_url = Firebase.config.databaseURL
+		_base_url = _config.databaseURL
 	else:
-		var port : String = Firebase.config.emulators.ports.realtimeDatabase
+		var port : String = _config.emulators.ports.realtimeDatabase
 		if port == "":
 			Firebase._printerr("You are in 'emulated' mode, but the port for Realtime Database has not been configured.")
 		else:
 			_base_url = "http://localhost"
 
-func get_database_reference(path: String, filter : Dictionary = {}) -> FirebaseDatabaseReference:
+func _on_FirebaseAuth_login_succeeded(auth_result : Dictionary) -> void:
+	_auth = auth_result
+
+func _on_FirebaseAuth_token_refresh_succeeded(auth_result : Dictionary) -> void:
+	_auth = auth_result
+
+func _on_FirebaseAuth_logout() -> void:
+	_auth = {}
+
+func get_database_reference(path : String, filter : Dictionary = {}) -> FirebaseDatabaseReference:
 	var firebase_reference = load("res://addons/godot-firebase/database/firebase_database_reference.tscn").instantiate()
 	firebase_reference.set_db_path(path, filter)
+	firebase_reference.set_auth_and_config(_auth, _config)
 	add_child(firebase_reference)
 	return firebase_reference
 	
-func get_once_database_reference(path: String, filter : Dictionary = {}) -> FirebaseOnceDatabaseReference:
+func get_once_database_reference(path : String, filter : Dictionary = {}) -> FirebaseOnceDatabaseReference:
 	var firebase_reference = load("res://addons/godot-firebase/database/firebase_once_database_reference.tscn").instantiate()
 	firebase_reference.set_db_path(path, filter)
+	firebase_reference.set_auth_and_config(_auth, _config)
 	add_child(firebase_reference)
 	return firebase_reference
-	
-func get_ephemeral_database_reference() -> FirebaseEphemeralDatabaseReference:
-	var ref = load("res://addons/godot-firebase/database/ephemeral_database_reference.gd").new()
-	add_child(ref)
-	return ref
-
-const PUSH_MIDDLEWARE = "push"
-const ALL_MIDDLEWARE = "all"
-const UPDATE_MIDDLEWARE = "update"
-
-var middleware: Dictionary[String, Array] = {
-	push = [],
-	all = [],
-	update = [],
-}
-
-func add_middleware(on_action: String, callable: Callable) -> void:
-	if middleware.has(on_action):
-		middleware[on_action].push_back(callable)
