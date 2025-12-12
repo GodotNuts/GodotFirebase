@@ -111,7 +111,8 @@ func query(query : FirestoreQuery) -> Array:
 	task._fields = JSON.stringify(body)
 	task._url = url
 	_pooled_request(task)
-	return await _handle_task_finished(task)
+	var t = await _handle_task_finished(task)
+	return t if t else []
 	
 ## Issue an aggregation query (sum, average, count) against your Firestore database;
 ## cheaper than a normal query and counting (for instance) values directly.
@@ -164,8 +165,8 @@ func list(path : String = "", page_size : int = 0, page_token : String = "", ord
 	task.data = [path, page_size, page_token, order_by]
 	task._url = url
 	_pooled_request(task)
-	
-	return await _handle_task_finished(task)
+	var t = await _handle_task_finished(task)
+	return t if t else []
 
 
 func _set_config(config_json : Dictionary) -> void:
