@@ -85,7 +85,7 @@ func select(fields) -> FirestoreQuery:
 
 # Select the collection you want to return the query result from
 # if @all_descendants also sub-collections will be returned. If false, only documents will be returned
-func from(collection_id : String, all_descendants : bool = true) -> FirestoreQuery:
+func from(collection_id : String, all_descendants : bool = false) -> FirestoreQuery:
 	query["from"] = [{collectionId = collection_id, allDescendants = all_descendants}]
 	return self
 
