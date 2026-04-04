@@ -241,5 +241,11 @@ func _handle_task_finished(task : FirestoreTask):
 	
 	if task.error.keys().size() > 0:
 		error.emit(task.error)
-		
+
+	# For tasks that return Array, returning null would crash with a typed return violation
+	# Return [] as a safe fallback for query and list tasks.
+	if task.data == null:
+		match task.action:
+			FirestoreTask.Task.TASK_QUERY, FirestoreTask.Task.TASK_LIST, FirestoreTask.Task.TASK_AGG_QUERY:
+				return []
 	return task.data
