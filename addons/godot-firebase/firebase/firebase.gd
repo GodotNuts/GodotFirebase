@@ -15,6 +15,7 @@ extends Node
 const _ENVIRONMENT_VARIABLES : String = "firebase/environment_variables"
 const _EMULATORS_PORTS : String = "firebase/emulators/ports"
 const _AUTH_PROVIDERS : String = "firebase/auth_providers"
+const _ENV: String = ".env."
 
 ## @type FirebaseAuth
 ## The Firebase Authentication API.
@@ -102,10 +103,29 @@ func _check_emulating() -> void:
 		if module.has_method("_check_emulating"):
 			module._check_emulating()
 
+func _resolve_env_path() -> String:
+	var base_path = "res://addons/godot-firebase/.env"
+	var dir = DirAccess.open("res://addons/godot-firebase/")
+	if dir == null:
+		return base_path
+	dir.list_dir_begin()
+	var file_name = dir.get_next()
+	while file_name != "":
+		if not dir.current_is_dir() and file_name.begins_with(_ENV):
+			var tag = file_name.substr(_ENV.length())
+			if tag != "" and OS.has_feature(tag):
+				_print("Using environment file for feature '%s': %s" % [tag, file_name])
+				dir.list_dir_end()
+				return "res://addons/godot-firebase/" + file_name
+		file_name = dir.get_next()
+	dir.list_dir_end()
+	return base_path
+
 func _load_config() -> void:
 	if not (_config.apiKey != "" and _config.authDomain != ""):
 		var env = ConfigFile.new()
-		var err = env.load("res://addons/godot-firebase/.env")
+		var env_path = _resolve_env_path()
+		var err = env.load(env_path)
 		if err == OK:
 			for key in _config.keys():
 				var config_value = _config[key]
@@ -122,7 +142,7 @@ func _load_config() -> void:
 					else:
 						_config[key] = value
 		else:
-			_printerr("Unable to read .env file at path 'res://addons/godot-firebase/.env'")
+			_printerr("Unable to read .env file at path '%s'" % env_path)
 
 	_setup_modules()
 
@@ -132,7 +152,6 @@ func _setup_modules() -> void:
 		if not module.has_method("_on_FirebaseAuth_login_succeeded"):
 			continue
 		Auth.login_succeeded.connect(module._on_FirebaseAuth_login_succeeded)
-		Auth.signup_succeeded.connect(module._on_FirebaseAuth_login_succeeded)
 		Auth.token_refresh_succeeded.connect(module._on_FirebaseAuth_token_refresh_succeeded)
 		Auth.logged_out.connect(module._on_FirebaseAuth_logout)
 
