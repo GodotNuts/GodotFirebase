@@ -314,7 +314,8 @@ func login_with_oauth(_token: String, provider: AuthProvider) -> void:
 			token = auth.accesstoken
 		if is_successful and _is_ready():
 			is_busy = true
-			_oauth_login_request_body.postBody = "access_token="+token+"&providerId="+provider.provider_id
+			_oauth_login_request_body.postBody = "code=" + token.uri_encode() + "&providerId=playgames.google.com"
+			_oauth_login_request_body.returnIdpCredential = true
 			_oauth_login_request_body.requestUri = _local_uri
 			requesting = Requests.LOGIN_WITH_OAUTH
 			auth_request_type = Auth_Type.LOGIN_OAUTH
