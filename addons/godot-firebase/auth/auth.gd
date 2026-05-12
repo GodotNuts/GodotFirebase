@@ -303,25 +303,72 @@ func get_auth_with_redirect(provider: AuthProvider) -> void:
 # Login with Google oAuth2.
 # A token is automatically obtained using an authorization code using @get_google_auth()
 # @provider_id and @request_uri can be changed
+# Login with OAuth2.
+# A token is automatically obtained using an authorization code.
 func login_with_oauth(_token: String, provider: AuthProvider) -> void:
 	if _token:
 		is_oauth_login = true
+
 		var token : String = _token.uri_decode()
 		var is_successful: bool = true
+
+		# Exchange token if provider requires it
 		if provider.should_exchange:
-			exchange_token(token, _local_uri, provider.access_token_uri, provider.get_client_id(), provider.get_client_secret())
+			exchange_token(
+				token,
+				_local_uri,
+				provider.access_token_uri,
+				provider.get_client_id(),
+				provider.get_client_secret()
+			)
+
 			is_successful = await self.token_exchanged
 			token = auth.accesstoken
+
 		if is_successful and _is_ready():
 			is_busy = true
-			_oauth_login_request_body.postBody = "code=" + token.uri_encode() + "&providerId=playgames.google.com"
-			_oauth_login_request_body.returnIdpCredential = true
+
+			# Google Play Games provider
+			if provider.provider_id == "playgames.google.com":
+
+				_oauth_login_request_body.postBody = (
+					"code="
+					+ token.uri_encode()
+					+ "&providerId="
+					+ provider.provider_id
+				)
+
+				_oauth_login_request_body.returnIdpCredential = true
+
+			# Default OAuth providers
+			else:
+
+				_oauth_login_request_body.postBody = (
+					"access_token="
+					+ token.uri_encode()
+					+ "&providerId="
+					+ provider.provider_id
+				)
+
+				_oauth_login_request_body.returnIdpCredential = false
+
 			_oauth_login_request_body.requestUri = _local_uri
+
 			requesting = Requests.LOGIN_WITH_OAUTH
 			auth_request_type = Auth_Type.LOGIN_OAUTH
-			var err = request(_base_url + _signin_with_oauth_request_url, _headers, HTTPClient.METHOD_POST, JSON.stringify(_oauth_login_request_body))
+
+			var err = request(
+				_base_url + _signin_with_oauth_request_url,
+				_headers,
+				HTTPClient.METHOD_POST,
+				JSON.stringify(_oauth_login_request_body)
+			)
+
+			# Cleanup
 			_oauth_login_request_body.postBody = ""
 			_oauth_login_request_body.requestUri = ""
+			_oauth_login_request_body.returnIdpCredential = false
+
 			if err != OK:
 				is_busy = false
 				Firebase._printerr("Error logging in with oauth: %s" % err)
@@ -680,6 +727,9 @@ func get_clean_keys(auth_result : Dictionary) -> Dictionary:
 # --------------------
 # PROVIDERS
 # --------------------
+
+func get_PlayGamesProvider() -> PlayGamesProvider:
+	return PlayGamesProvider.new()
 
 func get_GoogleProvider() -> GoogleProvider:
 	return GoogleProvider.new(_config.clientId, _config.clientSecret)
