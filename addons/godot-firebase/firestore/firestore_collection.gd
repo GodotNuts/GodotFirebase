@@ -80,7 +80,7 @@ func add(document_id : String, data : Dictionary = {}) -> FirestoreDocument:
 	return result
 	
 static var _simple_field_name_regex := RegEx.create_from_string("^[a-zA-Z_][a-zA-Z0-9_]*$")
-func _key_needs_backtick_wrapper(key: String) -> bool:
+static func _key_needs_backtick_wrapper(key: String) -> bool:
 	return _simple_field_name_regex.search(key) == null
 
 ## @args document
