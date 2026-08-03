@@ -79,6 +79,10 @@ func add(document_id : String, data : Dictionary = {}) -> FirestoreDocument:
 		add_child(result, true)
 	return result
 	
+static var _simple_field_name_regex := RegEx.create_from_string("^[a-zA-Z_][a-zA-Z0-9_]*$")
+static func _key_needs_backtick_wrapper(key: String) -> bool:
+	return _simple_field_name_regex.search(key) == null
+
 ## @args document
 ## @return FirestoreDocument
 # used to UPDATE a document, specify the document
@@ -88,7 +92,13 @@ func update(document : FirestoreDocument) -> FirestoreDocument:
 	task.data = collection_name + "/" + document.doc_name
 	var url = _get_request_url() + _separator + document.doc_name.replace(" ", "%20") + "?"
 	for key in document.keys():
-		url+="updateMask.fieldPaths={key}&".format({key = key})
+		# Field names that aren't simple need backtick wrappers ('%60' is the URL-encoded backtick)
+		# Simple field names don't start with numbers, and only have alphanumeric characters or '_'
+		# See https://firebase.google.com/docs/firestore/quotas#collections_documents_and_fields
+		if _key_needs_backtick_wrapper(key):
+			url+="updateMask.fieldPaths=%60{key}%60&".format({key = key})
+		else:
+			url+="updateMask.fieldPaths={key}&".format({key = key})
 			
 	url = url.rstrip("&")
 	
