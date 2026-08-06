@@ -214,7 +214,7 @@ static func dict2timestamp(dict : Dictionary) -> String:
 	#dict.erase('dst')
 	#var dict_values : Array = dict.values()
 	var time = Time.get_datetime_string_from_datetime_dict(dict, false)
-	return time
+	return time + "Z"
 	#return "%04d-%02d-%02dT%02d:%02d:%02d.00Z" % dict_values
 
 # Converts a Firebase Timestamp back to a gdscript Dictionary
