@@ -74,3 +74,7 @@ available at https://www.contributor-covenant.org/version/1/4/code-of-conduct.ht
 
 For answers to common questions about this code of conduct, see
 https://www.contributor-covenant.org/faq
+
+## AI
+
+At this time, we will not be accepting AI contributions, as the liability for us is too much, and the maintainability can become a nightmare. In general, we also would like to keep our environment clean. Thank you for understanding.
