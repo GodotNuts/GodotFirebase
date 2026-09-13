@@ -97,6 +97,10 @@ func update(path : String, data : Dictionary, etag : String = "") -> void:
 	if path == _separator:
 		path = ""
 
+	if etag == "" and _socket_connected():
+		_on_socket_ack(await Firebase.Database.get_socket().merge(_socket_path(path), data))
+		return
+
 	var to_update = JSON.stringify(data)
 	
 	var resolved_path = (_get_list_url() + _db_path + "/" + path + _get_remaining_path())
@@ -117,6 +121,10 @@ func put(path : String, data : Dictionary, etag : String = "") -> void:
 	if path == _separator:
 		path = ""
 
+	if etag == "" and _socket_connected():
+		_on_socket_ack(await Firebase.Database.get_socket().put(_socket_path(path), data))
+		return
+
 	var to_put = JSON.stringify(data)
 	
 	var resolved_path = (_get_list_url() + _db_path + "/" + path + _get_remaining_path())
@@ -128,6 +136,10 @@ func put(path : String, data : Dictionary, etag : String = "") -> void:
 	_pusher.request(resolved_path, request_headers, HTTPClient.METHOD_PUT, to_put)
 
 func delete(reference : String, etag : String = "") -> void:
+	if etag == "" and _socket_connected():
+		_on_socket_ack(await Firebase.Database.get_socket().put(_socket_path(reference), null))
+		return
+
 	var request_headers = _headers.duplicate()
 	if etag != "":
 		request_headers.append("If-Match: %s" % etag)
@@ -204,6 +216,19 @@ func _route_data(command : String, path : String, data) -> void:
 
 func on_push_request_complete(result : int, response_code : int, headers : PackedStringArray, body : PackedByteArray) -> void:
 	if response_code == HTTPClient.RESPONSE_OK:
+		push_successful.emit()
+	else:
+		push_failed.emit()
+
+func _socket_connected() -> bool:
+	return Firebase.Database.get_socket().connected
+
+# Absolute database path for the socket: no `.json`, no query, no doubled slashes.
+func _socket_path(path : String) -> String:
+	return _separator + _separator.join((_db_path + _separator + path).split(_separator, false))
+
+func _on_socket_ack(ack : Dictionary) -> void:
+	if ack.ok:
 		push_successful.emit()
 	else:
 		push_failed.emit()

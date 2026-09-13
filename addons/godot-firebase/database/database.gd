@@ -12,6 +12,8 @@ var _config : Dictionary = {}
 
 var _auth : Dictionary = {}
 
+var _socket : FirebaseDatabaseSocket = null
+
 func _set_config(config_json : Dictionary) -> void:
 	_config = config_json
 	_check_emulating()
@@ -29,12 +31,31 @@ func _check_emulating() -> void :
 
 func _on_FirebaseAuth_login_succeeded(auth_result : Dictionary) -> void:
 	_auth = auth_result
+	if _socket != null:
+		_socket.set_token(_auth.get("idtoken", ""))
 
 func _on_FirebaseAuth_token_refresh_succeeded(auth_result : Dictionary) -> void:
 	_auth = auth_result
+	if _socket != null:
+		_socket.set_token(_auth.get("idtoken", ""))
 
 func _on_FirebaseAuth_logout() -> void:
 	_auth = {}
+	if _socket != null:
+		_socket.set_token("")
+
+## The persistent write socket for this database, opened on first use.
+func get_socket() -> FirebaseDatabaseSocket:
+	if _socket == null:
+		if Firebase.emulating:
+			var port : String = _config.emulators.ports.realtimeDatabase
+			_socket = FirebaseDatabaseSocket.new("127.0.0.1:" + port, _config.projectId + "-default-rtdb", false)
+		else:
+			var host : String = _config.databaseURL.get_slice("://", 1).get_slice("/", 0)
+			_socket = FirebaseDatabaseSocket.new(host, host.get_slice(".", 0))
+		_socket.set_token(_auth.get("idtoken", ""))
+		add_child(_socket)
+	return _socket
 
 func get_database_reference(path : String, filter : Dictionary = {}) -> FirebaseDatabaseReference:
 	var firebase_reference = load("res://addons/godot-firebase/database/firebase_database_reference.tscn").instantiate()
