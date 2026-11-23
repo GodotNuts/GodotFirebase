@@ -152,10 +152,12 @@ func _pooled_request(task : FunctionTask) -> void:
 
 	if auth == null or auth.is_empty():
 		Firebase._print("Unauthenticated request issued...")
-		Firebase.Auth.login_anonymous()
-		var result : Array = await Firebase.Auth.auth_request
-		if result[0] != 1:
-			_check_auth_error(result[0], result[1])
+		var auth_result : Dictionary = await Firebase.Auth.login_anonymous()
+		if auth_result.is_empty():
+			_check_auth_error(ERR_UNAUTHORIZED, "Anonymous login failed")
+			task.call_deferred("_on_request_completed", HTTPRequest.RESULT_CANT_CONNECT, HTTPClient.RESPONSE_UNAUTHORIZED, PackedStringArray(), PackedByteArray())
+			return
+		auth = auth_result
 		Firebase._print("Client connected as Anonymous")
 
 
