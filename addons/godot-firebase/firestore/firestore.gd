@@ -252,7 +252,7 @@ func _fail_task_on_auth_error(task : FirestoreTask, result : Array) -> void:
 		"status": "Authentication Failed",
 		"message": str(message)
 	}}, task.action, "(Authentication)")
-	task.task_finished.emit()
+	task.call_deferred("emit_signal", "task_finished")
 
 func _handle_task_finished(task : FirestoreTask):
 	await task.task_finished
