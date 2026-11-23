@@ -193,11 +193,11 @@ func _check_emulating() -> void :
 func _pooled_request(task : FirestoreTask) -> void:
 	if (auth == null or auth.is_empty()) and not Firebase.emulating:
 		Firebase._print("Unauthenticated request issued...")
-		Firebase.Auth.login_anonymous()
-		var result : Array = await Firebase.Auth.auth_request
-		if not _is_auth_success(result):
-			_fail_task_on_auth_error(task, result)
+		var auth_result : Dictionary = await Firebase.Auth.login_anonymous()
+		if auth_result.is_empty():
+			_fail_task_on_auth_error(task, [ERR_UNAUTHORIZED, "Anonymous login failed"])
 			return
+		auth = auth_result
 		Firebase._print("Client connected as Anonymous")
 
 	if not Firebase.emulating:
@@ -240,9 +240,6 @@ func _check_auth_error(code, message) -> void:
 	if not err.is_empty():
 		Firebase._printerr(err)
 	Firebase._printerr(str(message))
-
-func _is_auth_success(result : Array) -> bool:
-	return result.size() > 0 and typeof(result[0]) == TYPE_INT and result[0] == 1
 
 # Marks a task as failed when authentication fails, so anything awaiting it
 # (e.g. get_doc) returns instead of waiting forever.
