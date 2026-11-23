@@ -195,8 +195,9 @@ func _pooled_request(task : FirestoreTask) -> void:
 		Firebase._print("Unauthenticated request issued...")
 		Firebase.Auth.login_anonymous()
 		var result : Array = await Firebase.Auth.auth_request
-		if result[0] != 1:
-			_check_auth_error(result[0], result[1])
+		if not _is_auth_success(result):
+			_fail_task_on_auth_error(task, result)
+			return
 		Firebase._print("Client connected as Anonymous")
 
 	if not Firebase.emulating:
@@ -229,12 +230,32 @@ func _on_FirebaseAuth_token_refresh_succeeded(auth_result : Dictionary) -> void:
 func _on_FirebaseAuth_logout() -> void:
 	auth = {}
 
-func _check_auth_error(code : int, message : String) -> void:
+# auth_request usually reports an int code, but some paths (e.g. OAuth errors) pass a String,
+# so the code is left untyped to avoid a crash when an auth error is reported.
+func _check_auth_error(code, message) -> void:
 	var err : String
-	match code:
-		400: err = "Please enable the Anonymous Sign-in method, or Authenticate the Client before issuing a request"
-	Firebase._printerr(err)
-	Firebase._printerr(message)
+	if typeof(code) == TYPE_INT:
+		match code:
+			400: err = "Please enable the Anonymous Sign-in method, or Authenticate the Client before issuing a request"
+	if not err.is_empty():
+		Firebase._printerr(err)
+	Firebase._printerr(str(message))
+
+func _is_auth_success(result : Array) -> bool:
+	return result.size() > 0 and typeof(result[0]) == TYPE_INT and result[0] == 1
+
+# Marks a task as failed when authentication fails, so anything awaiting it
+# (e.g. get_doc) returns instead of waiting forever.
+func _fail_task_on_auth_error(task : FirestoreTask, result : Array) -> void:
+	var code = result[0] if result.size() > 0 else 0
+	var message = result[1] if result.size() > 1 else "Unknown authentication error"
+	_check_auth_error(code, message)
+	task.build_error({ "error": {
+		"code": code,
+		"status": "Authentication Failed",
+		"message": str(message)
+	}}, task.action, "(Authentication)")
+	task.task_finished.emit()
 
 func _handle_task_finished(task : FirestoreTask):
 	await task.task_finished
