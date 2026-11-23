@@ -432,7 +432,7 @@ func _on_FirebaseAuth_request_completed(result : int, response_code : int, heade
 	var res
 	if response_code == 0:
 		res = {"error": {
-			"code": "ERR_CANT_CONNECT",
+			"code": ERR_CANT_CONNECT,
 			"message": "Error connecting to auth service"}}
 	else:
 		if json == null:
